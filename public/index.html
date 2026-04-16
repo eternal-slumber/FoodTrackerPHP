@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <title>FoodTracker AI</title>
+</head>
+<body>
+    <div id="app">
+        <!-- Экран приветствия -->
+        <div id="screen-welcome" class="screen">
+            <div class="welcome-content">
+                <div class="welcome-icon">🍽️</div>
+                <h1>FoodTracker AI</h1>
+                <p class="welcome-description">
+                    Отслеживай калории с помощью фото!<br>
+                    Просто сфотографируй еду, и ИИ определит калорийность.
+                </p>
+                <ul class="welcome-features">
+                    <li>📸 Сфотографируйте еду</li>
+                    <li>🤖 ИИ проанализирует состав</li>
+                    <li>📊 Узнайте калорийность</li>
+                </ul>
+                <button id="btn-start" class="main-button">Начать</button>
+            </div>
+        </div>
+
+        <!-- Экран регистрации -->
+        <div id="screen-register" class="screen hidden">
+            <div class="register-content">
+                <!-- Шаг 1: Базовые данные -->
+                <div id="register-step-1" class="register-step">
+                    <header>
+                        <h1>Добро пожаловать</h1>
+                        <p>Расскажите о себе</p>
+                    </header>
+                    <div class="form">
+                        <div class="form-group">
+                            <label for="age">Возраст</label>
+                            <input type="number" id="age" placeholder="25" min="10" max="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Рост (см)</label>
+                            <input type="number" id="height" placeholder="175" min="100" max="220">
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Вес (кг)</label>
+                            <input type="number" id="weight" placeholder="70" min="30" max="250" step="0.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Пол</label>
+                            <select id="gender">
+                                <option value="">Выберите пол</option>
+                                <option value="male">Мужчина</option>
+                                <option value="female">Женщина</option>
+                            </select>
+                        </div>
+                        <button id="btn-next-1" class="main-button">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 2: Уровень активности -->
+                <div id="register-step-2" class="register-step hidden">
+                    <header>
+                        <h1>Ваша активность</h1>
+                        <p>Насколько вы активны в течение дня?</p>
+                    </header>
+                    <div class="form">
+                        <div class="option-group">
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="minimal">
+                                <div class="option-content">
+                                    <span class="option-title">Минимальная</span>
+                                    <span class="option-desc">Сидячий образ жизни, минимум движения</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="low">
+                                <div class="option-content">
+                                    <span class="option-title">Низкая</span>
+                                    <span class="option-desc">Легкая активность, 1-3 дня в неделю</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="medium" checked>
+                                <div class="option-content">
+                                    <span class="option-title">Умеренная</span>
+                                    <span class="option-desc">Умеренная активность, 3-5 дней в неделю</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="high">
+                                <div class="option-content">
+                                    <span class="option-title">Высокая</span>
+                                    <span class="option-desc">Высокая активность, 6-7 дней в неделю</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="extra">
+                                <div class="option-content">
+                                    <span class="option-title">Очень высокая</span>
+                                    <span class="option-desc">Физическая работа, интенсивные тренировки</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="button-group">
+                            <button id="btn-back-2" class="back-button">Назад</button>
+                            <button id="btn-next-2" class="main-button">Далее</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Шаг 3: Цель -->
+                <div id="register-step-3" class="register-step hidden">
+                    <header>
+                        <h1>Ваша цель</h1>
+                        <p>Что вы хотите достичь?</p>
+                    </header>
+                    <div class="form">
+                        <div class="option-group">
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="deficit">
+                                <div class="option-content">
+                                    <span class="option-title">Похудение</span>
+                                    <span class="option-desc">Хочу сбросить вес</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="maintenance" checked>
+                                <div class="option-content">
+                                    <span class="option-title">Поддержание</span>
+                                    <span class="option-desc">Хочу оставаться в форме</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="surplus">
+                                <div class="option-content">
+                                    <span class="option-title">Набор массы</span>
+                                    <span class="option-desc">Хочу набрать мышечную массу</span>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="button-group">
+                            <button id="btn-back-3" class="back-button">Назад</button>
+                            <button id="btn-save" class="main-button">Рассчитать и начать</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основной экран приложения -->
+        <div id="screen-main" class="screen hidden">
+            <div class="main-content">
+                <!-- Прогресс бар -->
+                <div class="progress-card">
+                    <div class="progress-header">
+                        <h2>Прогресс за сегодня</h2>
+                        <span class="progress-percentage" id="progress-percentage">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <div class="progress Consumed">
+                            <span class="progress-value" id="today-calories">0</span>
+                            <span class="progress-label">съедено</span>
+                        </div>
+                        <div class="progress-divider">/</div>
+                        <div class="progress-goal">
+                            <span class="progress-value" id="daily-goal">0</span>
+                            <span class="progress-label">норма</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Сводка -->
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <h2>Твоя норма</h2>
+                    </div>
+                    <div class="summary-stats">
+                        <div class="stat-item">
+                            <span class="stat-value" id="user-goal">0</span>
+                            <span class="stat-label">ккал / день</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="user-weight">0</span>
+                            <span class="stat-label">кг</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value" id="user-height">0</span>
+                            <span class="stat-label">см</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопка сканирования -->
+                <input type="file" id="photo-input" accept="image/*" capture="camera" hidden>
+                <button id="btn-scan" class="scan-button">📸 Сканировать еду</button>
+                
+                <!-- История -->
+                <div class="history-section">
+                    <h3>История</h3>
+                    <div id="history-list"></div>
+                </div>
+            </div>
+
+            <!-- Таббар -->
+            <div class="tab-bar">
+                <button class="tab-item active" data-tab="home">
+                    <span class="tab-icon">🏠</span>
+                    <span class="tab-label">Главная</span>
+                </button>
+                <button class="tab-item" data-tab="settings">
+                    <span class="tab-icon">⚙️</span>
+                    <span class="tab-label">Настройки</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Экран настроек -->
+        <div id="screen-settings" class="screen hidden">
+            <div class="settings-content">
+                <header>
+                    <h1>Настройки</h1>
+                </header>
+                
+                <div class="settings-list">
+                    <div class="settings-item">
+                        <span class="settings-label">Возраст</span>
+                        <span class="settings-value" id="settings-age">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">Рост</span>
+                        <span class="settings-value" id="settings-height">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">Вес</span>
+                        <span class="settings-value" id="settings-weight">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">Пол</span>
+                        <span class="settings-value" id="settings-gender">-</span>
+                    </div>
+                    <div class="settings-item">
+                        <span class="settings-label">Дневная норма</span>
+                        <span class="settings-value" id="settings-goal">-</span>
+                    </div>
+                </div>
+
+                <button id="btn-delete-profile" class="delete-button">Удалить профиль</button>
+            </div>
+
+            <!-- Таббар -->
+            <div class="tab-bar">
+                <button class="tab-item" data-tab="home">
+                    <span class="tab-icon">🏠</span>
+                    <span class="tab-label">Главная</span>
+                </button>
+                <button class="tab-item active" data-tab="settings">
+                    <span class="tab-icon">⚙️</span>
+                    <span class="tab-label">Настройки</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="/assets/js/app.js"></script>
+</body>
+</html>

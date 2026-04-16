@@ -1,0 +1,10 @@
+/vendor/
+/.env
+/.env.*
+/storage/uploads/*
+/storage/.DS_Store
+/.idea/
+/.DS_Store
+*.log
+/.phpunit.result.cache
+/docker/
