@@ -7,21 +7,19 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use App\Core\Container;
 use App\Core\Database;
 use App\Core\Router;
-use App\Controllers\UserController;
-use App\Controllers\AnalyzeController;
 use App\Interfaces\AIServiceInterface;
-use App\Services\OpenRouterService; // OpenRouter API Service
+use App\Services\OpenRouterService; // OpenRouter API Service(Nvidia)
 use App\Services\MealAnalysisService;
 use Dotenv\Dotenv;
 
-// 1. Загружаем переменные окружения (.env)
+// 1.Загружаем переменные окружения (.env)
 $dotenv = Dotenv::createImmutable(__DIR__ . '/../');
 $dotenv->load();
 
-// 2. Инициализируем наш умный контейнер
+// 2.Инициализируем контейнер
 $container = new Container();
 
-// 3. Настраиваем исключения (то, что рефлексия не соберет сама)
+// 3.Настраиваем исключения (то, что рефлексия не соберет сама)
 
 // PDO — это сторонний класс, ему нужны параметры из .env, поэтому создаем его вручную
 $container->setInstance(PDO::class, Database::getConnection());
@@ -42,22 +40,18 @@ $container->set(MealAnalysisService::class, function($c) {
     );
 });
 
-// 4. Инициализируем роутер и передаем ему контейнер
+// 4.Инициализируем роутер и передаем ему контейнер
 $router = new Router($container);
 
-// 5. Определяем маршруты (Routes)
-// Заметь: мы просто указываем имена классов. 
-// Контейнер сам поймет, что AnalyzeController нужен PDO и AIServiceInterface.
-$router->add('GET', '/', 'App\Controllers\HomeController', 'index');
-$router->add('GET', '/api/user-status', UserController::class, 'status');
-$router->add('GET', '/api/progress', UserController::class, 'progress');
-$router->add('POST', '/api/register', UserController::class, 'register');
-$router->add('POST', '/api/upload', AnalyzeController::class, 'upload');
-$router->add('GET', '/api/history', AnalyzeController::class, 'history');
-$router->add('POST', '/api/delete-meal', AnalyzeController::class, 'deleteMeal');
-$router->add('POST', '/api/delete-profile', UserController::class, 'delete');
+// 5.Загружаем маршруты через атрибуты
+$routeLoader = new \App\Services\RouteLoader($router, [
+    \App\Controllers\HomeController::class,
+    \App\Controllers\UserController::class,
+    \App\Controllers\AnalyzeController::class,
+]);
+$routeLoader->load();
 
-// 6. Запускаем приложение
+// 6. Запуск приложения
 try {
     $router->dispatch($_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI']);
 } catch (Exception $e) {

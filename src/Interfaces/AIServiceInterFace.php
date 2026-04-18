@@ -6,7 +6,7 @@ namespace App\Interfaces;
 
 interface AIServiceInterFace
 {
-    //Принимаем путь к файлу, возвращаем массив с калориями и опис
+    //Принимаем путь к файлу, возвращаем массив с калориями и описанием
 
     public function analyze(string $imagePath): array;
 

@@ -30,7 +30,7 @@ class Router
 
         foreach ($this->routes as $route) {
             if ($route['method'] === $method && $route['path'] === $path) {
-                // Магия: достаем контроллер из контейнера (со всеми его зависимостями!)
+                // достаем контроллер из контейнера (со всеми его зависимостями!)
                 $controller = $this->container->get($route['controller']);
                 $action = $route['action'];
 

@@ -23,7 +23,7 @@ enum ActivityLevel: string
         };
     }
 
-    /// Создает enum из значения ( числовое '1.55' или семантическое 'medium')
+    // Создает enum из значения ( числовое '1.55' или семантическое 'medium')
     public static function fromValue(string $value): self
     {
         $value = trim($value);

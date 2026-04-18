@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Attributes\RouteAttribute;
 use App\Core\Database;
 use App\Models\User;
 use App\Services\CalorieCalculatorService;
@@ -21,6 +22,7 @@ class UserController
         $this->calculator = new CalorieCalculatorService();
     }
 
+    #[RouteAttribute('/api/register', 'POST')]
     public function register(): string
     {
         $data = json_decode(file_get_contents('php://input'), true);
@@ -60,6 +62,7 @@ class UserController
         }
     }
 
+    #[RouteAttribute('/api/user-status', 'GET')]
     public function status(): string
     {
         $tgId = AnalyzeValidator::validateTgId($_GET['tg_id'] ?? null);
@@ -82,6 +85,7 @@ class UserController
         return json_encode(['registered' => false]);
     }
 
+    #[RouteAttribute('/api/progress', 'GET')]
     public function progress(): string
     {
         $tgId = AnalyzeValidator::validateTgId($_GET['tg_id'] ?? null);
@@ -106,6 +110,7 @@ class UserController
         ]);
     }
 
+    #[RouteAttribute('/api/delete-profile', 'POST')]
     public function delete(): string
     {
         $data = json_decode(file_get_contents('php://input'), true);

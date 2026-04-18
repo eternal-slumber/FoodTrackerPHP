@@ -26,7 +26,7 @@ class Container
 
     public function get(string $name)
     {
-        // 1. Если объект уже создан (Singleton), возвращаем его
+        // 1. Если объект уже создан singleton, возвращаем его
         if (isset($this->instances[$name])) {
             return $this->instances[$name];
         }
@@ -37,7 +37,7 @@ class Container
             return $this->instances[$name];
         }
 
-        // 3. Если рецепта нет — включаем автосвязывание (Рефлексию)
+        // 3. Если рецепта нет — включаем автосвязывание 
         return $this->resolve($name);
     }
 

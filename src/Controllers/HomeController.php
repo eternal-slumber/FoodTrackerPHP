@@ -4,8 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Attributes\RouteAttribute;
+
 class HomeController
 {
+    #[RouteAttribute('/', 'GET')]
     public function index(): void
     {
         $htmlPath = __DIR__ . '/../../public/index.html';

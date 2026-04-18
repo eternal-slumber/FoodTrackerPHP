@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Attributes\RouteAttribute;
 use App\DTOs\AnalyzeRequestDTO;
 use App\Exceptions\AppException;
 use App\Exceptions\ValidationException;
@@ -16,6 +17,7 @@ class AnalyzeController
         private readonly MealAnalysisService $mealAnalysisService
     ) {}
 
+    #[RouteAttribute('/api/upload', 'POST')]
     public function upload(): string
     {
         try {
@@ -42,6 +44,7 @@ class AnalyzeController
         }
     }
 
+    #[RouteAttribute('/api/history', 'GET')]
     public function history(): string
     {
         try {
@@ -68,6 +71,7 @@ class AnalyzeController
         }
     }
 
+    #[RouteAttribute('/api/delete-meal', 'POST')]
     public function deleteMeal(): string
     {
         try {
