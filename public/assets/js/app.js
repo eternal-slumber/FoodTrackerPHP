@@ -233,6 +233,7 @@ photoInput.onchange = async (e) => {
         tg.showAlert("Ошибка при отправке на сервер.");
     } finally {
         tg.MainButton.hide();
+        photoInput.value = '';
     }
 };
 
@@ -382,3 +383,245 @@ function showScreen(screenName) {
         loadMealHistory();
     }
 }
+
+// ========== BottomSheet "Добавить еду" ==========
+
+const bottomSheet = document.getElementById('bottom-sheet');
+const sheetScreenA = document.getElementById('sheet-screen-a');
+const sheetScreenB = document.getElementById('sheet-screen-b');
+const foodDescription = document.getElementById('food-description');
+const foodPhoto = document.getElementById('food-photo');
+const photoPreview = document.getElementById('photo-preview');
+const previewImg = document.getElementById('preview-img');
+const btnAddPhoto = document.getElementById('btn-add-photo');
+const btnRemovePhoto = document.getElementById('btn-remove-photo');
+const btnToScreenB = document.getElementById('btn-to-screen-b');
+const btnBackToA = document.getElementById('btn-back-to-a');
+const btnAddProduct = document.getElementById('btn-add-product');
+const btnSaveMeal = document.getElementById('btn-save-meal');
+const productsList = document.getElementById('products-list');
+const mealNameInput = document.getElementById('meal-name');
+
+// Открыть BottomSheet
+document.getElementById('btn-add-food').onclick = () => {
+    bottomSheet.classList.remove('hidden');
+    // Сброс формы
+    mealNameInput.value = '';
+    foodDescription.value = '';
+    foodPhoto.value = '';
+    photoPreview.classList.add('hidden');
+    btnToScreenB.disabled = true;
+    sheetScreenA.classList.remove('hidden');
+    sheetScreenB.classList.add('hidden');
+};
+
+// Закрыть BottomSheet
+document.querySelector('.sheet-overlay').onclick = () => {
+    bottomSheet.classList.add('hidden');
+};
+
+// Выбор фото
+btnAddPhoto.onclick = () => foodPhoto.click();
+
+foodPhoto.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        previewImg.src = URL.createObjectURL(file);
+        photoPreview.classList.remove('hidden');
+    }
+};
+
+// Удалить фото
+btnRemovePhoto.onclick = () => {
+    foodPhoto.value = '';
+    photoPreview.classList.add('hidden');
+};
+
+// Валидация кнопки Далее
+foodDescription.oninput = () => {
+    btnToScreenB.disabled = foodDescription.value.trim() === '';
+};
+
+// Переход на экран Б
+btnToScreenB.onclick = () => {
+    const mealName = mealNameInput.value.trim();
+    document.getElementById('screen-b-meal-name').textContent = mealName;
+    sheetScreenA.classList.add('hidden');
+    sheetScreenB.classList.remove('hidden');
+    renderProducts();
+};
+
+// Вернуться на экран А
+btnBackToA.onclick = () => {
+    sheetScreenB.classList.add('hidden');
+    sheetScreenA.classList.remove('hidden');
+};
+
+// Рендер карточек продуктов
+function renderProducts() {
+    const text = foodDescription.value.trim();
+    const products = text.split(/[,;]/).map(p => p.trim()).filter(p => p);
+    
+    if (products.length === 0) products.push('');
+    
+    productsList.innerHTML = products.map((name, i) => createProductCard(name, i)).join('');
+    
+    // Обновить обработчики
+    document.querySelectorAll('.kbju-toggle').forEach(btn => {
+        btn.onclick = (e) => {
+            const panel = e.target.closest('.product-card').querySelector('.kbju-panel');
+            panel.classList.toggle('hidden');
+        };
+    });
+    
+    document.querySelectorAll('.product-delete').forEach(btn => {
+        btn.onclick = (e) => {
+            e.target.closest('.product-card').remove();
+        };
+});
+}
+
+function updateCardLabel(input) {
+    const card = input.closest('.product-card');
+    const label = card.querySelector('.input-label');
+    const name = input.value.trim();
+    const index = Array.from(productsList.children).indexOf(card);
+    label.textContent = `Продукт ${index + 1}${name ? ` (${name})` : ''}`;
+}
+
+function createProductCard(name, index) {
+    const displayName = name ? ` (${name})` : '';
+    return `
+        <div class="product-card">
+            <span class="input-label">Продукт ${index + 1}${displayName}</span>
+            <div class="product-row inline">
+                <div class="name-wrap">
+                    <label class="field-label">Название</label>
+                    <input type="text" class="product-name" value="${name}" placeholder="Название" oninput="updateCardLabel(this)">
+                </div>
+                <div class="weight-wrap">
+                    <label class="field-label">Вес (г)</label>
+                    <input type="number" class="product-weight" value="100">
+                </div>
+            </div>
+            <label class="field-label">Обработка</label>
+            <select class="processing-select">
+                <option value="">Не указано</option>
+                <option value="fry">Жарка</option>
+                <option value="boil">Варка</option>
+                <option value="stew">Тушение</option>
+                <option value="bake">Запекание</option>
+            </select>
+            <button class="kbju-toggle">Свои КБЖУ (на 100г)</button>
+            <div class="kbju-panel hidden">
+                <div class="kbju-field-wrap">
+                    <input type="number" class="kbju-field" placeholder="0">
+                    <span class="kbju-label">ккал</span>
+                </div>
+                <div class="kbju-field-wrap">
+                    <input type="number" class="kbju-field" placeholder="0">
+                    <span class="kbju-label">бел</span>
+                </div>
+                <div class="kbju-field-wrap">
+                    <input type="number" class="kbju-field" placeholder="0">
+                    <span class="kbju-label">жир</span>
+                </div>
+                <div class="kbju-field-wrap">
+                    <input type="number" class="kbju-field" placeholder="0">
+                    <span class="kbju-label">угл</span>
+                </div>
+            </div>
+            <button class="product-delete" title="Удалить">🗑️</button>
+        </div>
+    `;
+}
+
+// Добавить еще продукт
+btnAddProduct.onclick = () => {
+    const card = createProductCard('', productsList.children.length);
+    productsList.insertAdjacentHTML('beforeend', card);
+    
+    // Обновить обработчики новой карточки
+    const newCard = productsList.lastElementChild;
+    const newDelete = newCard.querySelector('.product-delete');
+    newDelete.onclick = (e) => {
+        e.target.closest('.product-card').remove();
+    };
+    
+    const newToggle = newCard.querySelector('.kbju-toggle');
+    newToggle.onclick = (e) => {
+        const panel = e.target.closest('.product-card').querySelector('.kbju-panel');
+        panel.classList.toggle('hidden');
+    };
+};
+
+// Сохранить прием пищи
+btnSaveMeal.onclick = async () => {
+    const mealName = mealNameInput.value.trim();
+    const cards = productsList.querySelectorAll('.product-card');
+    const products = [];
+    
+    let hasEmptyName = false;
+    cards.forEach(card => {
+        const name = card.querySelector('.product-name').value.trim();
+        const weight = parseInt(card.querySelector('.product-weight').value) || 100;
+        const processing = card.querySelector('.processing-select').value;
+        
+        if (!name) {
+            hasEmptyName = true;
+        }
+        
+        const kbju = {};
+        card.querySelectorAll('.kbju-field').forEach((field, i) => {
+            const keys = ['calories', 'proteins', 'fats', 'carbs'];
+            if (field.value) kbju[keys[i]] = field.value;
+        });
+        
+        if (name) {
+            products.push({ name, weight, processing, kbju });
+        }
+    });
+    
+    if (hasEmptyName) {
+        tg.showAlert('Заполните названия всех продуктов!');
+        return;
+    }
+    
+    if (products.length === 0) {
+        tg.showAlert('Добавьте хотя бы один продукт!');
+        return;
+    }
+    
+    tg.MainButton.setText('Сохранение...').show();
+    
+    try {
+        const response = await fetch('/api/save-meal', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tg_id: tgId,
+                meal_name: mealName || 'Прием пищи',
+                products: products
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            bottomSheet.classList.add('hidden');
+            loadMealHistory();
+            loadProgress();
+            
+            const mealTitle = mealName || 'Прием пищи';
+            const total = result.meal?.calories || 0;
+            const today = result.today_calories || 0;
+            tg.showAlert(`${mealTitle}: ${total} ккал\nЗа день: ${today} ккал`);
+        } else {
+            tg.showAlert(result.message || 'Ошибка сохранения');
+        }
+    } catch (error) {
+        tg.showAlert('Ошибка соединения');
+    } finally {
+        tg.MainButton.hide();
+    }
+};

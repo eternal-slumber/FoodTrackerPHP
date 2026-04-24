@@ -155,4 +155,94 @@ class MealAnalysisService
             'message' => 'Meal deleted successfully'
         ];
     }
+
+    public function saveManualMeal(int $tgId, string $mealName, array $products): array
+    {
+        $user = User::findById($tgId);
+        if (!$user) {
+            throw new \RuntimeException('User not found. Register first!');
+        }
+
+        $calculator = new NutritionCalculatorService();
+        $aiService = $this->aiService;
+
+        $processedProducts = [];
+        
+        foreach ($products as $product) {
+            $name = trim($product['name'] ?? '');
+            $weight = (int)($product['weight'] ?? 100);
+            $processing = $product['processing'] ?? '';
+            
+            $kbju100g = [
+                'calories' => 0,
+                'proteins' => 0,
+                'fats' => 0,
+                'carbs' => 0,
+            ];
+
+            if (!empty($product['kbju']['calories'])) {
+                $kbju100g = [
+                    'calories' => (float)$product['kbju']['calories'],
+                    'proteins' => (float)($product['kbju']['proteins'] ?? 0),
+                    'fats' => (float)($product['kbju']['fats'] ?? 0),
+                    'carbs' => (float)($product['kbju']['carbs'] ?? 0),
+                ];
+            } else {
+                $aiKbju = $aiService->getProductNutrients($name);
+                $kbju100g = [
+                    'calories' => (float)($aiKbju['calories'] ?? 0),
+                    'proteins' => (float)($aiKbju['proteins'] ?? 0),
+                    'fats' => (float)($aiKbju['fats'] ?? 0),
+                    'carbs' => (float)($aiKbju['carbs'] ?? 0),
+                ];
+            }
+
+            $kbju100g['calories'] = $calculator->applyProcessingCoefficient($kbju100g['calories'], $processing);
+            $kbju100g['proteins'] = $calculator->applyProcessingCoefficient($kbju100g['proteins'], $processing);
+            $kbju100g['fats'] = $calculator->applyProcessingCoefficient($kbju100g['fats'], $processing);
+            $kbju100g['carbs'] = $calculator->applyProcessingCoefficient($kbju100g['carbs'], $processing);
+
+            $kbjuPortion = $calculator->calculateForPortion($kbju100g, $weight);
+
+            $processedProducts[] = [
+                'name' => $name,
+                'weight' => $weight,
+                'processing' => $processing,
+                'calories' => $kbjuPortion['calories'],
+                'proteins' => $kbjuPortion['proteins'],
+                'fats' => $kbjuPortion['fats'],
+                'carbs' => $kbjuPortion['carbs'],
+            ];
+        }
+
+        $totals = $calculator->sumProducts($processedProducts);
+
+        $meal = new Meal(
+            userId: $user->id,
+            description: $mealName,
+            calories: $totals['calories'],
+            proteins: $totals['proteins'],
+            fats: $totals['fats'],
+            carbs: $totals['carbs']
+        );
+
+        if (!$meal->save()) {
+            throw new \RuntimeException('Failed to save meal');
+        }
+
+        $todayCalories = User::getTodayCalories($user->id);
+
+        return [
+            'status' => 'success',
+            'today_calories' => $todayCalories,
+            'meal' => [
+                'id' => $meal->id,
+                'description' => $mealName,
+                'calories' => $totals['calories'],
+                'proteins' => $totals['proteins'],
+                'fats' => $totals['fats'],
+                'carbs' => $totals['carbs'],
+            ]
+        ];
+    }
 }
