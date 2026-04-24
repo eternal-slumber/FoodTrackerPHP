@@ -71,7 +71,7 @@ class AnalyzeController
         }
     }
 
-    #[RouteAttribute('/api/delete-meal', 'POST')]
+#[RouteAttribute('/api/delete-meal', 'POST')]
     public function deleteMeal(): string
     {
         try {
@@ -88,7 +88,7 @@ class AnalyzeController
 
             // 3. Удаляем запись
             $result = $this->mealAnalysisService->deleteMeal((int)$mealId, $tgId);
-
+ 
             return json_encode($result);
 
         } catch (ValidationException $e) {
@@ -100,6 +100,36 @@ class AnalyzeController
         } catch (\Exception $e) {
             http_response_code(500);
             return json_encode(['error' => 'Internal server error']);
+        }
+    }
+
+    #[RouteAttribute('/api/save-meal', 'POST')]
+    public function saveMeal(): string
+    {
+        try {
+            $data = json_decode(file_get_contents('php://input'), true);
+            
+            $tgId = AnalyzeValidator::validateTgId($data['tg_id'] ?? null);
+            $mealName = trim($data['meal_name'] ?? 'Прием пищи');
+            $products = $data['products'] ?? [];
+
+            if (empty($products)) {
+                throw new ValidationException('Список продуктов пуст');
+            }
+
+            $result = $this->mealAnalysisService->saveManualMeal($tgId, $mealName, $products);
+            
+            return json_encode($result);
+
+        } catch (ValidationException $e) {
+            http_response_code(400);
+            return json_encode($e->toArray());
+        } catch (AppException $e) {
+            http_response_code($e->getCode() ?: 500);
+            return json_encode($e->toArray());
+        } catch (\Exception $e) {
+            http_response_code(500);
+            return json_encode(['error' => 'Internal server error', 'message' => $e->getMessage()]);
         }
     }
 }

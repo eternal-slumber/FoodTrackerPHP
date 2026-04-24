@@ -22,6 +22,16 @@ class OpenRouterService implements AIServiceInterFace // OpenRouter API Service
         Если на фото НЕ еда: верни JSON: {\"food\": \"не определено\", \"kcal\": 0}. 
         Пиши ТОЛЬКО JSON, без лишнего текста.";
         
+        /**
+         * Для фото (бесплатно, не перегружается, есть неточности)
+         * nvidia/nemotron-nano-12b-v2-vl:free
+         * 
+         * Фото, текст
+         * google/gemma-4-26b-a4b-it:free - часто загружена
+         * 
+         * google/gemma-4-31b-it:free - тестится 
+         */
+ 
         $payload = [
             "model" => "nvidia/nemotron-nano-12b-v2-vl:free",
             "messages" => [[
@@ -59,7 +69,7 @@ class OpenRouterService implements AIServiceInterFace // OpenRouter API Service
             return ['food' => 'Ошибка обработки', 'kcal' => 0];
         }
         
-        // Достаем текст из ответа OpenRouter и парсим его как JSON
+        // Достаем ответ Openrouter API и его парсинг json 
         $textResponse = $result['choices'][0]['message']['content'] ?? '{}';
         $parsed = json_decode(trim($textResponse, " `\n\r\t"), true);
         
@@ -69,5 +79,46 @@ class OpenRouterService implements AIServiceInterFace // OpenRouter API Service
         }
         
         return $parsed;
+    }
+
+    public function getProductNutrients(string $productName): array
+    {
+        $url = "https://openrouter.ai/api/v1/chat/completions";
+        
+        $prompt = "Ты — справочник калорийности продуктов. Верни точные КБЖУ на 100г для продукта \"$productName\".
+Верни ТОЛЬКО JSON без текста: {\"calories\": число, \"proteins\": число, \"fats\": число, \"carbs\": число}.
+Пример: {\"calories\": 165, \"proteins\": 31, \"fats\": 3.6, \"carbs\": 0}.
+Если не знаешь — верни {\"calories\": 0, \"proteins\": 0, \"fats\": 0, \"carbs\": 0}.";
+        
+        $payload = [
+            "model" => "nvidia/nemotron-nano-12b-v2-vl:free",
+            "messages" => [[
+                "role" => "user",
+                "content" => $prompt
+            ]]
+        ];
+
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $this->apiKey
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($httpCode !== 200) {
+            error_log("OpenRouter getProductNutrients Error: HTTP $httpCode");
+            return ['calories' => 0, 'proteins' => 0, 'fats' => 0, 'carbs' => 0];
+        }
+
+        $result = json_decode($response, true);
+        $textResponse = $result['choices'][0]['message']['content'] ?? '{}';
+        $parsed = json_decode(trim($textResponse, " `\n\r\t"), true);
+        
+        return $parsed ?? ['calories' => 0, 'proteins' => 0, 'fats' => 0, 'carbs' => 0];
     }
 }

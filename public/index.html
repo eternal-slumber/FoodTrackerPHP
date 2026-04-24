@@ -200,6 +200,49 @@
                 <!-- Кнопка сканирования -->
                 <input type="file" id="photo-input" accept="image/*" capture="camera" hidden>
                 <button id="btn-scan" class="scan-button">📸 Сканировать еду</button>
+
+                <!-- Новая кнопка добавить еду -->
+                <button id="btn-add-food" class="add-food-button">➕ Добавить еду</button>
+
+                <!-- BottomSheet модалка -->
+                <div id="bottom-sheet" class="bottom-sheet hidden">
+                    <div class="sheet-overlay"></div>
+                    <div class="sheet-content">
+                        <!-- Экран А: Ввод -->
+                        <div id="sheet-screen-a" class="sheet-screen">
+                            <div class="sheet-header">
+                                <h2>Добавить еду</h2>
+                            </div>
+                            <label class="field-label">Название приема пищи</label>
+                            <input type="text" id="meal-name" class="meal-name-input" placeholder="Завтрак, обед, перекус...">
+                            <div class="sheet-input-wrapper">
+                                <label class="input-label">Продукты</label>
+                                <textarea id="food-description" placeholder="Можно вставить текст с упаковки, например: куриная грудка 200г, рис 150г"></textarea>
+                                <button id="btn-add-photo" class="photo-btn">📷</button>
+                                <input type="file" id="food-photo" accept="image/*" hidden>
+                            </div>
+                            <div id="photo-preview" class="photo-preview hidden">
+                                <img id="preview-img" src="">
+                                <button id="btn-remove-photo" class="remove-photo-btn">✕</button>
+                            </div>
+                            <button id="btn-to-screen-b" class="main-button" disabled>Далее</button>
+                        </div>
+
+                        <!-- Экран Б: Корзина -->
+                        <div id="sheet-screen-b" class="sheet-screen hidden">
+                            <div class="sheet-header">
+                                <h2 id="screen-b-title">Что вы съели</h2>
+                                <span id="screen-b-meal-name" class="meal-name-display"></span>
+                            </div>
+                            <div id="products-list"></div>
+                            <button id="btn-add-product" class="secondary-button">➕ Добавить еще</button>
+                            <div class="sheet-actions">
+                                <button id="btn-back-to-a" class="back-button">Назад</button>
+                                <button id="btn-save-meal" class="main-button">Сохранить</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- История -->
                 <div class="history-section">
