@@ -31,6 +31,7 @@ class Database
 
             try {
                 self::$instance = new PDO($dsn, $user, $pass, $options);
+                self::$instance->exec("SET time_zone = '+00:00'");
             } catch (PDOException $e){
                 throw new PDOException($e->getMessage(), (int)$e->getCode());
             } 

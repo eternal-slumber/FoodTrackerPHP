@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
 use App\Services\CalorieCalculatorService;
+use App\Services\NutritionCalculatorService;
 use App\ValueObjects\BodyMetrics;
 use App\Enums\ActivityLevel;
 use App\Enums\Goal;
@@ -177,5 +178,30 @@ class CalorieCalculatorServiceTest extends TestCase
         $this->assertEquals(Goal::DEFICIT, Goal::fromValue('0.8'));
         $this->assertEquals(Goal::MAINTENANCE, Goal::fromValue('maintenance'));
         $this->assertEquals(Goal::MAINTENANCE, Goal::fromValue('1.0'));
+    }
+
+    public function testApplyProcessingCoefficientExtendedOptions(): void
+    {
+        $service = new NutritionCalculatorService();
+
+        $this->assertEqualsWithDelta(100.0, $service->applyProcessingCoefficient(100, ''), 0.001);
+        $this->assertEqualsWithDelta(140.0, $service->applyProcessingCoefficient(100, 'fry'), 0.001);
+        $this->assertEqualsWithDelta(130.0, $service->applyProcessingCoefficient(100, 'bake'), 0.001);
+        $this->assertEqualsWithDelta(120.0, $service->applyProcessingCoefficient(100, 'boil'), 0.001);
+        $this->assertEqualsWithDelta(110.0, $service->applyProcessingCoefficient(100, 'stew'), 0.001);
+        $this->assertEqualsWithDelta(125.0, $service->applyProcessingCoefficient(100, 'grill'), 0.001);
+        $this->assertEqualsWithDelta(105.0, $service->applyProcessingCoefficient(100, 'steam'), 0.001);
+        $this->assertEqualsWithDelta(160.0, $service->applyProcessingCoefficient(100, 'deep_fry'), 0.001);
+        $this->assertEqualsWithDelta(115.0, $service->applyProcessingCoefficient(100, 'no_oil_fry'), 0.001);
+    }
+
+    public function testProcessingOptionsExposeFrontendShape(): void
+    {
+        $service = new NutritionCalculatorService();
+
+        $this->assertSame(
+            ['value' => '', 'label' => 'Не указано - КБЖУ готового продукта', 'coefficient' => 1.0],
+            $service->getProcessingOptions()[0]
+        );
     }
 }

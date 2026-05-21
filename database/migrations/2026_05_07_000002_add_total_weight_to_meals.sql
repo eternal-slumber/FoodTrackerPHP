@@ -1,0 +1,1 @@
+ALTER TABLE meals ADD COLUMN total_weight INT DEFAULT NULL AFTER carbs;

@@ -12,20 +12,18 @@ class AnalyzeValidator
     {
         $errors = [];
 
-        // Валидация tg_id
-        if (empty($postData['tg_id'])) {
-            $errors['tg_id'] = 'Telegram ID is required';
-        } elseif (!is_numeric($postData['tg_id'])) {
-            $errors['tg_id'] = 'Telegram ID must be numeric';
-        }
-
         // Валидация фото
         if (empty($files['photo'])) {
             $errors['photo'] = 'Photo is required';
         } elseif ($files['photo']['error'] !== UPLOAD_ERR_OK) {
             $errors['photo'] = 'File upload error: ' . $files['photo']['error'];
-        } elseif ($files['photo']['size'] > 20 * 1024 * 1024) { // 20MB
-            $errors['photo'] = 'File size exceeds 20MB limit';
+        } elseif ($files['photo']['size'] > 10 * 1024 * 1024) { // 10MB
+            $errors['photo'] = 'File size exceeds 10MB limit';
+        } else {
+            $mimeType = self::detectMimeType($files['photo']['tmp_name']);
+            if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+                $errors['photo'] = 'Only JPEG, PNG and WebP images are allowed';
+            }
         }
 
         if (!empty($errors)) {
@@ -50,5 +48,12 @@ class AnalyzeValidator
         }
 
         return $tgId;
+    }
+
+    public static function detectMimeType(string $path): string
+    {
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+
+        return (string)$finfo->file($path);
     }
 }

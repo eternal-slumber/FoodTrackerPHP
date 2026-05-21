@@ -1,0 +1,44 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodtracker-app
+    restart: always
+    working_dir: /var/www/
+    volumes:
+      - ..:/var/www  
+    networks:
+      - calorie-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: foodtracker-nginx
+    restart: always
+    ports:
+      - "8080:80"
+    volumes:
+      - ..:/var/www
+      - ./nginx:/etc/nginx/conf.d #nginx confg
+    depends_on:
+      - app
+    networks:
+      - calorie-network
+
+  db:
+    container_name: foodtracker-db
+    image: mysql:8.0
+    volumes:
+      - ./storage/mysql:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: foodtracker_db
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    networks:
+      - calorie-network      
+
+networks:
+  calorie-network: 
+    driver: bridge

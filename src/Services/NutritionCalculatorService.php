@@ -6,18 +6,38 @@ namespace App\Services;
 
 class NutritionCalculatorService
 {
-    private const PROCESSING_COEFFICIENTS = [
-        'fry' => 1.4,      // Жарка
-        'bake' => 1.3,     // Запекание
-        'boil' => 1.2,      // Варка
-        'stew' => 1.1,      // Тушение
-        '' => 1.0,          // Не указано
+    private const PROCESSING_OPTIONS = [
+        ['value' => '', 'label' => 'Не указано - КБЖУ готового продукта', 'coefficient' => 1.0],
+        ['value' => 'fry', 'label' => 'Жарка', 'coefficient' => 1.4],
+        ['value' => 'bake', 'label' => 'Запекание', 'coefficient' => 1.3],
+        ['value' => 'boil', 'label' => 'Варка', 'coefficient' => 1.2],
+        ['value' => 'stew', 'label' => 'Тушение', 'coefficient' => 1.1],
+        ['value' => 'grill', 'label' => 'Гриль', 'coefficient' => 1.25],
+        ['value' => 'steam', 'label' => 'На пару', 'coefficient' => 1.05],
+        ['value' => 'deep_fry', 'label' => 'Фритюр', 'coefficient' => 1.6],
+        ['value' => 'no_oil_fry', 'label' => 'Жарка без масла', 'coefficient' => 1.15],
     ];
 
     public function applyProcessingCoefficient(float $baseValue, string $processing): float
     {
-        $coefficient = self::PROCESSING_COEFFICIENTS[$processing] ?? 1.0;
+        $coefficient = $this->processingCoefficient($processing);
         return $baseValue * $coefficient;
+    }
+
+    public function processingCoefficient(string $processing): float
+    {
+        foreach (self::PROCESSING_OPTIONS as $option) {
+            if ($option['value'] === $processing) {
+                return $option['coefficient'];
+            }
+        }
+
+        return 1.0;
+    }
+
+    public function getProcessingOptions(): array
+    {
+        return self::PROCESSING_OPTIONS;
     }
 
     public function calculateForPortion(array $kbju100g, int $weight): array

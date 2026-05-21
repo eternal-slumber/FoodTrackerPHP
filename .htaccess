@@ -1,0 +1,16 @@
+# Fallback protection only.
+# Correct Apache/MAMP DocumentRoot must point to this project's public/ directory.
+
+<IfModule mod_authz_core.c>
+    <FilesMatch "^(\.env|\.env\..*|composer\.(json|lock)|schema\.sql|phpunit\.xml)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+
+<IfModule !mod_authz_core.c>
+    <FilesMatch "^(\.env|\.env\..*|composer\.(json|lock)|schema\.sql|phpunit\.xml)$">
+        Deny from all
+    </FilesMatch>
+</IfModule>
+
+RedirectMatch 404 ^/(src|config|database|docker|scripts|storage|tests|vendor)(/|$)

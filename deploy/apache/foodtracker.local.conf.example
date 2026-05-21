@@ -1,0 +1,12 @@
+<VirtualHost *:80>
+    ServerName foodtracker.local
+    DocumentRoot "/Applications/MAMP/htdocs/foodTracker/public"
+
+    <Directory "/Applications/MAMP/htdocs/foodTracker/public">
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog "/Applications/MAMP/logs/foodtracker-error.log"
+    CustomLog "/Applications/MAMP/logs/foodtracker-access.log" common
+</VirtualHost>
