@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="/assets/css/style.css?v=20260515-meal-limits">
     <title>FoodTracker AI</title>
 </head>
 <body>
@@ -154,10 +154,18 @@
         <!-- Основной экран приложения -->
         <div id="screen-main" class="screen hidden">
             <div class="main-content">
-                <!-- Прогресс бар -->
-                <div class="progress-card">
+                <div class="home-greeting">
+                    <span id="home-greeting-text" class="home-greeting-text">Добрый день</span>
+                    <span class="home-greeting-comma">, </span><strong id="home-greeting-name" class="home-greeting-name">пользователь</strong>
+                </div>
+
+                <!-- Прогресс и норма -->
+                <div class="progress-card daily-nutrition-card">
                     <div class="progress-header">
-                        <h2>Прогресс за сегодня</h2>
+                        <div>
+                            <h2>Сегодня</h2>
+                            <p id="user-body-params" class="summary-body-params">Параметры не указаны</p>
+                        </div>
                         <span class="progress-percentage" id="progress-percentage">0%</span>
                     </div>
                     <div class="progress-bar">
@@ -174,70 +182,134 @@
                             <span class="progress-label">норма</span>
                         </div>
                     </div>
+                    <div class="macro-progress-list">
+                        <div class="macro-progress-row">
+                            <div class="macro-progress-header">
+                                <span>Белки</span>
+                                <strong><span id="today-proteins">0</span> / <span id="goal-proteins">0</span> г</strong>
+                            </div>
+                            <div class="macro-progress-bar">
+                                <div id="proteins-progress-fill" class="macro-progress-fill proteins" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="macro-progress-row">
+                            <div class="macro-progress-header">
+                                <span>Жиры</span>
+                                <strong><span id="today-fats">0</span> / <span id="goal-fats">0</span> г</strong>
+                            </div>
+                            <div class="macro-progress-bar">
+                                <div id="fats-progress-fill" class="macro-progress-fill fats" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="macro-progress-row">
+                            <div class="macro-progress-header">
+                                <span>Углеводы</span>
+                                <strong><span id="today-carbs">0</span> / <span id="goal-carbs">0</span> г</strong>
+                            </div>
+                            <div class="macro-progress-bar">
+                                <div id="carbs-progress-fill" class="macro-progress-fill carbs" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Сводка -->
-                <div class="summary-card">
-                    <div class="summary-header">
-                        <h2>Твоя норма</h2>
-                    </div>
-                    <div class="summary-stats">
-                        <div class="stat-item">
-                            <span class="stat-value" id="user-goal">0</span>
-                            <span class="stat-label">ккал / день</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="user-weight">0</span>
-                            <span class="stat-label">кг</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value" id="user-height">0</span>
-                            <span class="stat-label">см</span>
-                        </div>
-                    </div>
+                <div class="meal-action">
+                    <button id="btn-add-food" class="add-food-button">
+                        <span class="action-icon">＋</span>
+                        <span>
+                            <strong>Добавить прием пищи</strong>
+                            <small>Фото, галерея или вручную</small>
+                        </span>
+                    </button>
                 </div>
-
-                <!-- Кнопка сканирования -->
-                <input type="file" id="photo-input" accept="image/*" capture="camera" hidden>
-                <button id="btn-scan" class="scan-button">📸 Сканировать еду</button>
-
-                <!-- Новая кнопка добавить еду -->
-                <button id="btn-add-food" class="add-food-button">➕ Добавить еду</button>
 
                 <!-- BottomSheet модалка -->
                 <div id="bottom-sheet" class="bottom-sheet hidden">
                     <div class="sheet-overlay"></div>
                     <div class="sheet-content">
-                        <!-- Экран А: Ввод -->
-                        <div id="sheet-screen-a" class="sheet-screen">
+                        <div id="sheet-screen-method" class="sheet-screen">
                             <div class="sheet-header">
-                                <h2>Добавить еду</h2>
+                                <h2>Добавить прием пищи</h2>
+                                <p>Выберите, как заполнить черновик</p>
                             </div>
-                            <label class="field-label">Название приема пищи</label>
-                            <input type="text" id="meal-name" class="meal-name-input" placeholder="Завтрак, обед, перекус...">
-                            <div class="sheet-input-wrapper">
-                                <label class="input-label">Продукты</label>
-                                <textarea id="food-description" placeholder="Можно вставить текст с упаковки, например: куриная грудка 200г, рис 150г"></textarea>
-                                <button id="btn-add-photo" class="photo-btn">📷</button>
-                                <input type="file" id="food-photo" accept="image/*" hidden>
+                            <div class="entry-methods">
+                                <button class="entry-method" id="btn-camera">
+                                    <span class="method-icon">📷</span>
+                                    <span>
+                                        <strong>Сфотографировать</strong>
+                                        <small>AI заполнит черновик</small>
+                                    </span>
+                                </button>
+                                <button class="entry-method" id="btn-gallery">
+                                    <span class="method-icon">🖼️</span>
+                                    <span>
+                                        <strong>Выбрать из галереи</strong>
+                                        <small>Подойдет готовое фото</small>
+                                    </span>
+                                </button>
+                                <button class="entry-method" id="btn-manual-entry">
+                                    <span class="method-icon">✍️</span>
+                                    <span>
+                                        <strong>Ввести вручную</strong>
+                                        <small>Без фото и ожидания AI</small>
+                                    </span>
+                                </button>
                             </div>
-                            <div id="photo-preview" class="photo-preview hidden">
-                                <img id="preview-img" src="">
-                                <button id="btn-remove-photo" class="remove-photo-btn">✕</button>
-                            </div>
-                            <button id="btn-to-screen-b" class="main-button" disabled>Далее</button>
+                            <input type="file" id="camera-input" accept="image/*" capture="camera" hidden>
+                            <input type="file" id="gallery-input" accept="image/*" hidden>
                         </div>
 
-                        <!-- Экран Б: Корзина -->
-                        <div id="sheet-screen-b" class="sheet-screen hidden">
+                        <div id="sheet-screen-photo" class="sheet-screen hidden">
                             <div class="sheet-header">
-                                <h2 id="screen-b-title">Что вы съели</h2>
-                                <span id="screen-b-meal-name" class="meal-name-display"></span>
+                                <h2>Проверьте фото</h2>
+                                <p>После анализа вы сможете все поправить</p>
+                            </div>
+                            <div class="draft-photo-preview">
+                                <img id="draft-photo-img" src="" alt="">
+                            </div>
+                            <button id="btn-change-photo" class="secondary-button">Выбрать другое фото</button>
+                        </div>
+
+                        <div id="sheet-screen-editor" class="sheet-screen hidden">
+                            <div class="sheet-header editor-header">
+                                <div>
+                                    <h2>Черновик приема</h2>
+                                    <p id="draft-source-label">Проверьте данные перед сохранением</p>
+                                </div>
+                                <div class="draft-total">
+                                    <strong id="draft-total-calories">0</strong>
+                                    <span>ккал</span>
+                                </div>
+                            </div>
+
+                            <label class="field-label">Название приема пищи</label>
+                            <input type="text" id="meal-name" class="meal-name-input" placeholder="Завтрак, обед, перекус...">
+
+                            <div class="draft-image-field">
+                                <div>
+                                    <span class="input-label">Фото приема</span>
+                                    <p id="draft-image-status">Можно добавить миниатюру для истории</p>
+                                </div>
+                                <div id="manual-photo-preview" class="manual-photo-preview hidden">
+                                    <img id="manual-photo-img" src="" alt="">
+                                </div>
+                                <div class="draft-image-actions">
+                                    <button id="btn-add-manual-photo" class="secondary-button" type="button">Добавить фото</button>
+                                    <button id="btn-remove-manual-photo" class="back-button hidden" type="button">Удалить фото</button>
+                                </div>
+                                <input type="file" id="manual-photo-input" accept="image/*" hidden>
+                            </div>
+
+                            <div class="editor-toolbar">
+                                <span class="input-label">Продукты</span>
+                                <div class="editor-toolbar-actions">
+                                    <button id="btn-scan-more" class="icon-text-button" type="button">Сканировать еще</button>
+                                    <button id="btn-add-product" class="icon-text-button" type="button">＋ Добавить</button>
+                                </div>
                             </div>
                             <div id="products-list"></div>
-                            <button id="btn-add-product" class="secondary-button">➕ Добавить еще</button>
                             <div class="sheet-actions">
-                                <button id="btn-back-to-a" class="back-button">Назад</button>
+                                <button id="btn-cancel-draft" class="back-button">Отменить</button>
                                 <button id="btn-save-meal" class="main-button">Сохранить</button>
                             </div>
                         </div>
@@ -251,16 +323,83 @@
                 </div>
             </div>
 
-            <!-- Таббар -->
-            <div class="tab-bar">
-                <button class="tab-item active" data-tab="home">
-                    <span class="tab-icon">🏠</span>
-                    <span class="tab-label">Главная</span>
-                </button>
-                <button class="tab-item" data-tab="settings">
-                    <span class="tab-icon">⚙️</span>
-                    <span class="tab-label">Настройки</span>
-                </button>
+        </div>
+
+        <!-- Экран сводки -->
+        <div id="screen-summary" class="screen hidden">
+            <div class="summary-content">
+                <header class="summary-page-header">
+                    <h1>Сводка</h1>
+                    <div class="summary-month-nav">
+                        <button id="btn-summary-prev-month" class="summary-month-button" type="button" aria-label="Предыдущий месяц">‹</button>
+                        <p id="summary-month-label">Месяц</p>
+                        <button id="btn-summary-next-month" class="summary-month-button" type="button" aria-label="Следующий месяц">›</button>
+                    </div>
+                </header>
+                <div class="calendar-weekdays">
+                    <span>Пн</span>
+                    <span>Вт</span>
+                    <span>Ср</span>
+                    <span>Чт</span>
+                    <span>Пт</span>
+                    <span>Сб</span>
+                    <span>Вс</span>
+                </div>
+                <div id="summary-calendar-grid" class="summary-calendar-grid"></div>
+            </div>
+
+            <div id="summary-day-sheet" class="summary-day-sheet hidden">
+                <div class="summary-day-overlay"></div>
+                <div class="summary-day-panel">
+                    <button id="btn-summary-day-close" class="summary-day-close" type="button" aria-label="Закрыть">×</button>
+                    <div class="summary-day-content">
+                        <p id="summary-day-date" class="summary-day-date">День</p>
+                        <div id="summary-day-ring" class="summary-day-ring day-empty">
+                            <span class="summary-day-ring-inner">
+                                <strong id="summary-day-percent">0%</strong>
+                                <small>нормы</small>
+                            </span>
+                        </div>
+                        <div class="summary-day-calories">
+                            <strong id="summary-day-calories">0</strong>
+                            <span id="summary-day-goal">из 0 ккал</span>
+                        </div>
+                        <div class="summary-day-macros">
+                            <div><strong id="summary-day-proteins">0</strong><span>белки</span></div>
+                            <div><strong id="summary-day-fats">0</strong><span>жиры</span></div>
+                            <div><strong id="summary-day-carbs">0</strong><span>углеводы</span></div>
+                        </div>
+                        <div class="summary-day-meals">
+                            <h3>Приемы пищи</h3>
+                            <div id="summary-day-meals-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="meal-detail-sheet" class="meal-detail-sheet hidden">
+            <div class="meal-detail-overlay"></div>
+            <div class="meal-detail-panel">
+                <button id="btn-meal-detail-close" class="meal-detail-close" type="button" aria-label="Закрыть">×</button>
+                <div class="meal-detail-content">
+                    <p id="meal-detail-time" class="meal-detail-time">Прием пищи</p>
+                    <h2 id="meal-detail-title">Прием пищи</h2>
+                    <div class="meal-detail-total">
+                        <strong id="meal-detail-calories">0</strong>
+                        <span>ккал</span>
+                    </div>
+                    <div class="meal-detail-macros">
+                        <div><strong id="meal-detail-weight">0</strong><span>граммы</span></div>
+                        <div><strong id="meal-detail-proteins">0</strong><span>белки</span></div>
+                        <div><strong id="meal-detail-fats">0</strong><span>жиры</span></div>
+                        <div><strong id="meal-detail-carbs">0</strong><span>углеводы</span></div>
+                    </div>
+                    <div class="meal-detail-products">
+                        <h3>Продукты</h3>
+                        <div id="meal-detail-products-list"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -294,22 +433,94 @@
                     </div>
                 </div>
 
+                <button id="btn-edit-profile" class="secondary-button settings-edit-button" type="button">Редактировать профиль</button>
+
                 <button id="btn-delete-profile" class="delete-button">Удалить профиль</button>
             </div>
+        </div>
 
-            <!-- Таббар -->
-            <div class="tab-bar">
-                <button class="tab-item" data-tab="home">
-                    <span class="tab-icon">🏠</span>
-                    <span class="tab-label">Главная</span>
-                </button>
-                <button class="tab-item active" data-tab="settings">
-                    <span class="tab-icon">⚙️</span>
-                    <span class="tab-label">Настройки</span>
-                </button>
+        <!-- Экран редактирования профиля -->
+        <div id="screen-profile-edit" class="screen hidden">
+            <div class="profile-edit-content">
+                <header class="profile-edit-header">
+                    <button id="btn-profile-edit-back" class="icon-button" type="button" title="Назад">‹</button>
+                    <div>
+                        <h1>Профиль</h1>
+                        <p>Обновите параметры для пересчета нормы</p>
+                    </div>
+                </header>
+
+                <form id="settings-profile-form" class="profile-edit-form">
+                    <div class="profile-form-card">
+                        <div class="form-group">
+                            <label for="settings-input-age">Возраст</label>
+                            <input type="number" id="settings-input-age" min="10" max="100" placeholder="25">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-input-height">Рост</label>
+                            <input type="number" id="settings-input-height" min="100" max="220" placeholder="175">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-input-weight">Вес</label>
+                            <input type="number" id="settings-input-weight" min="30" max="250" step="0.1" placeholder="70">
+                        </div>
+                        <div class="form-group">
+                            <label for="settings-input-gender">Пол</label>
+                            <select id="settings-input-gender">
+                                <option value="male">Мужчина</option>
+                                <option value="female">Женщина</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <section class="profile-form-section">
+                        <span class="settings-form-label">Активность</span>
+                        <div class="compact-options">
+                            <label><input type="radio" name="settings_activity_level" value="minimal"><span>Минимальная</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="low"><span>Низкая</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="medium"><span>Средняя</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="high"><span>Высокая</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="extra"><span>Очень высокая</span></label>
+                        </div>
+                    </section>
+
+                    <section class="profile-form-section">
+                        <span class="settings-form-label">Цель</span>
+                        <div class="compact-options">
+                            <label><input type="radio" name="settings_goal" value="deficit"><span>Похудение</span></label>
+                            <label><input type="radio" name="settings_goal" value="maintenance"><span>Поддержание</span></label>
+                            <label><input type="radio" name="settings_goal" value="surplus"><span>Набор</span></label>
+                        </div>
+                    </section>
+
+                    <button id="btn-save-profile" class="main-button" type="submit">Сохранить изменения</button>
+                </form>
             </div>
         </div>
+
+        <nav id="app-tab-bar" class="tab-bar hidden">
+            <button class="tab-item active" data-tab="home">
+                <span class="tab-icon">🏠</span>
+                <span class="tab-label">Главная</span>
+            </button>
+            <button class="tab-item" data-tab="summary">
+                <span class="tab-icon">📊</span>
+                <span class="tab-label">Сводка</span>
+            </button>
+            <button class="tab-item" data-tab="settings">
+                <span class="tab-icon">⚙️</span>
+                <span class="tab-label">Настройки</span>
+            </button>
+        </nav>
     </div>
-    <script src="/assets/js/app.js"></script>
+    <script src="/assets/js/utils.js?v=20260520-progress-tz"></script>
+    <script src="/assets/js/telegram.js?v=20260512-split-1"></script>
+    <script src="/assets/js/api.js?v=20260512-split-1"></script>
+    <script src="/assets/js/progress.js?v=20260520-progress-tz"></script>
+    <script src="/assets/js/history.js?v=20260518-summary-detail"></script>
+    <script src="/assets/js/meal-editor.js?v=20260515-auto-meal-name"></script>
+    <script src="/assets/js/profile.js?v=20260512-split-4"></script>
+    <script src="/assets/js/summary.js?v=20260520-progress-tz"></script>
+    <script src="/assets/js/app.js?v=20260514-summary"></script>
 </body>
 </html>

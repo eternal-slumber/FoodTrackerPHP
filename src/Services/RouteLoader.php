@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Attributes\RouteAttribute;
-use App\Core\Router;
 use ReflectionClass;
 use ReflectionMethod;
+use Slim\App;
 
 class RouteLoader
 {
     public function __construct(
-        private Router $router,
+        private App $app,
         private array $controllerClasses
     ) {}
 
@@ -29,7 +29,15 @@ class RouteLoader
                      * @var RouteAttribute $route 
                      * */
                     $route = $attribute->newInstance();
-                    $this->router->add($route->method, $route->path, $controllerClass, $method->getName());
+                    $slimRoute = $this->app->map(
+                        [$route->method],
+                        $route->path,
+                        $controllerClass . ':' . $method->getName()
+                    );
+
+                    if ($route->name !== null) {
+                        $slimRoute->setName($route->name);
+                    }
                 }
             }
         }
