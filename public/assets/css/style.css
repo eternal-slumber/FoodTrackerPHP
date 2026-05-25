@@ -6,6 +6,7 @@
     --button-text: var(--tg-theme-button-text-color, #ffffff);
     --secondary-bg: var(--tg-theme-secondary-bg-color, #f4f4f5);
     --danger-color: #ff3b30;
+    --tg-safe-area-top: 0px;
 }
 
 * {
@@ -34,6 +35,7 @@ body.sheet-open {
     flex-direction: column;
     min-height: 100vh;
     padding: 20px;
+    padding-top: calc(20px + var(--tg-safe-area-top));
     padding-bottom: calc(104px + env(safe-area-inset-bottom)); /* Место для таббара */
 }
 

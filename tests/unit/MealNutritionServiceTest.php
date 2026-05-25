@@ -88,6 +88,11 @@ class MealNutritionServiceTest extends TestCase
                         'carbs' => 10,
                     ];
                 }
+
+                public function recommendMeal(array $context): string
+                {
+                    return '';
+                }
             },
             new NutritionCalculatorService()
         );

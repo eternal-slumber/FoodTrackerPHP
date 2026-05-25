@@ -9,6 +9,7 @@ Telegram Mini App для отслеживания питания и калори
 - Подсчет калорий по формуле
 - Прогресс-бар потребления калорий за день
 - История приемов пищи
+- Telegram-бот как панель быстрого доступа: `/start`, `/summary`, `/eat`, `/help`
 - Серверная проверка Telegram Mini App auth data
 - Приватная выдача загруженных фото через authenticated API
 
@@ -26,6 +27,8 @@ Telegram Mini App для отслеживания питания и калори
 - PHP-DI собирает контроллеры, сервисы и repositories.
 - API endpoints под `/api/*` требуют заголовок `X-Telegram-Init-Data`.
 - Backend проверяет подпись Telegram `initData` через `TELEGRAM_BOT_TOKEN`.
+- Telegram Bot webhook живет отдельно на `/telegram/webhook` и не заменяет Mini App.
+- Webhook проверяет `X-Telegram-Bot-Api-Secret-Token`, если задан `TELEGRAM_WEBHOOK_SECRET_TOKEN`.
 - `tg_id` из query/body не используется как источник авторизации.
 - SQL вынесен в repository layer (`UserRepository`, `MealRepository`).
 - Загруженные фото проверяются через `finfo` и разрешены только JPEG/PNG/WebP.
@@ -124,6 +127,60 @@ AI_BASE_URL=http://host.docker.internal:1234/v1
 
 Для анализа фото нужна vision/multimodal модель. Обычная текстовая модель подойдет только для ручного расчета КБЖУ по названию продукта.
 
+## Telegram Bot
+
+Бот используется как панель быстрого доступа к данным Mini App, а не как отдельный продукт.
+
+Команды:
+
+```text
+/start   приветствие и быстрые кнопки
+/summary сводка за сегодня
+/eat     рекомендация, что съесть сейчас
+/help    список команд
+```
+
+Под приветствием показываются кнопки:
+
+```text
+Сводка за сегодня
+Что съесть
+Настроить напоминания
+Открыть приложение
+```
+
+Сводка берется из той же БД и тех же сервисов, что и Mini App. Формат ответа:
+
+```text
+Сегодня ты съел 1450 / 2200 ккал.
+
+БЖУ:
+Белки: 82 / 130 г
+Жиры: 78 / 65 г
+Углеводы: 160 / 250 г
+
+Осталось 750 ккал.
+```
+
+Кнопка `Что съесть` делает AI-рекомендацию с учетом текущего приема пищи (`завтрак`, `обед`, `ужин`) и дневных остатков/переборов по калориям, белкам, жирам и углеводам. После рекомендации показываются кнопки `Назад` и `Добавить еду`; `Добавить еду` открывает Mini App.
+
+Настройки:
+
+```dotenv
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_SECRET_TOKEN=
+TELEGRAM_MINI_APP_URL=https://example.com
+TELEGRAM_BOT_DEFAULT_TZ_OFFSET_MINUTES=0
+```
+
+`TELEGRAM_BOT_DEFAULT_TZ_OFFSET_MINUTES` использует тот же знак, что `Date.getTimezoneOffset()` в браузере: Москва `-180`, UTC `0`. Нужен потому, что обычные Telegram bot updates не передают часовой пояс пользователя.
+
+Webhook регистрируется на публичный URL:
+
+```bash
+curl "https://api.telegram.org/bot<token>/setWebhook?url=https://example.com/telegram/webhook&secret_token=<secret>"
+```
+
 ## Структура БД
 
 Базовая схема лежит в `schema.sql`, точечные изменения — в `database/migrations/`.
@@ -162,6 +219,7 @@ foodTracker/
 │   ├── Models/         # Модели данных
 │   ├── Repositories/   # SQL доступ к данным
 │   ├── Auth/           # Telegram auth
+│   ├── Telegram/       # Telegram Bot API client и обработка команд
 │   ├── Services/       # Бизнес-логика
 │   ├── Enums/          # Перечисления
 │   ├── ValueObjects/   # Value Objects

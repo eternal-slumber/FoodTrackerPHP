@@ -6,12 +6,11 @@ namespace App\Controllers;
 
 use App\Auth\CurrentUser;
 use App\Attributes\RouteAttribute;
-use App\Enums\Goal;
 use App\Http\ResponseResponder;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Models\User;
 use App\Repositories\UserRepository;
-use App\Services\MacroGoalCalculationService;
+use App\Services\DailyNutritionSummaryService;
 use App\Services\RateLimiterService;
 use App\Services\SummaryService;
 use App\Services\UploadedFileStorage;
@@ -26,7 +25,7 @@ class UserController
         private readonly UserRepository $users,
         private readonly RateLimiterService $rateLimiter,
         private readonly SummaryService $summaryService,
-        private readonly MacroGoalCalculationService $macroGoalCalculator,
+        private readonly DailyNutritionSummaryService $dailyNutritionSummary,
         private readonly UploadedFileStorage $storage
     ) {}
 
@@ -174,35 +173,14 @@ class UserController
                 return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Invalid timezone offset'], 400);
             }
 
-            $todayNutrition = $this->users->getTodayNutrition((int)$user->id, $timezoneOffset);
-            $todayCalories = $todayNutrition['calories'];
-            $dailyGoal = $user->dailyGoal ?? 0;
-            $percentage = $dailyGoal > 0 ? round(($todayCalories / $dailyGoal) * 100, 1) : 0;
-            $macroGoals = $this->macroGoalCalculator->calculate(
-                $dailyGoal,
-                $user->weight,
-                Goal::fromValue($user->goal)
-            );
-            $macroPercentages = [
-                'proteins' => $this->calculatePercentage($todayNutrition['proteins'], $macroGoals['proteins_goal']),
-                'fats' => $this->calculatePercentage($todayNutrition['fats'], $macroGoals['fats_goal']),
-                'carbs' => $this->calculatePercentage($todayNutrition['carbs'], $macroGoals['carbs_goal']),
-            ];
+            $summary = $this->dailyNutritionSummary->getForTelegramUser($currentUser->telegramId, $timezoneOffset);
+            if ($summary === null) {
+                return ResponseResponder::json($response, ['status' => 'error', 'message' => 'User not found'], 404);
+            }
 
             return ResponseResponder::json($response, [
                 'status' => 'success',
-                'data' => [
-                    'daily_goal' => $dailyGoal,
-                    'today_sum' => $todayCalories,
-                    'percentage' => $percentage,
-                    'macro_goals' => $macroGoals,
-                    'today_macros' => [
-                        'proteins' => $todayNutrition['proteins'],
-                        'fats' => $todayNutrition['fats'],
-                        'carbs' => $todayNutrition['carbs'],
-                    ],
-                    'macro_percentages' => $macroPercentages,
-                ]
+                'data' => $summary
             ]);
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
@@ -276,10 +254,5 @@ class UserController
         }
 
         return $currentUser;
-    }
-
-    private function calculatePercentage(float|int $current, float|int $goal): float
-    {
-        return $goal > 0 ? round(((float)$current / (float)$goal) * 100, 1) : 0.0;
     }
 }

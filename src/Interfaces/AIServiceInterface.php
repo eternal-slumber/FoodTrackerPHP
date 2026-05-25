@@ -9,4 +9,6 @@ interface AIServiceInterface
     public function analyze(string $imagePath): array;
 
     public function getProductNutrients(string $productName): array;
+
+    public function recommendMeal(array $context): string;
 }

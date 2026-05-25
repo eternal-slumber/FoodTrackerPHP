@@ -90,6 +90,46 @@ PROMPT;
         return $parsed ? $this->normalizeNutrients($parsed) : $this->emptyNutrients();
     }
 
+    public function recommendMeal(array $context): string
+    {
+        $contextJson = json_encode($context, JSON_UNESCAPED_UNICODE);
+        $prompt = <<<PROMPT
+Ты — помощник по питанию. На основе текущего приема пищи и дневных КБЖУ предложи, что съесть сейчас.
+
+Правила:
+- Ответь только на русском языке.
+- Не используй markdown, таблицы и списки длиннее 3 пунктов.
+- Учитывай текущий прием пищи: завтрак, обед или ужин.
+- Учитывай остаток калорий, белков, жиров и углеводов. Если показатель уже превышен, не увеличивай его без необходимости.
+- Предложи 1 конкретный прием пищи с примерной порцией и краткой причиной.
+- В конце дай примерную оценку КБЖУ одной строкой.
+- Если калории почти закончились, предложи легкий вариант.
+
+Данные пользователя:
+{$contextJson}
+PROMPT;
+
+        $payload = [
+            'model' => $this->config->model,
+            'messages' => [[
+                'role' => 'user',
+                'content' => $prompt,
+            ]],
+        ];
+
+        $result = $this->chatCompletions($payload, 45, 'recommendMeal');
+        if ($result === null) {
+            return '';
+        }
+
+        $textResponse = $result['choices'][0]['message']['content'] ?? '';
+        if (!is_string($textResponse)) {
+            return '';
+        }
+
+        return trim($textResponse);
+    }
+
     private function chatCompletions(array $payload, int $timeoutSeconds, string $operation): ?array
     {
         $url = $this->config->baseUrl . '/chat/completions';
@@ -108,7 +148,7 @@ PROMPT;
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
-        curl_close($ch);
+
 
         if ($response === false) {
             error_log($this->logPrefix() . " {$operation} cURL error: {$curlError}");

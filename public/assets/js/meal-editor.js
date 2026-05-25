@@ -17,7 +17,7 @@ const btnAddProduct = document.getElementById('btn-add-product');
 const btnSaveMeal = document.getElementById('btn-save-meal');
 const btnAddManualPhoto = document.getElementById('btn-add-manual-photo');
 const btnRemoveManualPhoto = document.getElementById('btn-remove-manual-photo');
-const manualPhotoInput = document.getElementById('manual-photo-input');
+const attachmentPhotoInput = document.getElementById('manual-photo-input');
 const manualPhotoPreview = document.getElementById('manual-photo-preview');
 const manualPhotoImg = document.getElementById('manual-photo-img');
 const draftImageStatus = document.getElementById('draft-image-status');
@@ -28,6 +28,11 @@ const draftSourceLabel = document.getElementById('draft-source-label');
 
 const MAX_PRODUCTS_PER_MEAL = 6;
 const MAX_DRAFT_SCANS_PER_MEAL = 3;
+const PHOTO_INTENTS = {
+    AI_SCAN: 'ai_scan',
+    ATTACH_ONLY: 'attach_only',
+    APPEND_SCAN: 'append_scan'
+};
 
 let PROCESSING_OPTIONS = [
     { value: '', label: 'Не указано - КБЖУ готового продукта', coefficient: 1 },
@@ -59,7 +64,7 @@ let selectedPhotoFile = null;
 let selectedPhotoUrl = null;
 let manualPhotoUrl = null;
 let currentMainButtonHandler = null;
-let photoSelectionMode = 'initial';
+let photoIntent = PHOTO_INTENTS.AI_SCAN;
 let nextScanBatchNumber = 1;
 let mealNameEditedByUser = false;
 
@@ -128,7 +133,7 @@ function clearBackAction() {
 function openMealSheet() {
     mealDraft = createEmptyDraft();
     selectedPhotoFile = null;
-    photoSelectionMode = 'initial';
+    photoIntent = PHOTO_INTENTS.AI_SCAN;
     nextScanBatchNumber = 1;
     mealNameEditedByUser = false;
     if (selectedPhotoUrl) URL.revokeObjectURL(selectedPhotoUrl);
@@ -148,8 +153,8 @@ function closeMealSheet() {
     clearBackAction();
     cameraInput.value = '';
     galleryInput.value = '';
-    manualPhotoInput.value = '';
-    photoSelectionMode = 'initial';
+    attachmentPhotoInput.value = '';
+    photoIntent = PHOTO_INTENTS.AI_SCAN;
 }
 
 function showMealStep(step) {
@@ -176,8 +181,8 @@ function showMealStep(step) {
 
 function handleSheetBack() {
     if (!photoScreen.classList.contains('hidden')) {
-        if (photoSelectionMode === 'append') {
-            photoSelectionMode = 'initial';
+        if (photoIntent === PHOTO_INTENTS.APPEND_SCAN) {
+            photoIntent = PHOTO_INTENTS.AI_SCAN;
             showMealStep('editor');
             return;
         }
@@ -195,7 +200,7 @@ function handleSheetBack() {
     closeMealSheet();
 }
 
-function handlePhotoSelected(file) {
+function handleAiPhotoSelected(file) {
     if (!file) return;
 
     selectedPhotoFile = file;
@@ -203,7 +208,7 @@ function handlePhotoSelected(file) {
     selectedPhotoUrl = URL.createObjectURL(file);
     draftPhotoImg.src = selectedPhotoUrl;
 
-    if (photoSelectionMode !== 'append') {
+    if (photoIntent !== PHOTO_INTENTS.APPEND_SCAN) {
         mealDraft = createEmptyDraft();
         mealDraft.source = 'photo';
         mealNameEditedByUser = false;
@@ -225,7 +230,7 @@ async function analyzeSelectedPhoto() {
         return;
     }
 
-    if (photoSelectionMode === 'append' && getCurrentProductCount() >= MAX_PRODUCTS_PER_MEAL) {
+    if (photoIntent === PHOTO_INTENTS.APPEND_SCAN && getCurrentProductCount() >= MAX_PRODUCTS_PER_MEAL) {
         showProductLimitAlert();
         return;
     }
@@ -255,13 +260,13 @@ async function analyzeSelectedPhoto() {
             scanId
         }));
 
-        if (photoSelectionMode === 'append') {
+        if (photoIntent === PHOTO_INTENTS.APPEND_SCAN) {
             appendAnalyzedDraft(analyzedDraft);
         } else {
             mealDraft = limitDraftProducts(analyzedDraft);
         }
 
-        photoSelectionMode = 'initial';
+        photoIntent = PHOTO_INTENTS.AI_SCAN;
         haptic('success');
         showMealStep('editor');
     } catch (error) {
@@ -321,7 +326,7 @@ function renderDraftImageField() {
     manualPhotoPreview.classList.toggle('hidden', !manualPhotoUrl);
     btnRemoveManualPhoto.classList.toggle('hidden', !hasImage);
     btnAddManualPhoto.parentElement.classList.toggle('single-action', !hasImage);
-    btnAddManualPhoto.textContent = hasImage ? 'Заменить фото' : 'Добавить фото';
+    btnAddManualPhoto.textContent = hasImage ? 'Заменить фото' : 'Добавить фото для истории';
     draftImageStatus.textContent = hasImage
         ? 'Фото будет показано в истории после сохранения'
         : 'Можно добавить миниатюру для истории';
@@ -331,8 +336,10 @@ function renderDraftImageField() {
     }
 }
 
-async function uploadManualDraftPhoto(file) {
+async function uploadAttachmentPhoto(file) {
     if (!file) return;
+
+    photoIntent = PHOTO_INTENTS.ATTACH_ONLY;
 
     if (manualPhotoUrl) URL.revokeObjectURL(manualPhotoUrl);
     manualPhotoUrl = URL.createObjectURL(file);
@@ -368,7 +375,7 @@ async function uploadManualDraftPhoto(file) {
     } finally {
         btnAddManualPhoto.disabled = false;
         renderDraftImageField();
-        manualPhotoInput.value = '';
+        attachmentPhotoInput.value = '';
     }
 }
 
@@ -379,7 +386,7 @@ function removeManualDraftPhoto() {
 
     manualPhotoUrl = null;
     mealDraft.draftImagePath = null;
-    manualPhotoInput.value = '';
+    attachmentPhotoInput.value = '';
     renderDraftImageField();
     haptic('light');
 }
@@ -688,8 +695,8 @@ function updateAutoMealNameFromProducts() {
     mealNameInput.value = buildGeneratedMealName(collectDraftProducts());
 }
 
-function startPhotoSelection(mode, input) {
-    if (mode === 'append') {
+function startAiPhotoSelection(intent, input) {
+    if (intent === PHOTO_INTENTS.APPEND_SCAN) {
         syncDraftFromEditor();
 
         if (getDraftScanCount() >= MAX_DRAFT_SCANS_PER_MEAL) {
@@ -704,9 +711,15 @@ function startPhotoSelection(mode, input) {
         }
     }
 
-    photoSelectionMode = mode;
+    photoIntent = intent;
     input.value = '';
     input.click();
+}
+
+function startAttachmentPhotoSelection() {
+    photoIntent = PHOTO_INTENTS.ATTACH_ONLY;
+    attachmentPhotoInput.value = '';
+    attachmentPhotoInput.click();
 }
 
 function recalculateDraftTotal() {
@@ -774,13 +787,13 @@ document.querySelector('.sheet-overlay').onclick = closeMealSheet;
 btnManualEntry.onclick = startManualDraft;
 btnCancelDraft.onclick = closeMealSheet;
 btnSaveMeal.onclick = saveMealDraft;
-btnAddManualPhoto.onclick = () => manualPhotoInput.click();
+btnAddManualPhoto.onclick = startAttachmentPhotoSelection;
 btnRemoveManualPhoto.onclick = removeManualDraftPhoto;
 mealNameInput.addEventListener('input', () => {
     mealNameEditedByUser = true;
     mealDraft.mealName = mealNameInput.value.trim();
 });
-btnScanMore.onclick = () => startPhotoSelection('append', cameraInput);
+btnScanMore.onclick = () => startAiPhotoSelection(PHOTO_INTENTS.APPEND_SCAN, cameraInput);
 btnAddProduct.onclick = () => {
     if (getCurrentProductCount() >= MAX_PRODUCTS_PER_MEAL) {
         showProductLimitAlert();
@@ -796,9 +809,15 @@ btnAddProduct.onclick = () => {
     haptic('light');
 };
 
-btnCamera.onclick = () => startPhotoSelection('initial', cameraInput);
-btnGallery.onclick = () => startPhotoSelection('initial', galleryInput);
-btnChangePhoto.onclick = () => startPhotoSelection(photoSelectionMode, galleryInput);
-cameraInput.onchange = event => handlePhotoSelected(event.target.files[0]);
-galleryInput.onchange = event => handlePhotoSelected(event.target.files[0]);
-manualPhotoInput.onchange = event => uploadManualDraftPhoto(event.target.files[0]);
+btnCamera.onclick = () => startAiPhotoSelection(PHOTO_INTENTS.AI_SCAN, cameraInput);
+btnGallery.onclick = () => startAiPhotoSelection(PHOTO_INTENTS.AI_SCAN, galleryInput);
+btnChangePhoto.onclick = () => {
+    const nextIntent = photoIntent === PHOTO_INTENTS.APPEND_SCAN
+        ? PHOTO_INTENTS.APPEND_SCAN
+        : PHOTO_INTENTS.AI_SCAN;
+
+    startAiPhotoSelection(nextIntent, galleryInput);
+};
+cameraInput.onchange = event => handleAiPhotoSelected(event.target.files[0]);
+galleryInput.onchange = event => handleAiPhotoSelected(event.target.files[0]);
+attachmentPhotoInput.onchange = event => uploadAttachmentPhoto(event.target.files[0]);

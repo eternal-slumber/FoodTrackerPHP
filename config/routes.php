@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Controllers\AnalyzeController;
 use App\Controllers\HomeController;
+use App\Controllers\TelegramBotController;
 use App\Controllers\UserController;
 use App\Services\RouteLoader;
 use Slim\App;
@@ -13,6 +14,7 @@ return static function (App $app): void {
         HomeController::class,
         UserController::class,
         AnalyzeController::class,
+        TelegramBotController::class,
     ]);
 
     $routeLoader->load();

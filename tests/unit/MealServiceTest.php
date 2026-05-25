@@ -136,6 +136,11 @@ class MealServiceTest extends TestCase
                     {
                         return ['calories' => 0, 'proteins' => 0, 'fats' => 0, 'carbs' => 0];
                     }
+
+                    public function recommendMeal(array $context): string
+                    {
+                        return '';
+                    }
                 },
                 new NutritionCalculatorService()
             ),
