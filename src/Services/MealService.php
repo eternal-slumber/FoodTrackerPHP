@@ -55,6 +55,9 @@ class MealService
                 'carbs' => $meal->carbs,
                 'weight' => $meal->totalWeight,
                 'image_url' => $meal->imagePath ? '/api/meals/' . $meal->id . '/image' : null,
+                'thumbnail_url' => $meal->imagePath
+                    ? '/api/meals/' . $meal->id . '/thumbnail?v=' . $this->imageCacheToken($meal->imagePath)
+                    : null,
                 'created_at' => $meal->createdAt,
             ];
         }
@@ -67,7 +70,7 @@ class MealService
         $user = $this->findUser($tgId);
         $meal = $this->findOwnedMeal($mealId, (int)$user->id);
 
-        $this->storage->deleteIfExists($meal->imagePath);
+        $this->storage->deleteImageSet($meal->imagePath);
 
         if (!$this->meals->delete($mealId)) {
             throw new \RuntimeException('Failed to delete meal');
@@ -184,6 +187,34 @@ class MealService
         ];
     }
 
+    public function getMealThumbnail(int $mealId, int $tgId): array
+    {
+        $user = $this->findUser($tgId);
+        $meal = $this->findOwnedMeal($mealId, (int)$user->id);
+
+        if (!$meal->imagePath || !is_file($this->storage->fullPath($meal->imagePath))) {
+            throw new \RuntimeException('Meal image not found');
+        }
+
+        if (!$this->storage->hasThumbnail($meal->imagePath)) {
+            try {
+                $this->storage->createThumbnail($meal->imagePath);
+            } catch (\Throwable $e) {
+                error_log('Lazy thumbnail generation failed: ' . $e->getMessage());
+            }
+        }
+
+        $isThumbnail = $this->storage->hasThumbnail($meal->imagePath);
+        $relativePath = $isThumbnail
+            ? $this->storage->thumbnailRelativePath($meal->imagePath)
+            : $meal->imagePath;
+
+        return [
+            'path' => $this->storage->fullPath($relativePath),
+            'mime_type' => $isThumbnail ? 'image/jpeg' : $this->storage->mimeType($meal->imagePath),
+        ];
+    }
+
     private function findUser(int $tgId): User
     {
         $user = $this->users->findByTelegramId($tgId);
@@ -206,5 +237,22 @@ class MealService
         }
 
         return $meal;
+    }
+
+    private function imageCacheToken(string $relativePath): int
+    {
+        foreach ([$this->storage->thumbnailRelativePath($relativePath), $relativePath] as $path) {
+            $fullPath = $this->storage->fullPath($path);
+            if (!is_file($fullPath)) {
+                continue;
+            }
+
+            $modifiedAt = filemtime($fullPath);
+            if ($modifiedAt !== false) {
+                return $modifiedAt;
+            }
+        }
+
+        return time();
     }
 }

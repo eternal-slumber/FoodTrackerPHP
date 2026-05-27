@@ -6,9 +6,14 @@ use App\Config\AIProviderConfig;
 use App\Config\TelegramBotConfig;
 use App\Config\TelegramAuthConfig;
 use App\Auth\TelegramAuthService;
+use App\AI\AIChatClientInterface;
+use App\AI\AIJsonResponseParser;
+use App\AI\MealPhotoAnalysisAIService;
+use App\AI\MealRecommendationAIService;
+use App\AI\OpenAICompatibleChatClient;
+use App\AI\ProductNutritionAIService;
 use App\Core\Database;
 use App\Http\Middleware\TelegramAuthMiddleware;
-use App\Interfaces\AIServiceInterface;
 use App\Repositories\MealRepository;
 use App\Repositories\MealProductRepository;
 use App\Repositories\UserRepository;
@@ -21,7 +26,6 @@ use App\Services\MealNutritionService;
 use App\Services\MealRecommendationService;
 use App\Services\MealService;
 use App\Services\NutritionCalculatorService;
-use App\Services\OpenAICompatibleAIService;
 use App\Services\RateLimiterService;
 use App\Services\SummaryService;
 use App\Services\UploadedFileStorage;
@@ -42,7 +46,7 @@ $builder->addDefinitions([
 
     AIProviderConfig::class => static fn(): AIProviderConfig => AIProviderConfig::fromEnv($_ENV),
 
-    AIServiceInterface::class => static fn(ContainerInterface $container): AIServiceInterface => new OpenAICompatibleAIService(
+    AIChatClientInterface::class => static fn(ContainerInterface $container): AIChatClientInterface => new OpenAICompatibleChatClient(
         $container->get(AIProviderConfig::class)
     ),
 
@@ -71,6 +75,10 @@ $builder->addDefinitions([
     CalorieCalculatorService::class => autowire(),
     MacroGoalCalculationService::class => autowire(),
     DailyNutritionSummaryService::class => autowire(),
+    AIJsonResponseParser::class => autowire(),
+    MealPhotoAnalysisAIService::class => autowire(),
+    MealRecommendationAIService::class => autowire(),
+    ProductNutritionAIService::class => autowire(),
     UserRepository::class => autowire(),
     MealRepository::class => autowire(),
     MealProductRepository::class => autowire(),

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Interfaces\AIServiceInterface;
 use App\Models\Meal;
 use App\Models\MealProduct;
 use App\Models\User;
@@ -117,34 +116,63 @@ class MealServiceTest extends TestCase
         $this->assertSame('grill', $details['products'][0]['processing']);
     }
 
+    public function testGetMealThumbnailFallsBackToOriginalWhenThumbnailIsMissing(): void
+    {
+        $uploadPath = sys_get_temp_dir() . '/foodtracker_meal_service_' . bin2hex(random_bytes(6)) . '/';
+        mkdir($uploadPath . 'user_100001', 0777, true);
+        $pngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAFgwJ/luzNqgAAAABJRU5ErkJggg==');
+        file_put_contents($uploadPath . 'user_100001/aaaaaaaa.png', $pngBytes);
+
+        try {
+            $mealRepository = new FakeMealServiceMealRepository();
+            $mealRepository->meal = new Meal(
+                userId: 7,
+                description: 'Обед',
+                calories: 250,
+                imagePath: 'user_100001/aaaaaaaa.png',
+                id: 55
+            );
+
+            $service = $this->createService(
+                $mealRepository,
+                new FakeMealServiceProductRepository(),
+                new class($uploadPath) extends UploadedFileStorage {
+                    public function createThumbnail(string $relativePath): void {}
+                }
+            );
+
+            $thumbnail = $service->getMealThumbnail(55, 100001);
+
+            $this->assertSame($uploadPath . 'user_100001/aaaaaaaa.png', $thumbnail['path']);
+            $this->assertSame('image/png', $thumbnail['mime_type']);
+        } finally {
+            if (is_file($uploadPath . 'user_100001/aaaaaaaa.png')) {
+                unlink($uploadPath . 'user_100001/aaaaaaaa.png');
+            }
+
+            if (is_dir($uploadPath . 'user_100001')) {
+                rmdir($uploadPath . 'user_100001');
+            }
+
+            if (is_dir($uploadPath)) {
+                rmdir($uploadPath);
+            }
+        }
+    }
+
     private function createService(
         FakeMealServiceMealRepository $mealRepository,
-        FakeMealServiceProductRepository $productRepository
+        FakeMealServiceProductRepository $productRepository,
+        ?UploadedFileStorage $storage = null
     ): MealService {
         return new MealService(
             new FakeMealServiceUserRepository(),
             $mealRepository,
             $productRepository,
             new MealNutritionService(
-                new class implements AIServiceInterface {
-                    public function analyze(string $imagePath): array
-                    {
-                        return [];
-                    }
-
-                    public function getProductNutrients(string $productName): array
-                    {
-                        return ['calories' => 0, 'proteins' => 0, 'fats' => 0, 'carbs' => 0];
-                    }
-
-                    public function recommendMeal(array $context): string
-                    {
-                        return '';
-                    }
-                },
                 new NutritionCalculatorService()
             ),
-            new UploadedFileStorage('/tmp/')
+            $storage ?? new UploadedFileStorage('/tmp/')
         );
     }
 }

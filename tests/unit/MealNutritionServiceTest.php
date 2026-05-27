@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Interfaces\AIServiceInterface;
 use App\Exceptions\ValidationException;
 use App\Services\MealNutritionService;
 use App\Services\NutritionCalculatorService;
@@ -70,30 +69,52 @@ class MealNutritionServiceTest extends TestCase
         $service->processProducts($products);
     }
 
+    public function testProcessProductsUsesZeroForMissingKbjuFields(): void
+    {
+        $service = $this->createService();
+
+        $products = $service->processProducts([[
+            'name' => 'Творог',
+            'weight' => 100,
+            'processing' => '',
+            'kbju' => [
+                'calories' => 120,
+                'proteins' => '',
+                'fats' => 4,
+                'carbs' => '',
+            ],
+        ]]);
+
+        $this->assertSame(120, $products[0]['calories']);
+        $this->assertSame(0.0, $products[0]['proteins']);
+        $this->assertSame(4.0, $products[0]['fats']);
+        $this->assertSame(0.0, $products[0]['carbs']);
+    }
+
+    public function testHasMissingKbjuTreatsZeroAsFilledValue(): void
+    {
+        $this->assertFalse(MealNutritionService::hasMissingKbju([
+            'kbju' => [
+                'calories' => '100',
+                'proteins' => '0',
+                'fats' => '0',
+                'carbs' => '0',
+            ],
+        ]));
+
+        $this->assertTrue(MealNutritionService::hasMissingKbju([
+            'kbju' => [
+                'calories' => '100',
+                'proteins' => '',
+                'fats' => '0',
+                'carbs' => '0',
+            ],
+        ]));
+    }
+
     private function createService(): MealNutritionService
     {
         return new MealNutritionService(
-            new class implements AIServiceInterface {
-                public function analyze(string $imagePath): array
-                {
-                    return [];
-                }
-
-                public function getProductNutrients(string $productName): array
-                {
-                    return [
-                        'calories' => 50,
-                        'proteins' => 1,
-                        'fats' => 1,
-                        'carbs' => 10,
-                    ];
-                }
-
-                public function recommendMeal(array $context): string
-                {
-                    return '';
-                }
-            },
             new NutritionCalculatorService()
         );
     }

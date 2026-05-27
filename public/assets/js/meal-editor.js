@@ -13,6 +13,7 @@ const btnManualEntry = document.getElementById('btn-manual-entry');
 const btnChangePhoto = document.getElementById('btn-change-photo');
 const btnCancelDraft = document.getElementById('btn-cancel-draft');
 const btnScanMore = document.getElementById('btn-scan-more');
+const btnFillKbju = document.getElementById('btn-fill-kbju');
 const btnAddProduct = document.getElementById('btn-add-product');
 const btnSaveMeal = document.getElementById('btn-save-meal');
 const btnAddManualPhoto = document.getElementById('btn-add-manual-photo');
@@ -67,6 +68,8 @@ let currentMainButtonHandler = null;
 let photoIntent = PHOTO_INTENTS.AI_SCAN;
 let nextScanBatchNumber = 1;
 let mealNameEditedByUser = false;
+let isSavingMealDraft = false;
+let isFillingKbju = false;
 
 function createEmptyDraft() {
     return {
@@ -136,6 +139,8 @@ function openMealSheet() {
     photoIntent = PHOTO_INTENTS.AI_SCAN;
     nextScanBatchNumber = 1;
     mealNameEditedByUser = false;
+    isSavingMealDraft = false;
+    isFillingKbju = false;
     if (selectedPhotoUrl) URL.revokeObjectURL(selectedPhotoUrl);
     if (manualPhotoUrl) URL.revokeObjectURL(manualPhotoUrl);
     selectedPhotoUrl = null;
@@ -155,6 +160,8 @@ function closeMealSheet() {
     galleryInput.value = '';
     attachmentPhotoInput.value = '';
     photoIntent = PHOTO_INTENTS.AI_SCAN;
+    isSavingMealDraft = false;
+    isFillingKbju = false;
 }
 
 function showMealStep(step) {
@@ -453,6 +460,17 @@ function createProductCard(product, index) {
     `;
 }
 
+function renumberProductCards() {
+    productsList.querySelectorAll('.product-card').forEach((card, index) => {
+        card.dataset.index = String(index);
+
+        const label = card.querySelector('.product-card-header .input-label');
+        if (label) {
+            label.textContent = `Продукт ${index + 1}`;
+        }
+    });
+}
+
 function bindProductCardEvents() {
     productsList.querySelectorAll('.product-card').forEach(card => {
         card.querySelectorAll('input').forEach(input => {
@@ -481,6 +499,7 @@ function bindProductCardEvents() {
                 return;
             }
             card.remove();
+            renumberProductCards();
             syncDraftFromEditor();
             recalculateDraftTotal();
             updateDraftLimitControls();
@@ -550,6 +569,50 @@ function getCurrentProductCount() {
 function showProductLimitAlert() {
     tg.showAlert(`В одном приеме можно добавить до ${MAX_PRODUCTS_PER_MEAL} продуктов`);
     haptic('error');
+}
+
+function productsMissingKbju(products) {
+    return products.filter(product => ['calories', 'proteins', 'fats', 'carbs'].some(
+        key => !String(product.kbju?.[key] || '').trim()
+    ));
+}
+
+function productCardMissingKbju(card) {
+    return [
+        '.product-calories',
+        '.product-proteins',
+        '.product-fats',
+        '.product-carbs'
+    ].some(selector => !card.querySelector(selector).value.trim());
+}
+
+function fillMissingCardKbju(card, nutrients) {
+    const fields = {
+        calories: card.querySelector('.product-calories'),
+        proteins: card.querySelector('.product-proteins'),
+        fats: card.querySelector('.product-fats'),
+        carbs: card.querySelector('.product-carbs')
+    };
+
+    Object.entries(fields).forEach(([key, input]) => {
+        if (input.value.trim() !== '') {
+            return;
+        }
+
+        const value = nutrients?.[key];
+        input.value = value === undefined || value === null ? 0 : value;
+    });
+}
+
+function confirmAsync(message) {
+    return new Promise(resolve => {
+        if (typeof tg.showConfirm === 'function') {
+            tg.showConfirm(message, confirmed => resolve(Boolean(confirmed)));
+            return;
+        }
+
+        resolve(window.confirm(message));
+    });
 }
 
 function syncDraftFromEditor() {
@@ -640,11 +703,16 @@ function updateDraftLimitControls() {
     const scanCount = getDraftScanCount();
     const productsLimitReached = productCount >= MAX_PRODUCTS_PER_MEAL;
     const scanLimitReached = scanCount >= MAX_DRAFT_SCANS_PER_MEAL;
+    const canScanMore = mealDraft.source === 'photo' || scanCount > 0;
 
     btnAddProduct.disabled = productsLimitReached;
-    btnAddProduct.textContent = productsLimitReached ? 'Лимит продуктов' : '＋ Добавить';
+    btnAddProduct.textContent = productsLimitReached ? 'Лимит продуктов' : '＋ Добавить продукт';
 
-    btnScanMore.disabled = productsLimitReached || scanLimitReached;
+    btnFillKbju.disabled = isFillingKbju;
+    btnFillKbju.textContent = isFillingKbju ? 'Заполняю...' : 'Заполнить КБЖУ';
+
+    btnScanMore.classList.toggle('hidden', !canScanMore);
+    btnScanMore.disabled = !canScanMore || productsLimitReached || scanLimitReached;
     btnScanMore.textContent = scanLimitReached
         ? `Лимит сканов ${scanCount}/${MAX_DRAFT_SCANS_PER_MEAL}`
         : `Сканировать еще ${scanCount}/${MAX_DRAFT_SCANS_PER_MEAL}`;
@@ -722,6 +790,60 @@ function startAttachmentPhotoSelection() {
     attachmentPhotoInput.click();
 }
 
+async function fillMissingKbjuWithAi() {
+    if (isFillingKbju || isSavingMealDraft) {
+        return;
+    }
+
+    const cards = Array.from(productsList.querySelectorAll('.product-card'));
+    const cardsToFill = cards.filter(card => {
+        const name = card.querySelector('.product-name').value.trim();
+        return name !== '' && productCardMissingKbju(card);
+    });
+
+    if (cardsToFill.length === 0) {
+        tg.showAlert('Нет продуктов с названием и пустыми полями КБЖУ');
+        haptic('light');
+        return;
+    }
+
+    isFillingKbju = true;
+    const previousDraftSourceText = draftSourceLabel.textContent;
+    draftSourceLabel.textContent = 'AI заполняет недостающие калории и БЖУ';
+    updateDraftLimitControls();
+
+    try {
+        for (const card of cardsToFill) {
+            const productName = card.querySelector('.product-name').value.trim();
+            const response = await apiFetch('/api/product-nutrition', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_name: productName })
+            });
+            const result = await response.json();
+
+            if (!response.ok || result.status !== 'success') {
+                tg.showAlert(result.message || result.error || 'Не удалось заполнить КБЖУ');
+                haptic('error');
+                return;
+            }
+
+            fillMissingCardKbju(card, result.data || {});
+        }
+
+        syncDraftFromEditor();
+        recalculateDraftTotal();
+        haptic('success');
+    } catch (error) {
+        tg.showAlert('Ошибка при заполнении КБЖУ');
+        haptic('error');
+    } finally {
+        isFillingKbju = false;
+        draftSourceLabel.textContent = previousDraftSourceText;
+        updateDraftLimitControls();
+    }
+}
+
 function recalculateDraftTotal() {
     const total = collectDraftProducts().reduce((sum, product) => {
         const caloriesPer100g = parseFloat(product.kbju.calories) || 0;
@@ -734,6 +856,10 @@ function recalculateDraftTotal() {
 }
 
 async function saveMealDraft() {
+    if (isSavingMealDraft) {
+        return;
+    }
+
     const products = collectDraftProducts();
     const mealName = mealNameInput.value.trim() || buildGeneratedMealName(products);
 
@@ -749,6 +875,24 @@ async function saveMealDraft() {
         return;
     }
 
+    const productsWithMissingKbju = productsMissingKbju(products);
+    if (productsWithMissingKbju.length > 0) {
+        const confirmed = await confirmAsync(
+            `У ${productsWithMissingKbju.length} продукт(ов) не полностью заполнены КБЖУ. Недостающие значения сохранятся как 0. Продолжить?`
+        );
+
+        if (!confirmed) {
+            haptic('light');
+            return;
+        }
+    }
+
+    isSavingMealDraft = true;
+    btnSaveMeal.disabled = true;
+    const previousSaveButtonText = btnSaveMeal.textContent;
+    const previousDraftSourceText = draftSourceLabel.textContent;
+    btnSaveMeal.textContent = 'Сохраняю...';
+    draftSourceLabel.textContent = 'Сохраняю прием пищи';
     tg.MainButton.showProgress(false);
 
     try {
@@ -778,6 +922,10 @@ async function saveMealDraft() {
         tg.showAlert('Ошибка соединения');
         haptic('error');
     } finally {
+        isSavingMealDraft = false;
+        btnSaveMeal.disabled = false;
+        btnSaveMeal.textContent = previousSaveButtonText;
+        draftSourceLabel.textContent = previousDraftSourceText;
         tg.MainButton.hideProgress();
     }
 }
@@ -787,6 +935,7 @@ document.querySelector('.sheet-overlay').onclick = closeMealSheet;
 btnManualEntry.onclick = startManualDraft;
 btnCancelDraft.onclick = closeMealSheet;
 btnSaveMeal.onclick = saveMealDraft;
+btnFillKbju.onclick = fillMissingKbjuWithAi;
 btnAddManualPhoto.onclick = startAttachmentPhotoSelection;
 btnRemoveManualPhoto.onclick = removeManualDraftPhoto;
 mealNameInput.addEventListener('input', () => {
@@ -803,6 +952,7 @@ btnAddProduct.onclick = () => {
 
     const product = createEmptyProduct();
     productsList.insertAdjacentHTML('beforeend', createProductCard(product, productsList.children.length));
+    renumberProductCards();
     bindProductCardEvents();
     recalculateDraftTotal();
     updateDraftLimitControls();

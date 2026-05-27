@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\Interfaces\AIServiceInterface;
+use App\AI\MealRecommendationAIService;
 use App\Services\DailyNutritionSummaryService;
 use App\Services\MealRecommendationService;
 use DateTimeImmutable;
@@ -31,7 +31,19 @@ class MealRecommendationServiceTest extends TestCase
 
     public function testBuildsRecommendationFromDailySummary(): void
     {
-        $ai = new FakeRecommendationAiService('Съешь курицу с рисом и овощами.');
+        $ai = new FakeRecommendationAiService([
+            'meal_type' => 'ужин',
+            'summary' => 'Нужно добрать белок без лишнего жира.',
+            'suggestions' => [[
+                'title' => 'Курица с рисом и овощами',
+                'portion' => 'куриная грудка 150 г, рис 120 г, овощи 200 г',
+                'reason' => 'поможет добрать белок и углеводы',
+                'calories' => 520,
+                'proteins' => 42.0,
+                'fats' => 8.0,
+                'carbs' => 62.0,
+            ]],
+        ]);
         $service = new MealRecommendationService(
             new FakeRecommendationDailySummaryService([
                 'daily_goal' => 2200,
@@ -49,7 +61,9 @@ class MealRecommendationServiceTest extends TestCase
             new DateTimeImmutable('2026-05-22 15:00:00', new DateTimeZone('UTC'))
         );
 
-        $this->assertSame('Съешь курицу с рисом и овощами.', $recommendation);
+        $this->assertStringContainsString('Что можно съесть сейчас (ужин):', (string)$recommendation);
+        $this->assertStringContainsString('Курица с рисом и овощами', (string)$recommendation);
+        $this->assertStringContainsString('КБЖУ: 520 ккал, Б 42 г, Ж 8 г, У 62 г', (string)$recommendation);
         $this->assertSame('ужин', $ai->lastContext['meal_type']);
         $this->assertSame(48.0, $ai->lastContext['macros']['proteins']['remaining']);
         $this->assertSame(-13.0, $ai->lastContext['macros']['fats']['remaining']);
@@ -66,23 +80,13 @@ class FakeRecommendationDailySummaryService extends DailyNutritionSummaryService
     }
 }
 
-class FakeRecommendationAiService implements AIServiceInterface
+class FakeRecommendationAiService extends MealRecommendationAIService
 {
     public array $lastContext = [];
 
-    public function __construct(private readonly string $recommendation = '') {}
+    public function __construct(private readonly array $recommendation = []) {}
 
-    public function analyze(string $imagePath): array
-    {
-        return [];
-    }
-
-    public function getProductNutrients(string $productName): array
-    {
-        return [];
-    }
-
-    public function recommendMeal(array $context): string
+    public function recommend(array $context): array
     {
         $this->lastContext = $context;
 

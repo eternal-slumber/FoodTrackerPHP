@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Exceptions\ValidationException;
-use App\Interfaces\AIServiceInterface;
 
 class MealNutritionService
 {
     public const MAX_PRODUCTS_PER_MEAL = 6;
+    private const KBJU_KEYS = ['calories', 'proteins', 'fats', 'carbs'];
 
     public function __construct(
-        private readonly AIServiceInterface $aiService,
         private readonly NutritionCalculatorService $calculator
     ) {}
 
@@ -99,24 +98,35 @@ class MealNutritionService
         );
     }
 
-    private function resolveKbju100g(string $name, array $product): array
+    public static function hasMissingKbju(array $product): bool
     {
-        if (!empty($product['kbju']['calories'])) {
-            return [
-                'calories' => (float)$product['kbju']['calories'],
-                'proteins' => (float)($product['kbju']['proteins'] ?? 0),
-                'fats' => (float)($product['kbju']['fats'] ?? 0),
-                'carbs' => (float)($product['kbju']['carbs'] ?? 0),
-            ];
+        $kbju = $product['kbju'] ?? [];
+        if (!is_array($kbju)) {
+            return true;
         }
 
-        $aiKbju = $this->aiService->getProductNutrients($name);
+        foreach (self::KBJU_KEYS as $key) {
+            if (!array_key_exists($key, $kbju) || trim((string)$kbju[$key]) === '') {
+                return true;
+            }
+        }
 
-        return [
-            'calories' => (float)($aiKbju['calories'] ?? 0),
-            'proteins' => (float)($aiKbju['proteins'] ?? 0),
-            'fats' => (float)($aiKbju['fats'] ?? 0),
-            'carbs' => (float)($aiKbju['carbs'] ?? 0),
-        ];
+        return false;
+    }
+
+    private function resolveKbju100g(string $name, array $product): array
+    {
+        $kbju = is_array($product['kbju'] ?? null) ? $product['kbju'] : [];
+
+        return array_reduce(
+            self::KBJU_KEYS,
+            function (array $resolved, string $key) use ($kbju): array {
+                $hasUserValue = array_key_exists($key, $kbju) && trim((string)$kbju[$key]) !== '';
+                $resolved[$key] = (float)($hasUserValue ? $kbju[$key] : 0);
+
+                return $resolved;
+            },
+            []
+        );
     }
 }

@@ -2,6 +2,9 @@
 let mealDetailBackHandler = null;
 let mealDetailParentBackHandler = null;
 let mealDetailKeepBodyLockedOnClose = false;
+let protectedImagesObserver = null;
+let protectedImagesRenderId = 0;
+const historyMealDetailsCache = new Map();
 
 async function loadMealHistory() {
     try {
@@ -19,6 +22,9 @@ async function loadMealHistory() {
 // Отрисовка истории приемов пищи
 function renderMealHistory(meals) {
     const historyList = document.getElementById('history-list');
+    disconnectProtectedImagesObserver();
+    revokeProtectedImageUrls(historyList);
+    protectedImagesRenderId++;
 
     if (!meals || meals.length === 0) {
         historyList.innerHTML = '<p class="history-empty">История пуста</p>';
@@ -36,7 +42,7 @@ function renderMealHistory(meals) {
         </section>
     `).join('');
 
-    loadProtectedImages();
+    observeProtectedImages();
     bindHistorySwipeActions();
 }
 
@@ -60,7 +66,7 @@ function groupMealsByDate(meals) {
 
 function renderHistoryItem(meal) {
     const description = escapeHtml(meal.description);
-    const imageUrl = escapeHtml(meal.image_url || '');
+    const imageUrl = escapeHtml(meal.thumbnail_url || meal.image_url || '');
     const meta = formatMealMeta(meal);
     const formattedTime = meal.parsedDate
         ? meal.parsedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -68,19 +74,27 @@ function renderHistoryItem(meal) {
 
     return `
         <div class="history-swipe-row">
-            <button class="history-delete-action" type="button" data-meal-id="${meal.id}">Удалить</button>
-            <div class="history-item" data-meal-id="${meal.id}">
-                <div class="history-thumbnail">
-                    <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="${description}" data-image-url="${imageUrl}">
-                </div>
-                <div class="history-info">
-                    <div class="history-date">${formattedTime}</div>
-                    <div class="history-description">${description}</div>
-                    <div class="history-macros">${meta}</div>
-                </div>
-                <div class="history-calories">
-                    <span class="calories-value">${meal.calories}</span>
-                    <span class="calories-label">ккал</span>
+            <div class="history-swipe-layer">
+                <button class="history-delete-action" type="button" data-meal-id="${meal.id}">Удалить</button>
+                <div class="history-item" data-meal-id="${meal.id}" aria-expanded="false">
+                    <div class="history-card-main">
+                        <div class="history-thumbnail">
+                            <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="${description}" data-image-url="${imageUrl}" loading="lazy" decoding="async">
+                        </div>
+                        <div class="history-info">
+                            <div class="history-date">${formattedTime}</div>
+                            <div class="history-description">${description}</div>
+                            <div class="history-macros">${meta}</div>
+                        </div>
+                        <div class="history-calories">
+                            <span class="calories-value">${meal.calories}</span>
+                            <span class="calories-label">ккал</span>
+                            <span class="history-expand-indicator">⌄</span>
+                        </div>
+                    </div>
+                    <div class="history-accordion" aria-hidden="true">
+                        <div class="history-accordion-inner"></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,16 +119,24 @@ function bindHistorySwipeActions() {
 
         deleteButton.onclick = () => deleteMeal(Number(deleteButton.dataset.mealId));
 
-        item.addEventListener('click', () => {
+        item.addEventListener('click', event => {
+            if (event.target.closest('.history-accordion')) {
+                return;
+            }
+
             if (row.dataset.swipeHandled === '1' || row.classList.contains('open')) {
                 row.dataset.swipeHandled = '';
                 return;
             }
 
-            openMealDetail(Number(item.dataset.mealId));
+            toggleHistoryAccordion(row, Number(item.dataset.mealId));
         });
 
         item.addEventListener('pointerdown', event => {
+            if (event.target.closest('.history-accordion')) {
+                return;
+            }
+
             closeHistorySwipeRows(row);
             startX = event.clientX;
             startY = event.clientY;
@@ -194,6 +216,154 @@ function bindHistorySwipeActions() {
             item.style.transform = row.classList.contains('open') ? `translateX(${maxSwipeX}px)` : '';
         });
     });
+}
+
+async function toggleHistoryAccordion(row, mealId) {
+    if (!mealId) return;
+
+    if (row.classList.contains('detail-open')) {
+        closeHistoryAccordions();
+        return;
+    }
+
+    closeHistoryAccordions(row);
+    closeHistorySwipeRows(row);
+
+    setHistoryAccordionContent(row, '<div class="history-detail-content"><p class="history-detail-loading">Загрузка деталей...</p></div>');
+    openHistoryAccordion(row);
+
+    try {
+        const meal = await fetchMealDetail(mealId);
+        if (!row.isConnected) {
+            return;
+        }
+
+        setHistoryAccordionContent(row, renderHistoryAccordionDetail(meal));
+    } catch (error) {
+        if (!row.isConnected) {
+            return;
+        }
+
+        console.error('Ошибка загрузки детализации приема:', error);
+        setHistoryAccordionContent(row, '<div class="history-detail-content"><p class="history-detail-loading">Не удалось загрузить детализацию</p></div>');
+    }
+}
+
+function closeHistoryAccordions(exceptRow = null) {
+    document.querySelectorAll('.history-swipe-row.detail-open').forEach(row => {
+        if (row === exceptRow) return;
+
+        closeHistoryAccordion(row);
+    });
+}
+
+function setHistoryAccordionContent(row, html) {
+    const accordion = row.querySelector('.history-accordion');
+    const accordionInner = row.querySelector('.history-accordion-inner');
+
+    if (!accordion || !accordionInner) {
+        return;
+    }
+
+    const isOpen = row.classList.contains('detail-open');
+    if (isOpen) {
+        accordion.style.height = `${accordion.offsetHeight}px`;
+    }
+
+    accordionInner.innerHTML = html;
+
+    if (isOpen) {
+        requestAnimationFrame(() => animateHistoryAccordionHeight(row));
+    }
+}
+
+function openHistoryAccordion(row) {
+    const accordion = row.querySelector('.history-accordion');
+    if (!accordion) {
+        return;
+    }
+
+    accordion.setAttribute('aria-hidden', 'false');
+    accordion.style.height = '0px';
+    row.classList.add('detail-open');
+    row.querySelector('.history-item')?.setAttribute('aria-expanded', 'true');
+
+    requestAnimationFrame(() => animateHistoryAccordionHeight(row));
+}
+
+function closeHistoryAccordion(row) {
+    const accordion = row.querySelector('.history-accordion');
+    if (!accordion) {
+        return;
+    }
+
+    accordion.style.height = `${accordion.offsetHeight}px`;
+    row.classList.remove('detail-open');
+    accordion.setAttribute('aria-hidden', 'true');
+    row.querySelector('.history-item')?.setAttribute('aria-expanded', 'false');
+
+    requestAnimationFrame(() => {
+        accordion.style.height = '0px';
+    });
+}
+
+function animateHistoryAccordionHeight(row) {
+    const accordion = row.querySelector('.history-accordion');
+    const accordionInner = row.querySelector('.history-accordion-inner');
+
+    if (!accordion || !accordionInner || !row.classList.contains('detail-open')) {
+        return;
+    }
+
+    accordion.style.height = `${accordionInner.scrollHeight}px`;
+}
+
+async function fetchMealDetail(mealId) {
+    if (historyMealDetailsCache.has(mealId)) {
+        return historyMealDetailsCache.get(mealId);
+    }
+
+    const response = await apiFetch(`/api/meals/${mealId}`);
+    const result = await response.json();
+
+    if (!response.ok || result.status !== 'success') {
+        throw new Error(result.message || result.error || 'Не удалось загрузить детализацию');
+    }
+
+    historyMealDetailsCache.set(mealId, result.data);
+    return result.data;
+}
+
+function renderHistoryAccordionDetail(meal) {
+    return `
+        <div class="history-detail-content">
+            <div class="history-detail-totals">
+                <div><strong>${meal.weight ? Number(meal.weight) : '—'}</strong><span>граммы</span></div>
+                <div><strong>${formatMacro(meal.proteins)}</strong><span>белки</span></div>
+                <div><strong>${formatMacro(meal.fats)}</strong><span>жиры</span></div>
+                <div><strong>${formatMacro(meal.carbs)}</strong><span>углеводы</span></div>
+            </div>
+            <div class="history-detail-products">
+                ${renderHistoryAccordionProducts(meal.products || [])}
+            </div>
+        </div>
+    `;
+}
+
+function renderHistoryAccordionProducts(products) {
+    if (products.length === 0) {
+        return '<p class="history-detail-empty">Детализация недоступна для старых записей</p>';
+    }
+
+    return products.map(product => `
+        <article class="history-detail-product">
+            <div>
+                <strong>${escapeHtml(product.name || 'Продукт')}</strong>
+                <small>${formatMealProductMeta(product)}</small>
+            </div>
+            <span>${Number(product.calories || 0)} ккал</span>
+        </article>
+    `).join('');
 }
 
 async function openMealDetail(mealId, options = {}) {
@@ -404,22 +574,109 @@ function formatHistoryDateLabel(date) {
     });
 }
 
-async function loadProtectedImages() {
-    const images = document.querySelectorAll('img[data-image-url]');
+function disconnectProtectedImagesObserver() {
+    if (!protectedImagesObserver) {
+        return;
+    }
 
+    protectedImagesObserver.disconnect();
+    protectedImagesObserver = null;
+}
+
+function revokeProtectedImageUrls(root = document) {
+    root.querySelectorAll('img[data-object-url]').forEach(image => {
+        URL.revokeObjectURL(image.dataset.objectUrl);
+        delete image.dataset.objectUrl;
+    });
+}
+
+function observeProtectedImages() {
+    const images = Array.from(document.querySelectorAll('img[data-image-url]'))
+        .filter(image => image.dataset.imageUrl && image.dataset.imageLoaded !== '1' && image.dataset.imageLoading !== '1');
+    const renderId = String(protectedImagesRenderId);
+
+    if (images.length === 0) {
+        return;
+    }
+
+    images.forEach(image => {
+        image.dataset.imageRenderId = renderId;
+    });
+
+    if (!('IntersectionObserver' in window)) {
+        loadProtectedImages(images, renderId);
+        return;
+    }
+
+    disconnectProtectedImagesObserver();
+    protectedImagesObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) {
+                return;
+            }
+
+            observer.unobserve(entry.target);
+            loadProtectedImage(entry.target, renderId);
+        });
+    }, {
+        rootMargin: '300px 0px',
+        threshold: 0.01
+    });
+
+    images.forEach(image => protectedImagesObserver.observe(image));
+}
+
+async function loadProtectedImages(images = document.querySelectorAll('img[data-image-url]'), renderId = String(protectedImagesRenderId)) {
     for (const image of images) {
-        const url = image.dataset.imageUrl;
-        if (!url) continue;
+        await loadProtectedImage(image, renderId);
+    }
+}
 
-        try {
-            const response = await apiFetch(url);
-            if (!response.ok) continue;
+async function loadProtectedImage(image, renderId = String(protectedImagesRenderId)) {
+    if (image.dataset.imageLoading === '1' || image.dataset.imageLoaded === '1') {
+        return;
+    }
 
-            const blob = await response.blob();
-            image.src = URL.createObjectURL(blob);
-        } catch (error) {
-            console.error('Ошибка загрузки изображения:', error);
+    if (!image.isConnected || image.dataset.imageRenderId !== renderId) {
+        return;
+    }
+
+    const url = image.dataset.imageUrl;
+    if (!url) {
+        return;
+    }
+
+    image.dataset.imageLoading = '1';
+
+    try {
+        const response = await apiFetch(url);
+        if (!response.ok) {
+            return;
         }
+
+        if (!image.isConnected || image.dataset.imageRenderId !== renderId) {
+            return;
+        }
+
+        const blob = await response.blob();
+
+        if (!image.isConnected || image.dataset.imageRenderId !== renderId) {
+            return;
+        }
+
+        const objectUrl = URL.createObjectURL(blob);
+
+        if (image.dataset.objectUrl) {
+            URL.revokeObjectURL(image.dataset.objectUrl);
+        }
+
+        image.src = objectUrl;
+        image.dataset.objectUrl = objectUrl;
+        image.dataset.imageLoaded = '1';
+    } catch (error) {
+        console.error('Ошибка загрузки изображения:', error);
+    } finally {
+        delete image.dataset.imageLoading;
     }
 }
 

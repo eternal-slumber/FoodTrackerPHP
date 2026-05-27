@@ -36,6 +36,63 @@ class TelegramBotServiceTest extends TestCase
         $this->assertSame('https://example.com', $client->messages[0]['reply_markup']['inline_keyboard'][3][0]['web_app']['url']);
     }
 
+    public function testDuplicateStartCommandIsIgnoredByDebounce(): void
+    {
+        $client = new FakeTelegramBotClient();
+        $service = $this->createService($client, null);
+
+        $service->handleUpdate([
+            'message' => [
+                'message_id' => 10,
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001, 'first_name' => 'Артем'],
+                'text' => '/start',
+            ],
+        ]);
+        $service->handleUpdate([
+            'message' => [
+                'message_id' => 11,
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001, 'first_name' => 'Артем'],
+                'text' => '/start',
+            ],
+        ]);
+
+        $this->assertCount(1, $client->messages);
+        $this->assertStringContainsString('Привет', $client->messages[0]['text']);
+    }
+
+    public function testStartDebounceDoesNotBlockSummaryCommand(): void
+    {
+        $client = new FakeTelegramBotClient();
+        $service = $this->createService($client, [
+            'today_sum' => 1450,
+            'daily_goal' => 2200,
+            'remaining_calories' => 750,
+            'today_macros' => ['proteins' => 82.0, 'fats' => 78.0, 'carbs' => 160.0],
+            'macro_goals' => ['proteins_goal' => 130, 'fats_goal' => 65, 'carbs_goal' => 250],
+        ]);
+
+        $service->handleUpdate([
+            'message' => [
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001, 'first_name' => 'Артем'],
+                'text' => '/start',
+            ],
+        ]);
+        $service->handleUpdate([
+            'message' => [
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001],
+                'text' => '/summary',
+            ],
+        ]);
+
+        $this->assertCount(2, $client->messages);
+        $this->assertStringContainsString('Привет', $client->messages[0]['text']);
+        $this->assertSame("Сегодня ты съел 1450 / 2200 ккал.\n\nБЖУ:\nБелки: 82 / 130 г\nЖиры: 78 / 65 г\nУглеводы: 160 / 250 г\n\nОсталось 750 ккал.", $client->messages[1]['text']);
+    }
+
     public function testSummaryCommandSendsDailySummary(): void
     {
         $client = new FakeTelegramBotClient();
@@ -76,13 +133,36 @@ class TelegramBotServiceTest extends TestCase
             'callback_query' => [
                 'id' => 'callback-1',
                 'from' => ['id' => 100001],
-                'message' => ['chat' => ['id' => 55]],
+                'message' => ['message_id' => 77, 'chat' => ['id' => 55]],
                 'data' => 'summary_today',
             ],
         ]);
 
         $this->assertSame(['callback-1'], $client->answeredCallbacks);
-        $this->assertSame("Сегодня ты съел 1450 / 2200 ккал.\n\nБЖУ:\nБелки: 82 / 130 г\nЖиры: 78 / 65 г\nУглеводы: 160 / 250 г\n\nОсталось 750 ккал.", $client->messages[0]['text']);
+        $this->assertSame([], $client->messages);
+        $this->assertSame(77, $client->editedMessages[0]['message_id']);
+        $this->assertSame("Сегодня ты съел 1450 / 2200 ккал.\n\nБЖУ:\nБелки: 82 / 130 г\nЖиры: 78 / 65 г\nУглеводы: 160 / 250 г\n\nОсталось 750 ккал.", $client->editedMessages[0]['text']);
+    }
+
+    public function testMainMenuCallbackEditsCurrentMessage(): void
+    {
+        $client = new FakeTelegramBotClient();
+        $service = $this->createService($client, null);
+
+        $service->handleUpdate([
+            'callback_query' => [
+                'id' => 'callback-main',
+                'from' => ['id' => 100001, 'first_name' => 'Артем'],
+                'message' => ['message_id' => 88, 'chat' => ['id' => 55]],
+                'data' => 'main_menu',
+            ],
+        ]);
+
+        $this->assertSame(['callback-main'], $client->answeredCallbacks);
+        $this->assertSame([], $client->messages);
+        $this->assertSame(88, $client->editedMessages[0]['message_id']);
+        $this->assertStringContainsString('Привет, Артем', $client->editedMessages[0]['text']);
+        $this->assertSame('Сводка за сегодня', $client->editedMessages[0]['reply_markup']['inline_keyboard'][0][0]['text']);
     }
 
     public function testRecommendationCallbackSendsAiRecommendation(): void
@@ -94,16 +174,37 @@ class TelegramBotServiceTest extends TestCase
             'callback_query' => [
                 'id' => 'callback-2',
                 'from' => ['id' => 100001],
-                'message' => ['chat' => ['id' => 55]],
+                'message' => ['message_id' => 99, 'chat' => ['id' => 55]],
                 'data' => 'meal_recommendation',
             ],
         ]);
 
         $this->assertSame(['callback-2'], $client->answeredCallbacks);
+        $this->assertSame([], $client->messages);
+        $this->assertSame(99, $client->editedMessages[0]['message_id']);
+        $this->assertSame('Думаю...', $client->editedMessages[0]['text']);
+        $this->assertSame(99, $client->editedMessages[1]['message_id']);
+        $this->assertSame('Съешь омлет с овощами.', $client->editedMessages[1]['text']);
+        $this->assertSame('Назад', $client->editedMessages[1]['reply_markup']['inline_keyboard'][0][0]['text']);
+        $this->assertSame('Добавить еду', $client->editedMessages[1]['reply_markup']['inline_keyboard'][1][0]['text']);
+    }
+
+    public function testEatCommandStillSendsThinkingThenEditsIt(): void
+    {
+        $client = new FakeTelegramBotClient();
+        $service = $this->createService($client, null, 'Съешь омлет с овощами.');
+
+        $service->handleUpdate([
+            'message' => [
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001],
+                'text' => '/eat',
+            ],
+        ]);
+
         $this->assertSame('Думаю...', $client->messages[0]['text']);
+        $this->assertSame(1, $client->editedMessages[0]['message_id']);
         $this->assertSame('Съешь омлет с овощами.', $client->editedMessages[0]['text']);
-        $this->assertSame('Назад', $client->editedMessages[0]['reply_markup']['inline_keyboard'][0][0]['text']);
-        $this->assertSame('Добавить еду', $client->editedMessages[0]['reply_markup']['inline_keyboard'][1][0]['text']);
     }
 
     private function createService(
@@ -183,10 +284,21 @@ class FakeTelegramMealRecommendationService extends MealRecommendationService
 
 class FakeTelegramRateLimiterService extends RateLimiterService
 {
+    private array $attempts = [];
+
     public function __construct() {}
 
     public function consume(string $scope, string $action, int $limit, int $windowSeconds): bool
     {
+        $key = $scope . ':' . $action;
+        $this->attempts[$key] = $this->attempts[$key] ?? 0;
+
+        if ($this->attempts[$key] >= $limit) {
+            return false;
+        }
+
+        $this->attempts[$key]++;
+
         return true;
     }
 }

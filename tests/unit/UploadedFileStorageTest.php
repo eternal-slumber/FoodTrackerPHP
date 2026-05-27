@@ -60,6 +60,50 @@ class UploadedFileStorageTest extends TestCase
         $this->assertFileExists($unmanagedFile);
     }
 
+    public function testThumbnailRelativePathUsesThumbPrefixAndJpegExtension(): void
+    {
+        $storage = new UploadedFileStorage($this->uploadPath);
+
+        $this->assertSame(
+            'user_100001/thumb_aaaaaaaa.jpg',
+            $storage->thumbnailRelativePath('user_100001/aaaaaaaa.png')
+        );
+    }
+
+    public function testDeleteImageSetDeletesOriginalAndThumbnail(): void
+    {
+        $original = $this->createUpload('user_100001/aaaaaaaa.jpg');
+        $thumbnail = $this->createUpload('user_100001/thumb_aaaaaaaa.jpg');
+
+        $storage = new UploadedFileStorage($this->uploadPath);
+        $storage->deleteImageSet('user_100001/aaaaaaaa.jpg');
+
+        $this->assertFileDoesNotExist($original);
+        $this->assertFileDoesNotExist($thumbnail);
+    }
+
+    public function testDeleteOldOrphanFilesKeepsThumbnailForReferencedUpload(): void
+    {
+        $original = $this->createUpload('user_100001/aaaaaaaa.jpg');
+        $thumbnail = $this->createUpload('user_100001/thumb_aaaaaaaa.jpg');
+        $orphanThumbnail = $this->createUpload('user_100001/thumb_bbbbbbbb.jpg');
+
+        touch($original, time() - 172800);
+        touch($thumbnail, time() - 172800);
+        touch($orphanThumbnail, time() - 172800);
+
+        $storage = new UploadedFileStorage($this->uploadPath);
+        $deleted = $storage->deleteOldOrphanFiles(
+            ['user_100001/aaaaaaaa.jpg'],
+            86400
+        );
+
+        $this->assertSame(1, $deleted);
+        $this->assertFileExists($original);
+        $this->assertFileExists($thumbnail);
+        $this->assertFileDoesNotExist($orphanThumbnail);
+    }
+
     private function createUpload(string $relativePath): string
     {
         $path = $this->uploadPath . $relativePath;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Interfaces\AIServiceInterface;
+use App\AI\MealRecommendationAIService;
 use DateTimeImmutable;
 use DateTimeZone;
 
@@ -12,7 +12,7 @@ class MealRecommendationService
 {
     public function __construct(
         private readonly DailyNutritionSummaryService $dailySummary,
-        private readonly AIServiceInterface $aiService
+        private readonly MealRecommendationAIService $recommendationAi
     ) {}
 
     public function recommendForTelegramUser(
@@ -26,9 +26,11 @@ class MealRecommendationService
         }
 
         $context = $this->buildContext($summary, $timezoneOffsetMinutes, $nowUtc);
-        $recommendation = trim($this->aiService->recommendMeal($context));
+        $recommendation = $this->recommendationAi->recommend($context);
 
-        return $recommendation !== '' ? $recommendation : $this->fallbackRecommendation($context);
+        return $this->hasSuggestions($recommendation)
+            ? $this->formatRecommendation($recommendation)
+            : $this->fallbackRecommendation($context);
     }
 
     public function currentMealType(int $timezoneOffsetMinutes = 0, ?DateTimeImmutable $nowUtc = null): string
@@ -74,6 +76,54 @@ class MealRecommendationService
             'goal' => round((float)$goal, 1),
             'remaining' => round((float)$goal - (float)$current, 1),
         ];
+    }
+
+    private function hasSuggestions(array $recommendation): bool
+    {
+        return !empty($recommendation['suggestions']) && is_array($recommendation['suggestions']);
+    }
+
+    private function formatRecommendation(array $recommendation): string
+    {
+        $mealType = trim((string)($recommendation['meal_type'] ?? 'прием пищи'));
+        $summary = trim((string)($recommendation['summary'] ?? ''));
+        $lines = ['Что можно съесть сейчас (' . $mealType . '):'];
+
+        if ($summary !== '') {
+            $lines[] = '';
+            $lines[] = $summary;
+        }
+
+        foreach (array_values($recommendation['suggestions']) as $index => $suggestion) {
+            if (!is_array($suggestion)) {
+                continue;
+            }
+
+            $lines[] = '';
+            $lines[] = ($index + 1) . '. ' . (string)($suggestion['title'] ?? 'Блюдо');
+            $lines[] = 'Порция: ' . (string)($suggestion['portion'] ?? 'порция по аппетиту');
+            $lines[] = 'Почему: ' . (string)($suggestion['reason'] ?? 'подходит под текущие дневные показатели');
+            $lines[] = sprintf(
+                'КБЖУ: %d ккал, Б %s г, Ж %s г, У %s г',
+                (int)($suggestion['calories'] ?? 0),
+                $this->formatNumber((float)($suggestion['proteins'] ?? 0)),
+                $this->formatNumber((float)($suggestion['fats'] ?? 0)),
+                $this->formatNumber((float)($suggestion['carbs'] ?? 0))
+            );
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function formatNumber(float $value): string
+    {
+        $rounded = round($value, 1);
+
+        if (abs($rounded - round($rounded)) < 0.01) {
+            return (string)(int)round($rounded);
+        }
+
+        return number_format($rounded, 1, '.', '');
     }
 
     private function fallbackRecommendation(array $context): string

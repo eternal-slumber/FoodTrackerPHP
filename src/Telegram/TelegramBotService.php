@@ -52,6 +52,10 @@ class TelegramBotService
         $text = trim((string)($message['text'] ?? ''));
         $command = $this->normalizeCommand($text);
 
+        if ($command === '/start' && !$this->rateLimiter->consume('tg_chat:' . $chatId, 'telegram_start', 1, 3)) {
+            return;
+        }
+
         match ($command) {
             '/start' => $this->sendWelcome($chatId, $message),
             '/summary', TelegramBotMessageFactory::SUMMARY_BUTTON => $this->sendSummary($chatId, (int)$telegramId),
@@ -62,12 +66,13 @@ class TelegramBotService
         };
     }
 
-    private function sendWelcome(int|string $chatId, array $message): void
+    private function sendWelcome(int|string $chatId, array $message, ?int $messageId = null): void
     {
         $firstName = isset($message['from']['first_name']) ? (string)$message['from']['first_name'] : null;
 
-        $this->client->sendMessage(
+        $this->sendOrEditMessage(
             $chatId,
+            $messageId,
             $this->messages->welcome($firstName),
             $this->messages->mainInlineKeyboard($this->config->miniAppUrl)
         );
@@ -90,15 +95,26 @@ class TelegramBotService
         }
 
         match ((string)($callbackQuery['data'] ?? '')) {
-            TelegramBotMessageFactory::MAIN_MENU_CALLBACK => $this->sendWelcome($chatId, ['from' => $from]),
-            TelegramBotMessageFactory::SUMMARY_CALLBACK => $this->sendSummary($chatId, (int)$telegramId),
-            TelegramBotMessageFactory::RECOMMENDATION_CALLBACK => $this->sendMealRecommendation($chatId, (int)$telegramId),
-            TelegramBotMessageFactory::REMINDERS_CALLBACK => $this->sendReminders($chatId),
+            TelegramBotMessageFactory::MAIN_MENU_CALLBACK => $this->sendWelcome($chatId, ['from' => $from], $this->callbackMessageId($message)),
+            TelegramBotMessageFactory::SUMMARY_CALLBACK => $this->sendSummary($chatId, (int)$telegramId, $this->callbackMessageId($message)),
+            TelegramBotMessageFactory::RECOMMENDATION_CALLBACK => $this->sendMealRecommendation($chatId, (int)$telegramId, $this->callbackMessageId($message)),
+            TelegramBotMessageFactory::REMINDERS_CALLBACK => $this->sendReminders($chatId, $this->callbackMessageId($message)),
             default => null,
         };
     }
 
-    private function sendSummary(int|string $chatId, int $telegramId): void
+    private function callbackMessageId(mixed $message): ?int
+    {
+        if (!is_array($message) || !isset($message['message_id']) || !is_numeric($message['message_id'])) {
+            return null;
+        }
+
+        $messageId = (int)$message['message_id'];
+
+        return $messageId > 0 ? $messageId : null;
+    }
+
+    private function sendSummary(int|string $chatId, int $telegramId, ?int $messageId = null): void
     {
         $summary = $this->dailySummary->getForTelegramUser(
             $telegramId,
@@ -106,34 +122,42 @@ class TelegramBotService
         );
 
         if ($summary === null) {
-            $this->client->sendMessage(
+            $this->sendOrEditMessage(
                 $chatId,
+                $messageId,
                 $this->messages->registrationRequired($this->config->miniAppUrl),
                 $this->messages->miniAppInlineKeyboard($this->config->miniAppUrl)
             );
             return;
         }
 
-        $this->client->sendMessage(
+        $this->sendOrEditMessage(
             $chatId,
+            $messageId,
             $this->messages->summary($summary),
             $this->messages->summaryInlineKeyboard($this->config->miniAppUrl)
         );
     }
 
-    private function sendMealRecommendation(int|string $chatId, int $telegramId): void
+    private function sendMealRecommendation(int|string $chatId, int $telegramId, ?int $messageId = null): void
     {
         if (!$this->rateLimiter->consume('tg:' . $telegramId, 'ai_daily', 20, 86400)) {
-            $this->client->sendMessage(
+            $this->sendOrEditMessage(
                 $chatId,
+                $messageId,
                 'Дневной лимит AI-запросов исчерпан. Попробуй позже.',
                 $this->messages->recommendationInlineKeyboard($this->config->miniAppUrl)
             );
             return;
         }
 
-        $thinkingMessage = $this->client->sendMessage($chatId, 'Думаю...');
-        $thinkingMessageId = isset($thinkingMessage['message_id']) ? (int)$thinkingMessage['message_id'] : 0;
+        if ($messageId !== null) {
+            $this->sendOrEditMessage($chatId, $messageId, 'Думаю...');
+            $thinkingMessageId = $messageId;
+        } else {
+            $thinkingMessage = $this->client->sendMessage($chatId, 'Думаю...');
+            $thinkingMessageId = isset($thinkingMessage['message_id']) ? (int)$thinkingMessage['message_id'] : 0;
+        }
 
         $recommendation = $this->mealRecommendation->recommendForTelegramUser(
             $telegramId,
@@ -141,8 +165,9 @@ class TelegramBotService
         );
 
         if ($recommendation === null) {
-            $this->client->sendMessage(
+            $this->sendOrEditMessage(
                 $chatId,
+                $thinkingMessageId,
                 $this->messages->registrationRequired($this->config->miniAppUrl),
                 $this->messages->miniAppInlineKeyboard($this->config->miniAppUrl)
             );
@@ -157,10 +182,11 @@ class TelegramBotService
         );
     }
 
-    private function sendReminders(int|string $chatId): void
+    private function sendReminders(int|string $chatId, ?int $messageId = null): void
     {
-        $this->client->sendMessage(
+        $this->sendOrEditMessage(
             $chatId,
+            $messageId,
             $this->messages->reminders($this->config->miniAppUrl),
             $this->messages->miniAppInlineKeyboard($this->config->miniAppUrl)
         );
@@ -168,11 +194,11 @@ class TelegramBotService
 
     private function sendOrEditMessage(
         int|string $chatId,
-        int $messageId,
+        ?int $messageId,
         string $text,
         ?array $replyMarkup = null
     ): void {
-        if ($messageId < 1) {
+        if ($messageId === null || $messageId < 1) {
             $this->client->sendMessage($chatId, $text, $replyMarkup);
             return;
         }

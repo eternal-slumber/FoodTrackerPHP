@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\AI\MealPhotoAnalysisAIService;
 use App\DTOs\AnalyzeRequestDTO;
-use App\Interfaces\AIServiceInterface;
 use App\Repositories\UserRepository;
 
 class MealDraftService
 {
     public function __construct(
-        private readonly AIServiceInterface $aiService,
+        private readonly MealPhotoAnalysisAIService $photoAnalysis,
         private readonly UserRepository $users,
         private readonly UploadedFileStorage $storage,
         private readonly MealNutritionService $nutrition
@@ -25,7 +25,7 @@ class MealDraftService
         }
 
         $relativePath = $this->storage->saveUploadedFile($dto->imagePath, $dto->telegramId, $dto->mimeType);
-        $analysis = $this->aiService->analyze($this->storage->fullPath($relativePath));
+        $analysis = $this->photoAnalysis->analyze($this->storage->fullPath($relativePath));
         $product = $this->nutrition->createAiDraftProduct($analysis);
 
         return [

@@ -51,6 +51,11 @@ class MealAnalysisService
         return $this->meals->getMealImage($mealId, $tgId);
     }
 
+    public function getMealThumbnail(int $mealId, int $tgId): array
+    {
+        return $this->meals->getMealThumbnail($mealId, $tgId);
+    }
+
     public function getMealDetails(int $mealId, int $tgId): array
     {
         return $this->meals->getMealDetails($mealId, $tgId);

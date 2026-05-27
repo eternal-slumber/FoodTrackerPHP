@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\AI\ProductNutritionAIService;
 use App\Auth\CurrentUser;
 use App\Attributes\RouteAttribute;
 use App\DTOs\AnalyzeRequestDTO;
@@ -22,11 +23,17 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 class AnalyzeController
 {
+    private const SAVE_MEAL_BURST_LIMIT = 1;
+    private const SAVE_MEAL_BURST_WINDOW_SECONDS = 5;
+    private const SAVE_MEAL_HOURLY_LIMIT = 30;
+    private const SAVE_MEAL_HOURLY_WINDOW_SECONDS = 3600;
+
     public function __construct(
         private readonly MealAnalysisService $mealAnalysisService,
         private readonly NutritionCalculatorService $nutritionCalculator,
         private readonly RateLimiterService $rateLimiter,
-        private readonly UploadedFileStorage $uploadedFileStorage
+        private readonly UploadedFileStorage $uploadedFileStorage,
+        private readonly ProductNutritionAIService $productNutrition
     ) {}
 
     #[RouteAttribute('/api/processing-options', 'GET')]
@@ -36,6 +43,37 @@ class AnalyzeController
             'status' => 'success',
             'data' => $this->nutritionCalculator->getProcessingOptions(),
         ]);
+    }
+
+    #[RouteAttribute('/api/product-nutrition', 'POST')]
+    public function productNutrition(Request $request, Response $response): Response
+    {
+        try {
+            $currentUser = $this->currentUser($request);
+            $data = $request->getParsedBody();
+            $data = is_array($data) ? $data : [];
+            $productName = substr(trim((string)($data['product_name'] ?? '')), 0, 120);
+
+            if ($productName === '') {
+                throw new ValidationException('Введите название продукта');
+            }
+
+            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'ai_daily', 20, 86400)) {
+                return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
+            }
+
+            return ResponseResponder::json($response, [
+                'status' => 'success',
+                'data' => $this->productNutrition->getProductNutrients($productName),
+            ]);
+        } catch (ValidationException $e) {
+            return ResponseResponder::json($response, $e->toArray(), 400);
+        } catch (AppException $e) {
+            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
+        } catch (\Exception $e) {
+            error_log('Product nutrition error: ' . $e->getMessage());
+            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        }
     }
 
     #[RouteAttribute('/api/analyze-draft', 'POST')]
@@ -204,19 +242,27 @@ class AnalyzeController
                 throw new ValidationException('В одном приеме можно сохранить не больше ' . MealNutritionService::MAX_PRODUCTS_PER_MEAL . ' продуктов');
             }
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'save_meal', 30, 3600)) {
-                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
+            $rateLimitScope = 'tg:' . $currentUser->telegramId;
+
+            if (!$this->rateLimiter->consume(
+                $rateLimitScope,
+                'save_meal_burst',
+                self::SAVE_MEAL_BURST_LIMIT,
+                self::SAVE_MEAL_BURST_WINDOW_SECONDS
+            )) {
+                return ResponseResponder::json($response, [
+                    'error' => 'Too Many Requests',
+                    'message' => 'Подождите несколько секунд перед повторным сохранением',
+                ], 429);
             }
 
-            $productsNeedingAi = array_filter(
-                $products,
-                fn(mixed $product): bool => is_array($product) && empty($product['kbju']['calories'])
-            );
-
-            foreach ($productsNeedingAi as $_) {
-                if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'ai_daily', 20, 86400)) {
-                    return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
-                }
+            if (!$this->rateLimiter->consume(
+                $rateLimitScope,
+                'save_meal',
+                self::SAVE_MEAL_HOURLY_LIMIT,
+                self::SAVE_MEAL_HOURLY_WINDOW_SECONDS
+            )) {
+                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
             }
 
             $result = $this->mealAnalysisService->saveManualMeal($tgId, $mealName, $products, $draftImagePath);
@@ -245,6 +291,30 @@ class AnalyzeController
             }
 
             $image = $this->mealAnalysisService->getMealImage($mealId, $currentUser->telegramId);
+            $response->getBody()->write((string)file_get_contents($image['path']));
+
+            return $response
+                ->withHeader('Content-Type', $image['mime_type'])
+                ->withHeader('Cache-Control', 'private, max-age=3600');
+        } catch (ValidationException $e) {
+            return ResponseResponder::json($response, $e->toArray(), 400);
+        } catch (\Exception $e) {
+            return ResponseResponder::json($response, ['error' => 'Not Found'], 404);
+        }
+    }
+
+    #[RouteAttribute('/api/meals/{id}/thumbnail', 'GET')]
+    public function mealThumbnail(Request $request, Response $response, array $args): Response
+    {
+        try {
+            $currentUser = $this->currentUser($request);
+            $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+
+            if ($mealId < 1) {
+                throw new ValidationException('Invalid meal id');
+            }
+
+            $image = $this->mealAnalysisService->getMealThumbnail($mealId, $currentUser->telegramId);
             $response->getBody()->write((string)file_get_contents($image['path']));
 
             return $response
