@@ -1,6 +1,20 @@
+function getDevTelegramUserConfig() {
+    const configUser = window.__APP_CONFIG__?.devTelegramUser || {};
+    const id = Number(configUser.id || 100001);
+    const username = String(configUser.username || 'dev_user');
+    const firstName = String(configUser.firstName || username || 'Dev');
+
+    return {
+        id,
+        first_name: firstName,
+        username
+    };
+}
+
 function createTelegramWebAppMock() {
     const clickHandlers = new Set();
     const backHandlers = new Set();
+    const devUser = getDevTelegramUserConfig();
 
     const mainButton = {
         setText(text) {
@@ -55,11 +69,7 @@ function createTelegramWebAppMock() {
     return {
         initData: '',
         initDataUnsafe: {
-            user: {
-                id: 100001,
-                first_name: 'Dev',
-                username: 'dev_user'
-            }
+            user: devUser
         },
         MainButton: mainButton,
         BackButton: backButton,

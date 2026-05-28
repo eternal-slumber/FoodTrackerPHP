@@ -42,7 +42,7 @@ class TelegramAuthMiddleware implements MiddlewareInterface
                     new CurrentUser(
                         telegramId: $this->devUserId,
                         username: $this->devUsername,
-                        firstName: 'Dev'
+                        firstName: $this->devUsername !== '' ? $this->devUsername : 'Dev'
                     )
                 ));
             }

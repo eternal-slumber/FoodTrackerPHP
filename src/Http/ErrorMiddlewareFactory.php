@@ -35,7 +35,11 @@ final class ErrorMiddlewareFactory
                 ];
 
                 if ($displayErrorDetails) {
+                    $payload['exception'] = $exception::class;
                     $payload['message'] = $exception->getMessage();
+                    $payload['file'] = $exception->getFile();
+                    $payload['line'] = $exception->getLine();
+                    $payload['trace'] = $exception->getTrace();
                 }
 
                 error_log(sprintf(
