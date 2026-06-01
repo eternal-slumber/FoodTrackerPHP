@@ -47,12 +47,40 @@ class MealNutritionServiceTest extends TestCase
         ]);
 
         $this->assertSame('Омлет', $product['name']);
+        $this->assertSame(100, $product['weight']);
         $this->assertSame(250, $product['calories']);
         $this->assertSame(17.4, $product['proteins']);
         $this->assertSame(18.0, $product['fats']);
         $this->assertSame(3.0, $product['carbs']);
         $this->assertSame(0.88, $product['confidence']);
         $this->assertSame('', $product['processing']);
+    }
+
+    public function testCreateAiDraftProductConvertsPortionEstimateToPer100g(): void
+    {
+        $service = $this->createService();
+
+        $product = $service->createAiDraftProduct([
+            'food' => 'Паста с курицей',
+            'weight' => 250,
+            'kcal' => 520,
+            'proteins' => 32.5,
+            'fats' => 18.0,
+            'carbs' => 54.0,
+        ]);
+
+        $this->assertSame('Паста с курицей', $product['name']);
+        $this->assertSame(250, $product['weight']);
+        $this->assertSame(208, $product['calories']);
+        $this->assertSame(13.0, $product['proteins']);
+        $this->assertSame(7.2, $product['fats']);
+        $this->assertSame(21.6, $product['carbs']);
+        $this->assertSame([
+            'calories' => 520,
+            'proteins' => 32.5,
+            'fats' => 18.0,
+            'carbs' => 54.0,
+        ], $service->calculateDraftProductPortion($product));
     }
 
     public function testProcessProductsRejectsTooManyProducts(): void

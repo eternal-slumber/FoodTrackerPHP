@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Enums\Goal;
 use App\Repositories\MealRepository;
 use App\Repositories\UserRepository;
 use InvalidArgumentException;
@@ -12,7 +13,8 @@ class SummaryService
 {
     public function __construct(
         private readonly UserRepository $users,
-        private readonly MealRepository $meals
+        private readonly MealRepository $meals,
+        private readonly MacroGoalCalculationService $macroGoalCalculator
     ) {}
 
     public function getMonthlySummary(int $telegramId, string $month, int $timezoneOffsetMinutes): array
@@ -31,6 +33,11 @@ class SummaryService
         }
 
         $dailyGoal = (int)($user->dailyGoal ?? 0);
+        $macroGoals = $this->macroGoalCalculator->calculate(
+            $dailyGoal,
+            (float)$user->weight,
+            Goal::fromValue($user->goal)
+        );
         $days = array_map(
             fn(array $day): array => $this->formatDay($day, $dailyGoal),
             $this->meals->getDailyCaloriesForMonth((int)$user->id, $month, $timezoneOffsetMinutes)
@@ -39,6 +46,7 @@ class SummaryService
         return [
             'month' => $month,
             'daily_goal' => $dailyGoal,
+            'macro_goals' => $macroGoals,
             'days' => $days,
         ];
     }

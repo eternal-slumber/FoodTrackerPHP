@@ -9,9 +9,19 @@ function updateUserUI() {
     document.getElementById('settings-weight').innerText = userData.weight ? `${userData.weight} кг` : '-';
     document.getElementById('settings-gender').innerText = userData.gender === 'male' ? 'Мужчина' : 'Женщина';
     document.getElementById('settings-goal').innerText = userData.daily_goal ? `${userData.daily_goal} ккал` : '-';
+    setElementText('settings-target', formatGoalLabel(userData.goal));
+    setElementText('settings-activity', formatActivityLabel(userData.activity_level));
     fillSettingsForm();
 
     loadProgress();
+}
+
+function setElementText(id, value) {
+    const element = document.getElementById(id);
+
+    if (element) {
+        element.innerText = value;
+    }
 }
 
 function formatBodyParams(data) {
@@ -21,6 +31,24 @@ function formatBodyParams(data) {
     const gender = data.gender === 'male' ? 'мужчина' : data.gender === 'female' ? 'женщина' : null;
 
     return [age, height, weight, gender].filter(Boolean).join(' · ') || 'Параметры не указаны';
+}
+
+function formatActivityLabel(activityLevel) {
+    return {
+        minimal: 'Минимальная',
+        low: 'Низкая',
+        medium: 'Средняя',
+        high: 'Высокая',
+        extra: 'Очень высокая'
+    }[activityLevel || 'medium'] || 'Средняя';
+}
+
+function formatGoalLabel(goal) {
+    return {
+        deficit: 'Похудение',
+        maintenance: 'Поддержание',
+        surplus: 'Набор массы'
+    }[goal || 'maintenance'] || 'Поддержание';
 }
 
 function fillSettingsForm() {
@@ -81,7 +109,7 @@ function confirmTelegram(message) {
 }
 
 document.getElementById('btn-start').onclick = () => {
-    showScreen('register');
+    startRegisterFlow();
 };
 
 const registerSteps = {
@@ -90,9 +118,108 @@ const registerSteps = {
     3: document.getElementById('register-step-3')
 };
 
-function showRegisterStep(step) {
-    Object.values(registerSteps).forEach(el => el.classList.add('hidden'));
-    registerSteps[step].classList.remove('hidden');
+const registerStepIndicators = document.querySelectorAll('[data-register-step-indicator]');
+const registerFirstStepFields = [
+    document.getElementById('age'),
+    document.getElementById('height'),
+    document.getElementById('weight'),
+    document.getElementById('gender')
+];
+const btnNext1 = document.getElementById('btn-next-1');
+let activeRegisterStep = 1;
+let isRegisterStepTransitioning = false;
+
+function startRegisterFlow() {
+    const welcomeScreen = document.getElementById('screen-welcome');
+    const registerScreen = document.getElementById('screen-register');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (document.body.classList.contains('register-transitioning')) {
+        return;
+    }
+
+    showRegisterStep(1, { instant: true });
+    updateRegisterFirstStepState();
+
+    if (reduceMotion) {
+        showScreen('register');
+        return;
+    }
+
+    document.body.classList.add('register-transitioning');
+    registerScreen.classList.remove('hidden');
+    welcomeScreen.classList.add('register-swipe-out');
+    registerScreen.classList.add('register-swipe-in');
+    updateTabBar('register');
+
+    window.setTimeout(() => {
+        welcomeScreen.classList.add('hidden');
+        welcomeScreen.classList.remove('register-swipe-out');
+        registerScreen.classList.remove('register-swipe-in');
+        document.body.classList.remove('register-transitioning');
+    }, 680);
+}
+
+function showRegisterStep(step, options = {}) {
+    const nextStep = parseInt(step, 10);
+    const nextEl = registerSteps[nextStep];
+    const currentEl = registerSteps[activeRegisterStep];
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!nextEl || isRegisterStepTransitioning) {
+        return;
+    }
+
+    if (options.instant || reduceMotion || !currentEl || currentEl === nextEl) {
+        Object.values(registerSteps).forEach(el => {
+            clearRegisterStepClasses(el);
+            el.classList.add('hidden');
+        });
+
+        nextEl.classList.remove('hidden');
+        activeRegisterStep = nextStep;
+        updateRegisterStepper(nextStep);
+        return;
+    }
+
+    isRegisterStepTransitioning = true;
+    const direction = nextStep > activeRegisterStep ? 'forward' : 'back';
+
+    clearRegisterStepClasses(currentEl);
+    clearRegisterStepClasses(nextEl);
+    nextEl.classList.remove('hidden');
+
+    currentEl.classList.add('is-step-leaving', `is-step-leaving-${direction}`);
+    nextEl.classList.add('is-step-entering', `is-step-entering-${direction}`);
+    updateRegisterStepper(nextStep);
+
+    window.setTimeout(() => {
+        currentEl.classList.add('hidden');
+        clearRegisterStepClasses(currentEl);
+        clearRegisterStepClasses(nextEl);
+        activeRegisterStep = nextStep;
+        isRegisterStepTransitioning = false;
+    }, 360);
+}
+
+function clearRegisterStepClasses(el) {
+    el.classList.remove(
+        'is-step-entering',
+        'is-step-leaving',
+        'is-step-entering-forward',
+        'is-step-leaving-forward',
+        'is-step-entering-back',
+        'is-step-leaving-back'
+    );
+}
+
+function updateRegisterStepper(activeStep) {
+    registerStepIndicators.forEach(indicator => {
+        const step = parseInt(indicator.dataset.registerStepIndicator, 10);
+
+        indicator.classList.toggle('active', step === activeStep);
+        indicator.classList.toggle('completed', step < activeStep);
+    });
 }
 
 document.getElementById('btn-next-1').onclick = () => {
@@ -108,6 +235,19 @@ document.getElementById('btn-next-1').onclick = () => {
 
     showRegisterStep(2);
 };
+
+function updateRegisterFirstStepState() {
+    const isComplete = registerFirstStepFields.every(field => String(field.value).trim() !== '');
+
+    btnNext1.disabled = !isComplete;
+}
+
+registerFirstStepFields.forEach(field => {
+    field.addEventListener('input', updateRegisterFirstStepState);
+    field.addEventListener('change', updateRegisterFirstStepState);
+});
+
+updateRegisterFirstStepState();
 
 document.getElementById('btn-next-2').onclick = () => {
     showRegisterStep(3);
@@ -204,6 +344,30 @@ document.getElementById('btn-edit-profile').onclick = () => {
     fillSettingsForm();
     showScreen('profileEdit');
 };
+
+const themeChoiceButtons = document.querySelectorAll('[data-theme-choice]');
+
+function updateThemeControls() {
+    const currentTheme = window.appTheme?.get?.() || 'system';
+    const themeControl = themeChoiceButtons[0]?.closest('.theme-segmented');
+
+    if (themeControl) {
+        themeControl.dataset.activeTheme = currentTheme;
+    }
+
+    themeChoiceButtons.forEach(button => {
+        button.classList.toggle('active', button.dataset.themeChoice === currentTheme);
+    });
+}
+
+themeChoiceButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        window.appTheme?.set?.(button.dataset.themeChoice);
+        updateThemeControls();
+    });
+});
+
+updateThemeControls();
 
 document.getElementById('btn-profile-edit-back').onclick = async () => {
     if (!isProfileFormDirty()) {

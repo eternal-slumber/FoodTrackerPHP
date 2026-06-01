@@ -60,7 +60,7 @@ function showScreen(screenName) {
     }
 
     if (screenName === 'summary' && userData) {
-        loadSummaryCalendar();
+        loadSummaryCalendar(summaryCurrentMonth);
     }
 }
 
@@ -68,7 +68,7 @@ function tabToScreenName(tabName) {
     return {
         home: 'main',
         summary: 'summary',
-        settings: 'settings'
+        profile: 'settings'
     }[tabName] || 'main';
 }
 
@@ -76,7 +76,7 @@ function screenNameToTab(screenName) {
     return {
         main: 'home',
         summary: 'summary',
-        settings: 'settings'
+        settings: 'profile'
     }[screenName] || '';
 }
 

@@ -66,7 +66,6 @@ function groupMealsByDate(meals) {
 
 function renderHistoryItem(meal) {
     const description = escapeHtml(meal.description);
-    const imageUrl = escapeHtml(meal.thumbnail_url || meal.image_url || '');
     const meta = formatMealMeta(meal);
     const formattedTime = meal.parsedDate
         ? meal.parsedDate.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
@@ -79,7 +78,7 @@ function renderHistoryItem(meal) {
                 <div class="history-item" data-meal-id="${meal.id}" aria-expanded="false">
                     <div class="history-card-main">
                         <div class="history-thumbnail">
-                            <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="${description}" data-image-url="${imageUrl}" loading="lazy" decoding="async">
+                            ${renderHistoryThumbnail(meal, description)}
                         </div>
                         <div class="history-info">
                             <div class="history-date">${formattedTime}</div>
@@ -89,7 +88,12 @@ function renderHistoryItem(meal) {
                         <div class="history-calories">
                             <span class="calories-value">${meal.calories}</span>
                             <span class="calories-label">ккал</span>
-                            <span class="history-expand-indicator">⌄</span>
+                            <span class="history-expand-indicator" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path opacity="0.18" d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="currentColor"/>
+                                    <path d="M10.74 16.2802C10.55 16.2802 10.36 16.2102 10.21 16.0602C9.91999 15.7702 9.91999 15.2902 10.21 15.0002L13.21 12.0002L10.21 9.00016C9.91999 8.71016 9.91999 8.23016 10.21 7.94016C10.5 7.65016 10.98 7.65016 11.27 7.94016L14.8 11.4702C15.09 11.7602 15.09 12.2402 14.8 12.5302L11.27 16.0602C11.12 16.2102 10.93 16.2802 10.74 16.2802Z" fill="currentColor"/>
+                                </svg>
+                            </span>
                         </div>
                     </div>
                     <div class="history-accordion" aria-hidden="true">
@@ -98,6 +102,27 @@ function renderHistoryItem(meal) {
                 </div>
             </div>
         </div>
+    `;
+}
+
+function renderHistoryThumbnail(meal, description) {
+    const imageUrl = escapeHtml(meal.thumbnail_url || meal.image_url || '');
+
+    if (imageUrl) {
+        return `<img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="${description}" data-image-url="${imageUrl}" loading="lazy" decoding="async">`;
+    }
+
+    return `
+        <span class="history-thumbnail-placeholder" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" focusable="false">
+                <path d="M18.2295 10.2H5.76953L5.88953 9.36999C6.00953 8.49999 6.74953 7.85999 7.62953 7.85999H16.3695C17.2495 7.85999 17.9895 8.49999 18.1095 9.36999L18.2295 10.2Z"/>
+                <g opacity="0.4">
+                    <path d="M19.0697 16.14H4.92969L5.76969 10.2H11.9997C12.6497 10.2 13.1697 10.73 13.1697 11.37C13.1697 10.73 13.6997 10.2 14.3397 10.2C14.9797 10.2 15.5197 10.73 15.5197 11.37C15.5197 10.73 16.0397 10.2 16.6897 10.2H18.2297L19.0697 16.14Z"/>
+                </g>
+                <path d="M13.1701 6.68999C13.1701 7.32999 12.6501 7.85999 12.0001 7.85999C11.3501 7.85999 10.8301 7.32999 10.8301 6.68999C10.8301 6.04999 11.3501 5.51999 12.0001 5.51999C12.6501 5.51999 13.1701 6.03999 13.1701 6.68999Z"/>
+                <path d="M20.2398 16.92V17.31C20.2398 17.96 19.7198 18.48 19.0698 18.48H4.92977C4.27977 18.48 3.75977 17.96 3.75977 17.31V16.92C3.75977 16.49 4.10977 16.14 4.53977 16.14H19.4598C19.8898 16.14 20.2398 16.49 20.2398 16.92Z"/>
+            </svg>
+        </span>
     `;
 }
 

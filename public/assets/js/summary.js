@@ -5,14 +5,24 @@ let summaryDayBackHandler = null;
 let summaryOverlayStartX = 0;
 let summaryOverlayStartY = 0;
 let summaryOverlayTapReady = false;
+let summaryMonthLoadId = 0;
+let summaryMonthAnimationId = 0;
+let summaryMonthIsLoading = false;
 
-async function loadSummaryCalendar(month = getCurrentMonthKey()) {
-    summaryCurrentMonth = month;
+async function loadSummaryCalendar(month = getCurrentMonthKey(), options = {}) {
+    const loadId = ++summaryMonthLoadId;
+    const direction = Number(options.direction || 0);
     const timezoneOffset = getTimezoneOffsetMinutes();
+    let keepsButtonsDisabledForAnimation = false;
+    setSummaryMonthButtonsDisabled(true);
 
     try {
         const response = await apiFetch(`/api/summary?month=${month}&tz_offset=${timezoneOffset}`);
         const result = await response.json();
+
+        if (loadId !== summaryMonthLoadId) {
+            return;
+        }
 
         if (!response.ok || result.status !== 'success') {
             tg.showAlert(result.message || result.error || 'Не удалось загрузить сводку');
@@ -20,10 +30,19 @@ async function loadSummaryCalendar(month = getCurrentMonthKey()) {
         }
 
         summaryCurrentMonth = result.data.month;
-        renderSummaryCalendar(result.data);
+        keepsButtonsDisabledForAnimation = direction !== 0;
+        renderSummaryCalendar(result.data, { direction });
     } catch (error) {
+        if (loadId !== summaryMonthLoadId) {
+            return;
+        }
+
         console.error('Ошибка загрузки сводки:', error);
         tg.showAlert('Ошибка загрузки сводки');
+    } finally {
+        if (loadId === summaryMonthLoadId && !keepsButtonsDisabledForAnimation) {
+            setSummaryMonthButtonsDisabled(false);
+        }
     }
 }
 
@@ -38,11 +57,23 @@ function shiftMonth(month, delta) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function renderSummaryCalendar(data) {
+function renderSummaryCalendar(data, options = {}) {
+    const direction = Number(options.direction || 0);
+
+    if (direction !== 0) {
+        renderSummaryCalendarAnimated(data, direction);
+        return;
+    }
+
+    renderSummaryCalendarContent(data);
+}
+
+function renderSummaryCalendarContent(data) {
     document.getElementById('summary-month-label').textContent = formatSummaryMonth(data.month);
 
     summaryDailyGoal = Number(data.daily_goal || 0);
     summaryDaysByDate = new Map((data.days || []).map(day => [day.date, day]));
+    document.getElementById('summary-month-stats').innerHTML = renderSummaryMonthStats(data);
     const dates = buildMonthDates(data.month);
 
     document.getElementById('summary-calendar-grid').innerHTML = dates.map(dateInfo => {
@@ -54,6 +85,102 @@ function renderSummaryCalendar(data) {
 
         return renderCalendarDay(dateInfo, day);
     }).join('');
+    animateSummaryRings(document.getElementById('summary-calendar-grid'));
+}
+
+function renderSummaryCalendarAnimated(data, direction) {
+    const animationId = ++summaryMonthAnimationId;
+    const monthLabel = document.getElementById('summary-month-label');
+    const monthStats = document.getElementById('summary-month-stats');
+    const calendarGrid = document.getElementById('summary-calendar-grid');
+    const exitingClass = direction > 0 ? 'summary-slide-out-left' : 'summary-slide-out-right';
+    const enteringClass = direction > 0 ? 'summary-slide-in-right' : 'summary-slide-in-left';
+
+    resetSummaryMonthAnimation(monthLabel);
+    resetSummaryMonthAnimation(monthStats);
+    resetSummaryMonthAnimation(calendarGrid);
+
+    monthLabel.classList.add('summary-month-animating', exitingClass);
+    monthStats.classList.add('summary-month-animating', exitingClass);
+    calendarGrid.classList.add('summary-month-animating', exitingClass);
+
+    window.setTimeout(() => {
+        if (animationId !== summaryMonthAnimationId) {
+            return;
+        }
+
+        renderSummaryCalendarContent(data);
+        resetSummaryMonthAnimation(monthLabel);
+        resetSummaryMonthAnimation(monthStats);
+        resetSummaryMonthAnimation(calendarGrid);
+        monthLabel.classList.add('summary-month-animating', enteringClass);
+        monthStats.classList.add('summary-month-animating', enteringClass);
+        calendarGrid.classList.add('summary-month-animating', enteringClass);
+
+        requestAnimationFrame(() => {
+            if (animationId !== summaryMonthAnimationId) {
+                return;
+            }
+
+            monthLabel.classList.add('summary-slide-active');
+            monthStats.classList.add('summary-slide-active');
+            calendarGrid.classList.add('summary-slide-active');
+        });
+
+        window.setTimeout(() => {
+            if (animationId !== summaryMonthAnimationId) {
+                return;
+            }
+
+            resetSummaryMonthAnimation(monthLabel);
+            resetSummaryMonthAnimation(monthStats);
+            resetSummaryMonthAnimation(calendarGrid);
+            setSummaryMonthButtonsDisabled(false);
+        }, 320);
+    }, 170);
+}
+
+function resetSummaryMonthAnimation(element) {
+    element.classList.remove(
+        'summary-month-animating',
+        'summary-slide-out-left',
+        'summary-slide-out-right',
+        'summary-slide-in-left',
+        'summary-slide-in-right',
+        'summary-slide-active'
+    );
+}
+
+function setSummaryMonthButtonsDisabled(disabled) {
+    summaryMonthIsLoading = disabled;
+    document.getElementById('btn-summary-prev-month').disabled = disabled;
+    document.getElementById('btn-summary-next-month').disabled = disabled;
+}
+
+function renderSummaryMonthStats(data) {
+    const days = Array.isArray(data.days) ? data.days : [];
+    const recordedDays = days.filter(dayHasRecords);
+    const recordedCount = recordedDays.length;
+    const totalCalories = recordedDays.reduce((sum, day) => sum + Number(day.calories || 0), 0);
+    const averageCalories = recordedCount > 0 ? Math.round(totalCalories / recordedCount) : 0;
+    const normalDays = recordedDays.filter(day => Number(day.percentage || 0) >= 90 && Number(day.percentage || 0) <= 105).length;
+    const overDays = recordedDays.filter(day => Number(day.percentage || 0) > 105).length;
+
+    return `
+        <div class="summary-month-stat-compact">
+            <strong>${averageCalories}</strong>
+            <span>ккал/день в среднем</span>
+        </div>
+        <p>${normalDays} в норме · ${overDays} переборов</p>
+    `;
+}
+
+function dayHasRecords(day) {
+    return Number(day.calories || 0) > 0
+        || Number(day.proteins || 0) > 0
+        || Number(day.fats || 0) > 0
+        || Number(day.carbs || 0) > 0
+        || (Array.isArray(day.meals) && day.meals.length > 0);
 }
 
 function buildMonthDates(month) {
@@ -79,20 +206,102 @@ function buildMonthDates(month) {
 
 function renderCalendarDay(dateInfo, day) {
     const rawPercentage = Number(day.percentage || 0);
-    const visualPercentage = Math.min(Math.max(rawPercentage, 0), 100);
+    const ringVisual = getRingVisual(rawPercentage);
     const calories = Number(day.calories || 0);
     const colorClass = `day-${day.color || 'empty'}`;
     const roundedPercentage = Math.round(rawPercentage);
 
     return `
         <button class="calendar-day ${colorClass}" type="button" data-date="${escapeHtml(day.date)}">
-            <span class="calendar-ring" style="--progress: ${visualPercentage}%">
+            <span
+                class="calendar-ring summary-progress-ring ${ringVisual.className}"
+                data-ring-progress-value="${ringVisual.progressValue}"
+                data-ring-rotation-value="${ringVisual.rotationValue}"
+            >
+                ${renderProgressRingSvg()}
+                <span class="summary-ring-dot" aria-hidden="true"></span>
                 <span class="calendar-day-number">${dateInfo.day}</span>
             </span>
             <span class="calendar-day-calories">${calories > 0 ? calories : ''}</span>
             <span class="calendar-day-percent">${calories > 0 ? `${roundedPercentage}%` : ''}</span>
         </button>
     `;
+}
+
+function getRingVisual(rawPercentage) {
+    const percentage = Math.max(Number(rawPercentage || 0), 0);
+    const progressValue = Math.min(percentage, 100);
+
+    return {
+        className: [
+            percentage > 0 ? 'has-progress' : '',
+            progressValue >= 99.5 ? 'is-full' : '',
+            percentage > 100 ? 'has-over' : ''
+        ].filter(Boolean).join(' '),
+        progressValue: Math.round(progressValue * 100) / 100,
+        rotationValue: Math.round(percentage * 100) / 100
+    };
+}
+
+function renderProgressRingSvg() {
+    return `
+        <svg class="summary-ring-svg" viewBox="0 0 44 44" aria-hidden="true" focusable="false">
+            <circle class="summary-ring-track" cx="22" cy="22" r="18" pathLength="100"></circle>
+            <circle class="summary-ring-progress" cx="22" cy="22" r="18" pathLength="100"></circle>
+        </svg>
+    `;
+}
+
+function applySummaryRingVisual(ring, rawPercentage) {
+    const ringVisual = getRingVisual(rawPercentage);
+
+    ring.classList.toggle('has-progress', ringVisual.className.includes('has-progress'));
+    ring.classList.toggle('is-full', ringVisual.className.includes('is-full'));
+    ring.classList.toggle('has-over', ringVisual.className.includes('has-over'));
+    ring.dataset.ringProgressValue = String(ringVisual.progressValue);
+    ring.dataset.ringRotationValue = String(ringVisual.rotationValue);
+    setRingStroke(ring, 0, 0);
+}
+
+function animateSummaryRings(root) {
+    const rings = root.matches?.('.summary-progress-ring')
+        ? [root]
+        : Array.from(root.querySelectorAll('.summary-progress-ring'));
+
+    rings.forEach(ring => {
+        ring.classList.remove('is-ring-animated');
+        ring.style.removeProperty('transition-delay');
+        setRingStroke(ring, 0, 0);
+    });
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            rings.forEach((ring, index) => {
+                ring.style.setProperty('transition-delay', `${Math.min(index * 16, 160)}ms`);
+                setRingStroke(
+                    ring,
+                    Number(ring.dataset.ringProgressValue || 0),
+                    Number(ring.dataset.ringRotationValue || 0)
+                );
+                ring.classList.add('is-ring-animated');
+            });
+        });
+    });
+}
+
+function setRingStroke(ring, progressValue, rotationValue) {
+    const progressCircle = ring.querySelector('.summary-ring-progress');
+    const dot = ring.querySelector('.summary-ring-dot');
+    const progress = Math.min(Math.max(Number(progressValue || 0), 0), 100);
+    const rotation = Math.max(Number(rotationValue || 0), 0);
+
+    if (progressCircle) {
+        progressCircle.style.strokeDashoffset = String(100 - progress);
+    }
+
+    if (dot) {
+        dot.style.transform = `rotate(${rotation * 3.6}deg)`;
+    }
 }
 
 function formatSummaryMonth(month) {
@@ -111,11 +320,13 @@ document.addEventListener('click', event => {
 });
 
 document.getElementById('btn-summary-prev-month').onclick = () => {
-    loadSummaryCalendar(shiftMonth(summaryCurrentMonth, -1));
+    if (summaryMonthIsLoading) return;
+    loadSummaryCalendar(shiftMonth(summaryCurrentMonth, -1), { direction: -1 });
 };
 
 document.getElementById('btn-summary-next-month').onclick = () => {
-    loadSummaryCalendar(shiftMonth(summaryCurrentMonth, 1));
+    if (summaryMonthIsLoading) return;
+    loadSummaryCalendar(shiftMonth(summaryCurrentMonth, 1), { direction: 1 });
 };
 
 document.querySelector('.summary-day-overlay').addEventListener('pointerdown', event => {
@@ -206,13 +417,13 @@ function closeSummaryDaySheet() {
 
 function renderSummaryDaySheet(day) {
     const rawPercentage = Number(day.percentage || 0);
-    const visualPercentage = Math.min(Math.max(rawPercentage, 0), 100);
     const calories = Number(day.calories || 0);
     const colorClass = `day-${day.color || 'empty'}`;
     const ring = document.getElementById('summary-day-ring');
 
-    ring.className = `summary-day-ring ${colorClass}`;
-    ring.style.setProperty('--progress', `${visualPercentage}%`);
+    ring.className = `summary-day-ring summary-progress-ring ${colorClass}`;
+    applySummaryRingVisual(ring, rawPercentage);
+    animateSummaryRings(ring);
 
     document.getElementById('summary-day-date').textContent = formatSummaryDate(day.date);
     document.getElementById('summary-day-percent').textContent = `${Math.round(rawPercentage)}%`;

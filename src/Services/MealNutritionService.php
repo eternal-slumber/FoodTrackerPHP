@@ -22,20 +22,34 @@ class MealNutritionService
         $proteins = max(0, round((float)($analysis['proteins'] ?? 0), 1));
         $fats = max(0, round((float)($analysis['fats'] ?? 0), 1));
         $carbs = max(0, round((float)($analysis['carbs'] ?? 0), 1));
+        $estimatedWeight = (int)($analysis['weight'] ?? 0);
+        $weight = $estimatedWeight > 0
+            ? max(1, min(5000, $estimatedWeight))
+            : 100;
         $confidence = isset($analysis['confidence'])
             ? max(0, min(1, round((float)$analysis['confidence'], 2)))
             : null;
 
         return [
             'name' => $foodName !== '' ? $foodName : 'Продукт',
-            'weight' => 100,
+            'weight' => $weight,
             'processing' => '',
-            'calories' => $calories,
-            'proteins' => $proteins,
-            'fats' => $fats,
-            'carbs' => $carbs,
+            'calories' => $this->portionValueToPer100g($calories, $weight, true),
+            'proteins' => $this->portionValueToPer100g($proteins, $weight),
+            'fats' => $this->portionValueToPer100g($fats, $weight),
+            'carbs' => $this->portionValueToPer100g($carbs, $weight),
             'confidence' => $confidence,
         ];
+    }
+
+    public function calculateDraftProductPortion(array $product): array
+    {
+        return $this->calculator->calculateForPortion([
+            'calories' => (float)($product['calories'] ?? 0),
+            'proteins' => (float)($product['proteins'] ?? 0),
+            'fats' => (float)($product['fats'] ?? 0),
+            'carbs' => (float)($product['carbs'] ?? 0),
+        ], max(1, min(5000, (int)($product['weight'] ?? 100))));
     }
 
     public function processProducts(array $products): array
@@ -128,5 +142,14 @@ class MealNutritionService
             },
             []
         );
+    }
+
+    private function portionValueToPer100g(float|int $value, int $weight, bool $integer = false): float|int
+    {
+        $per100g = $weight > 0 ? ((float)$value * 100 / $weight) : 0;
+
+        return $integer
+            ? max(0, (int)round($per100g))
+            : max(0, round($per100g, 1));
     }
 }

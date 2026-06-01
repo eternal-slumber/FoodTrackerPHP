@@ -7,9 +7,13 @@ const editorScreen = document.getElementById('sheet-screen-editor');
 const cameraInput = document.getElementById('camera-input');
 const galleryInput = document.getElementById('gallery-input');
 const draftPhotoImg = document.getElementById('draft-photo-img');
+const draftPhotoPreview = document.getElementById('draft-photo-preview');
+const photoActions = document.querySelector('.photo-actions');
 const btnCamera = document.getElementById('btn-camera');
 const btnGallery = document.getElementById('btn-gallery');
 const btnManualEntry = document.getElementById('btn-manual-entry');
+const btnAnalyzePhoto = document.getElementById('btn-analyze-photo');
+const btnAnalyzePhotoText = btnAnalyzePhoto.querySelector('.photo-analyze-text');
 const btnChangePhoto = document.getElementById('btn-change-photo');
 const btnCancelDraft = document.getElementById('btn-cancel-draft');
 const btnScanMore = document.getElementById('btn-scan-more');
@@ -29,6 +33,8 @@ const draftSourceLabel = document.getElementById('draft-source-label');
 
 const MAX_PRODUCTS_PER_MEAL = 6;
 const MAX_DRAFT_SCANS_PER_MEAL = 3;
+const MAX_UPLOAD_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PHOTO_INTENTS = {
     AI_SCAN: 'ai_scan',
     ATTACH_ONLY: 'attach_only',
@@ -68,6 +74,7 @@ let currentMainButtonHandler = null;
 let photoIntent = PHOTO_INTENTS.AI_SCAN;
 let nextScanBatchNumber = 1;
 let mealNameEditedByUser = false;
+let isAnalyzingPhoto = false;
 let isSavingMealDraft = false;
 let isFillingKbju = false;
 
@@ -139,6 +146,7 @@ function openMealSheet() {
     photoIntent = PHOTO_INTENTS.AI_SCAN;
     nextScanBatchNumber = 1;
     mealNameEditedByUser = false;
+    isAnalyzingPhoto = false;
     isSavingMealDraft = false;
     isFillingKbju = false;
     if (selectedPhotoUrl) URL.revokeObjectURL(selectedPhotoUrl);
@@ -160,6 +168,7 @@ function closeMealSheet() {
     galleryInput.value = '';
     attachmentPhotoInput.value = '';
     photoIntent = PHOTO_INTENTS.AI_SCAN;
+    isAnalyzingPhoto = false;
     isSavingMealDraft = false;
     isFillingKbju = false;
 }
@@ -177,6 +186,7 @@ function showMealStep(step) {
     if (step === 'photo') {
         setBackAction(handleSheetBack);
         setMainAction('Проанализировать', analyzeSelectedPhoto);
+        updateAnalyzePhotoButton();
     }
 
     if (step === 'editor') {
@@ -210,10 +220,23 @@ function handleSheetBack() {
 function handleAiPhotoSelected(file) {
     if (!file) return;
 
+    if (!validateImageFileBeforeUpload(file)) {
+        resetPhotoInputs();
+        return;
+    }
+
     selectedPhotoFile = file;
     if (selectedPhotoUrl) URL.revokeObjectURL(selectedPhotoUrl);
     selectedPhotoUrl = URL.createObjectURL(file);
     draftPhotoImg.src = selectedPhotoUrl;
+
+    if (photoIntent === PHOTO_INTENTS.APPEND_SCAN) {
+        syncDraftFromEditor();
+        mealDraft.source = 'photo';
+        showMealStep('editor');
+        analyzeSelectedPhoto();
+        return;
+    }
 
     if (photoIntent !== PHOTO_INTENTS.APPEND_SCAN) {
         mealDraft = createEmptyDraft();
@@ -225,6 +248,10 @@ function handleAiPhotoSelected(file) {
 }
 
 async function analyzeSelectedPhoto() {
+    if (isAnalyzingPhoto) {
+        return;
+    }
+
     if (!selectedPhotoFile) {
         tg.showAlert('Выберите фото');
         haptic('error');
@@ -242,7 +269,18 @@ async function analyzeSelectedPhoto() {
         return;
     }
 
+    const isAppendScan = photoIntent === PHOTO_INTENTS.APPEND_SCAN;
+    const appendScanId = isAppendScan ? createScanBatchId() : null;
+
+    isAnalyzingPhoto = true;
+    updateAnalyzePhotoButton();
+    updateDraftLimitControls();
     tg.MainButton.showProgress(false);
+
+    if (isAppendScan && appendScanId) {
+        addScanLoadingCard(appendScanId);
+        updateDraftSourceLabel();
+    }
 
     const formData = new FormData();
     formData.append('photo', selectedPhotoFile);
@@ -252,15 +290,18 @@ async function analyzeSelectedPhoto() {
             method: 'POST',
             body: formData
         });
-        const result = await response.json();
+        const result = await readJsonOrNull(response);
 
-        if (!response.ok || result.status !== 'success') {
-            tg.showAlert(result.message || result.error || 'Не удалось распознать фото');
+        if (!response.ok || result?.status !== 'success') {
+            if (appendScanId) {
+                removeScanLoadingCard(appendScanId);
+            }
+            tg.showAlert(getAnalyzePhotoErrorMessage(response, result));
             haptic('error');
             return;
         }
 
-        const scanId = createScanBatchId();
+        const scanId = appendScanId || createScanBatchId();
         const analyzedDraft = normalizeDraft(result.data, 'photo');
         analyzedDraft.products = analyzedDraft.products.map(product => ({
             ...product,
@@ -277,11 +318,58 @@ async function analyzeSelectedPhoto() {
         haptic('success');
         showMealStep('editor');
     } catch (error) {
+        if (appendScanId) {
+            removeScanLoadingCard(appendScanId);
+        }
         tg.showAlert('Ошибка при анализе фото');
         haptic('error');
     } finally {
+        if (isAppendScan) {
+            photoIntent = PHOTO_INTENTS.AI_SCAN;
+        }
+        isAnalyzingPhoto = false;
+        updateAnalyzePhotoButton();
+        if (!editorScreen.classList.contains('hidden')) {
+            updateDraftSourceLabel();
+            updateDraftLimitControls();
+        }
         tg.MainButton.hideProgress();
     }
+}
+
+async function readJsonOrNull(response) {
+    try {
+        return await response.json();
+    } catch (error) {
+        return null;
+    }
+}
+
+function getAnalyzePhotoErrorMessage(response, result) {
+    if (response.status === 413) {
+        return 'Фото слишком большое. Максимум 10 МБ';
+    }
+
+    if (response.status === 504) {
+        return 'AI не успел ответить. Попробуйте меньшее фото или другую модель';
+    }
+
+    if (response.status === 502) {
+        return result?.error || 'AI сейчас недоступен. Попробуйте позже';
+    }
+
+    return result?.message || result?.error || 'Не удалось распознать фото';
+}
+
+function updateAnalyzePhotoButton() {
+    btnAnalyzePhoto.disabled = isAnalyzingPhoto;
+    btnAnalyzePhotoText.textContent = isAnalyzingPhoto ? 'AI анализирует фото' : 'Проанализировать';
+    btnAnalyzePhoto.classList.toggle('is-loading', isAnalyzingPhoto);
+    btnAnalyzePhoto.classList.toggle('hidden', Boolean(telegramInitData));
+    btnChangePhoto.disabled = isAnalyzingPhoto;
+    btnChangePhoto.setAttribute('aria-hidden', String(isAnalyzingPhoto));
+    photoActions?.classList.toggle('is-analyzing', isAnalyzingPhoto);
+    draftPhotoPreview?.classList.toggle('is-processing', isAnalyzingPhoto);
 }
 
 function normalizeDraft(data, source) {
@@ -346,6 +434,11 @@ function renderDraftImageField() {
 async function uploadAttachmentPhoto(file) {
     if (!file) return;
 
+    if (!validateImageFileBeforeUpload(file)) {
+        attachmentPhotoInput.value = '';
+        return;
+    }
+
     photoIntent = PHOTO_INTENTS.ATTACH_ONLY;
 
     if (manualPhotoUrl) URL.revokeObjectURL(manualPhotoUrl);
@@ -384,6 +477,31 @@ async function uploadAttachmentPhoto(file) {
         renderDraftImageField();
         attachmentPhotoInput.value = '';
     }
+}
+
+function validateImageFileBeforeUpload(file) {
+    if (file.type && !ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        tg.showAlert('Поддерживаются только JPEG, PNG и WebP');
+        haptic('error');
+        return false;
+    }
+
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+        tg.showAlert(`Фото слишком большое: ${formatFileSize(file.size)}. Максимум 10 МБ`);
+        haptic('error');
+        return false;
+    }
+
+    return true;
+}
+
+function formatFileSize(bytes) {
+    return `${(bytes / 1024 / 1024).toFixed(1)} МБ`;
+}
+
+function resetPhotoInputs() {
+    cameraInput.value = '';
+    galleryInput.value = '';
 }
 
 function removeManualDraftPhoto() {
@@ -460,6 +578,48 @@ function createProductCard(product, index) {
     `;
 }
 
+function createScanLoadingCard(scanId, index) {
+    return `
+        <div class="product-card product-card-loading" data-index="${index}" data-scan-id="${escapeHtml(scanId)}" data-loading="true" aria-live="polite">
+            <div class="product-card-header">
+                <span class="input-label">Продукт ${index + 1}</span>
+                <span class="scan-loading-badge">AI</span>
+            </div>
+            <div class="scan-loading-content">
+                <span class="scan-loading-spinner" aria-hidden="true"></span>
+                <div>
+                    <strong class="shimmer-text">Распознаю блюдо</strong>
+                    <p>Заполню название, вес и КБЖУ после ответа AI</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function addScanLoadingCard(scanId) {
+    productsList.insertAdjacentHTML(
+        'beforeend',
+        createScanLoadingCard(scanId, productsList.querySelectorAll('.product-card').length)
+    );
+    renumberProductCards();
+    updateDraftLimitControls();
+    productsList.lastElementChild?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function removeScanLoadingCard(scanId) {
+    const card = Array.from(productsList.querySelectorAll('.product-card-loading'))
+        .find(item => item.dataset.scanId === scanId);
+
+    if (!card) {
+        return;
+    }
+
+    card.remove();
+    renumberProductCards();
+    updateDraftLimitControls();
+    recalculateDraftTotal();
+}
+
 function renumberProductCards() {
     productsList.querySelectorAll('.product-card').forEach((card, index) => {
         card.dataset.index = String(index);
@@ -473,6 +633,10 @@ function renumberProductCards() {
 
 function bindProductCardEvents() {
     productsList.querySelectorAll('.product-card').forEach(card => {
+        if (card.dataset.loading === 'true') {
+            return;
+        }
+
         card.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', recalculateDraftTotal);
         });
@@ -521,7 +685,7 @@ productsList.addEventListener('click', event => {
 });
 
 function collectDraftProducts() {
-    return Array.from(productsList.querySelectorAll('.product-card')).slice(0, MAX_PRODUCTS_PER_MEAL).map(card => {
+    return Array.from(productsList.querySelectorAll('.product-card:not([data-loading="true"])')).slice(0, MAX_PRODUCTS_PER_MEAL).map(card => {
         const calories = card.querySelector('.product-calories').value;
         const proteins = card.querySelector('.product-proteins').value;
         const fats = card.querySelector('.product-fats').value;
@@ -602,6 +766,29 @@ function fillMissingCardKbju(card, nutrients) {
         const value = nutrients?.[key];
         input.value = value === undefined || value === null ? 0 : value;
     });
+}
+
+function setKbjuLoadingState(card, isLoading) {
+    const controls = card.querySelectorAll('input, select, button');
+    card.classList.toggle('product-card-kbju-loading', isLoading);
+    card.setAttribute('aria-busy', String(isLoading));
+
+    controls.forEach(control => {
+        control.disabled = isLoading;
+    });
+
+    let overlay = card.querySelector('.kbju-loading-overlay');
+
+    if (isLoading && !overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'kbju-loading-overlay';
+        overlay.innerHTML = '<span class="shimmer-text">AI заполняет КБЖУ</span>';
+        card.appendChild(overlay);
+    }
+
+    if (!isLoading && overlay) {
+        overlay.remove();
+    }
 }
 
 function confirmAsync(message) {
@@ -705,20 +892,32 @@ function updateDraftLimitControls() {
     const scanLimitReached = scanCount >= MAX_DRAFT_SCANS_PER_MEAL;
     const canScanMore = mealDraft.source === 'photo' || scanCount > 0;
 
-    btnAddProduct.disabled = productsLimitReached;
+    btnAddProduct.disabled = productsLimitReached || isAnalyzingPhoto;
     btnAddProduct.textContent = productsLimitReached ? 'Лимит продуктов' : '＋ Добавить продукт';
 
-    btnFillKbju.disabled = isFillingKbju;
+    btnFillKbju.disabled = isFillingKbju || isAnalyzingPhoto;
     btnFillKbju.textContent = isFillingKbju ? 'Заполняю...' : 'Заполнить КБЖУ';
 
     btnScanMore.classList.toggle('hidden', !canScanMore);
-    btnScanMore.disabled = !canScanMore || productsLimitReached || scanLimitReached;
-    btnScanMore.textContent = scanLimitReached
+    btnScanMore.disabled = !canScanMore || productsLimitReached || scanLimitReached || isAnalyzingPhoto;
+    btnScanMore.textContent = isAnalyzingPhoto
+        ? 'Сканирую...'
+        : scanLimitReached
         ? `Лимит сканов ${scanCount}/${MAX_DRAFT_SCANS_PER_MEAL}`
         : `Сканировать еще ${scanCount}/${MAX_DRAFT_SCANS_PER_MEAL}`;
+
+    if (!isSavingMealDraft) {
+        btnSaveMeal.disabled = isAnalyzingPhoto;
+        btnSaveMeal.textContent = isAnalyzingPhoto ? 'Идет анализ...' : 'Сохранить';
+    }
 }
 
 function updateDraftSourceLabel() {
+    if (isAnalyzingPhoto && !editorScreen.classList.contains('hidden')) {
+        draftSourceLabel.textContent = 'AI распознает блюдо, можно дождаться результата прямо здесь';
+        return;
+    }
+
     const scanInfo = `AI-сканы: ${getDraftScanCount()}/${MAX_DRAFT_SCANS_PER_MEAL}`;
     const hasScannedProducts = getDraftScanCount() > 0;
 
@@ -814,6 +1013,7 @@ async function fillMissingKbjuWithAi() {
 
     try {
         for (const card of cardsToFill) {
+            setKbjuLoadingState(card, true);
             const productName = card.querySelector('.product-name').value.trim();
             const response = await apiFetch('/api/product-nutrition', {
                 method: 'POST',
@@ -829,6 +1029,7 @@ async function fillMissingKbjuWithAi() {
             }
 
             fillMissingCardKbju(card, result.data || {});
+            setKbjuLoadingState(card, false);
         }
 
         syncDraftFromEditor();
@@ -838,6 +1039,7 @@ async function fillMissingKbjuWithAi() {
         tg.showAlert('Ошибка при заполнении КБЖУ');
         haptic('error');
     } finally {
+        cardsToFill.forEach(card => setKbjuLoadingState(card, false));
         isFillingKbju = false;
         draftSourceLabel.textContent = previousDraftSourceText;
         updateDraftLimitControls();
@@ -857,6 +1059,12 @@ function recalculateDraftTotal() {
 
 async function saveMealDraft() {
     if (isSavingMealDraft) {
+        return;
+    }
+
+    if (isAnalyzingPhoto) {
+        tg.showAlert('Дождитесь окончания анализа блюда');
+        haptic('error');
         return;
     }
 
@@ -934,6 +1142,7 @@ document.getElementById('btn-add-food').onclick = openMealSheet;
 document.querySelector('.sheet-overlay').onclick = closeMealSheet;
 btnManualEntry.onclick = startManualDraft;
 btnCancelDraft.onclick = closeMealSheet;
+btnAnalyzePhoto.onclick = analyzeSelectedPhoto;
 btnSaveMeal.onclick = saveMealDraft;
 btnFillKbju.onclick = fillMissingKbjuWithAi;
 btnAddManualPhoto.onclick = startAttachmentPhotoSelection;

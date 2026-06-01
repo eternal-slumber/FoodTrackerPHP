@@ -27,6 +27,7 @@ class MealDraftService
         $relativePath = $this->storage->saveUploadedFile($dto->imagePath, $dto->telegramId, $dto->mimeType);
         $analysis = $this->photoAnalysis->analyze($this->storage->fullPath($relativePath));
         $product = $this->nutrition->createAiDraftProduct($analysis);
+        $totals = $this->nutrition->calculateDraftProductPortion($product);
 
         return [
             'status' => 'success',
@@ -34,10 +35,10 @@ class MealDraftService
                 'meal_name' => $product['name'] !== '' ? $product['name'] : 'Прием пищи',
                 'products' => [$product],
                 'totals' => [
-                    'calories' => $product['calories'],
-                    'proteins' => $product['proteins'],
-                    'fats' => $product['fats'],
-                    'carbs' => $product['carbs'],
+                    'calories' => $totals['calories'],
+                    'proteins' => $totals['proteins'],
+                    'fats' => $totals['fats'],
+                    'carbs' => $totals['carbs'],
                     'weight' => $product['weight'],
                 ],
                 'confidence' => null,

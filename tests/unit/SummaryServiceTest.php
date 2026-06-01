@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use App\Models\User;
 use App\Repositories\MealRepository;
 use App\Repositories\UserRepository;
+use App\Services\MacroGoalCalculationService;
 use App\Services\SummaryService;
 use PHPUnit\Framework\TestCase;
 
@@ -75,6 +76,12 @@ class SummaryServiceTest extends TestCase
 
         $this->assertSame('2026-05', $summary['month']);
         $this->assertSame(2000, $summary['daily_goal']);
+        $this->assertSame([
+            'calories_goal' => 2000,
+            'proteins_goal' => 112,
+            'fats_goal' => 56,
+            'carbs_goal' => 262,
+        ], $summary['macro_goals']);
         $this->assertSame([], $summary['days']);
     }
 
@@ -100,7 +107,8 @@ class SummaryServiceTest extends TestCase
 
         return new SummaryService(
             new FakeSummaryUserRepository($user),
-            new FakeSummaryMealRepository($dailyCalories)
+            new FakeSummaryMealRepository($dailyCalories),
+            new MacroGoalCalculationService()
         );
     }
 }

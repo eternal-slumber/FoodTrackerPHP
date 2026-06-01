@@ -116,6 +116,47 @@ function getAppBackgroundColor() {
     return colorToHex(getComputedStyle(document.body).backgroundColor) || '#ffffff';
 }
 
+const APP_THEME_STORAGE_KEY = 'foodTracker.theme';
+
+function normalizeAppTheme(theme) {
+    return ['system', 'light', 'dark'].includes(theme) ? theme : 'system';
+}
+
+function getStoredAppTheme() {
+    try {
+        return normalizeAppTheme(localStorage.getItem(APP_THEME_STORAGE_KEY) || 'system');
+    } catch (error) {
+        return 'system';
+    }
+}
+
+function applyAppTheme(theme, options = {}) {
+    const normalizedTheme = normalizeAppTheme(theme);
+
+    if (options.animate) {
+        document.documentElement.classList.add('theme-transition');
+        window.setTimeout(() => {
+            document.documentElement.classList.remove('theme-transition');
+        }, 340);
+    }
+
+    document.documentElement.dataset.appTheme = normalizedTheme;
+
+    if (options.persist) {
+        try {
+            localStorage.setItem(APP_THEME_STORAGE_KEY, normalizedTheme);
+        } catch (error) {
+            console.debug('[Theme] save failed:', error);
+        }
+    }
+
+    if (options.updateViewport !== false && typeof applyTelegramViewportSettings === 'function') {
+        applyTelegramViewportSettings();
+    }
+
+    return normalizedTheme;
+}
+
 function colorToHex(color) {
     var match = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
     if (!match) {
@@ -149,11 +190,14 @@ function applyTelegramViewportSettings() {
     callTelegramViewportMethod('setBottomBarColor', backgroundColor);
 
     var safeAreaTop = Number(tg.safeAreaInset?.top || 0);
+    var contentSafeAreaTop = Number(tg.contentSafeAreaInset?.top || 0);
     document.documentElement.style.setProperty('--tg-safe-area-top', safeAreaTop + 'px');
+    document.documentElement.style.setProperty('--tg-content-safe-area-top', contentSafeAreaTop + 'px');
 }
 
 var realTg = window.Telegram?.WebApp;
 var tg = hasTelegramSession(realTg) ? realTg : createTelegramWebAppMock();
+applyAppTheme(getStoredAppTheme(), { updateViewport: false });
 applyTelegramViewportSettings();
 tg.expand();
 if (typeof tg.requestFullscreen === 'function') {
@@ -171,3 +215,10 @@ if (typeof tg.onEvent === 'function') {
 var user = tg.initDataUnsafe?.user;
 var tgId = user?.id || 0;
 var telegramInitData = tg.initData || '';
+
+window.appTheme = {
+    get: getStoredAppTheme,
+    set(theme) {
+        return applyAppTheme(theme, { persist: true, animate: true });
+    }
+};

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\AI;
 
+use App\Exceptions\AppException;
+
 class MealPhotoAnalysisAIService
 {
     public function __construct(
@@ -26,15 +28,16 @@ class MealPhotoAnalysisAIService
 - Если еда не видна, фото не еды или качество не позволяет оценить состав: верни нули и "food": "не определено".
 - Если видна еда, но состав/вес неясны, используй обобщенное русское название, например "салат", "каша", "мясо с гарниром", и понижай confidence.
 - Не указывай бренд, редкие ингредиенты или способ приготовления, если они явно не видны.
+- weight оценивай в граммах для всей видимой съедобной порции на фото.
 - kcal, proteins, fats и carbs оценивай для всей видимой порции, а не на 100 г.
-- Значения должны быть числами: kcal целое, proteins/fats/carbs можно с 1 знаком после запятой.
+- Значения должны быть числами: weight и kcal целые, proteins/fats/carbs можно с 1 знаком после запятой.
 - confidence — число от 0 до 1.
 
 Формат ответа:
-{"food":"название на русском","kcal":123,"proteins":12.3,"fats":4.5,"carbs":30.1,"confidence":0.72}
+{"food":"название на русском","weight":250,"kcal":520,"proteins":32.3,"fats":18.5,"carbs":54.1,"confidence":0.72}
 
 Если оценка невозможна:
-{"food":"не определено","kcal":0,"proteins":0,"fats":0,"carbs":0,"confidence":0}
+{"food":"не определено","weight":0,"kcal":0,"proteins":0,"fats":0,"carbs":0,"confidence":0}
 PROMPT;
 
         $textResponse = $this->client->complete([[
@@ -46,13 +49,13 @@ PROMPT;
         ]], 60, 'analyze');
 
         if ($textResponse === null) {
-            return $this->emptyAnalysis('Ошибка API');
+            throw new AppException('AI API не ответил вовремя или недоступен', 502);
         }
 
         $parsed = $this->jsonParser->parseObject($textResponse);
         if ($parsed === null) {
             error_log('Meal photo analysis parse error. Text: ' . json_encode($textResponse, JSON_UNESCAPED_UNICODE));
-            return $this->emptyAnalysis('Не определено');
+            throw new AppException('AI вернул некорректный ответ', 502);
         }
 
         return $this->normalizeAnalysis($parsed);
@@ -67,23 +70,12 @@ PROMPT;
 
         return [
             'food' => $food,
+            'weight' => max(0, min(5000, (int)round((float)($analysis['weight'] ?? 0)))),
             'kcal' => max(0, (int)round((float)($analysis['kcal'] ?? 0))),
             'proteins' => max(0, round((float)($analysis['proteins'] ?? 0), 1)),
             'fats' => max(0, round((float)($analysis['fats'] ?? 0), 1)),
             'carbs' => max(0, round((float)($analysis['carbs'] ?? 0), 1)),
             'confidence' => max(0, min(1, round((float)($analysis['confidence'] ?? 0), 2))),
-        ];
-    }
-
-    private function emptyAnalysis(string $food): array
-    {
-        return [
-            'food' => $food,
-            'kcal' => 0,
-            'proteins' => 0,
-            'fats' => 0,
-            'carbs' => 0,
-            'confidence' => 0,
         ];
     }
 }
