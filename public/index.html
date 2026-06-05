@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/assets/css/style.css?v=20260605-daily-stats-glass">
+    <link rel="stylesheet" href="/assets/css/style.css?v=20260605-slider-indicators">
     <title>FoodTracker AI</title>
 </head>
 <body>
@@ -127,7 +127,8 @@
                         <div class="form-group">
                             <label for="gender">Пол</label>
                             <input type="hidden" id="gender" value="">
-                            <div class="register-gender-control" role="group" aria-label="Пол">
+                            <div class="register-gender-control" role="group" aria-label="Пол" style="--active-gender-index: 0">
+                                <span class="register-gender-indicator" aria-hidden="true"></span>
                                 <button type="button" data-register-gender="male" aria-pressed="false">Мужчина</button>
                                 <button type="button" data-register-gender="female" aria-pressed="false">Женщина</button>
                             </div>
@@ -608,8 +609,9 @@
                             <span class="settings-label">Тема</span>
                             <span class="settings-control-hint">Выберите оформление приложения</span>
                         </div>
-                        <fieldset class="theme-switcher">
+                        <fieldset class="theme-switcher" style="--active-theme-index: 0">
                             <legend class="theme-switcher__legend">Тема приложения</legend>
+                            <span class="theme-switcher__indicator" aria-hidden="true"></span>
                             <label class="theme-switcher__option" title="Системная">
                                 <input class="theme-switcher__input" type="radio" name="app_theme" value="system" data-theme-choice="system" c-option="1">
                                 <svg class="theme-switcher__icon" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
@@ -721,7 +723,8 @@
             </div>
         </div>
 
-        <nav id="app-tab-bar" class="tab-bar hidden">
+        <nav id="app-tab-bar" class="tab-bar hidden" style="--active-tab-index: 0">
+            <span class="tab-indicator" aria-hidden="true"></span>
             <button class="tab-item active" data-tab="home">
                 <span class="tab-icon" aria-hidden="true">
                     <svg viewBox="0 0 24 24" focusable="false">
@@ -767,8 +770,8 @@
     <script src="/assets/js/progress.js?v=20260520-progress-tz"></script>
     <script src="/assets/js/history.js?v=20260531-history-placeholder"></script>
     <script src="/assets/js/meal-editor.js?v=20260601-photo-loader-polish"></script>
-    <script src="/assets/js/profile.js?v=20260605-liquid-glass-default-on"></script>
+    <script src="/assets/js/profile.js?v=20260605-theme-indicator-motion"></script>
     <script src="/assets/js/summary.js?v=20260529-summary-over-dot"></script>
-    <script src="/assets/js/app.js?v=20260605-tab-active-no-reload"></script>
+    <script src="/assets/js/app.js?v=20260605-tab-indicator"></script>
 </body>
 </html>

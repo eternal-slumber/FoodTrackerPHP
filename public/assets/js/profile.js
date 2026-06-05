@@ -125,7 +125,7 @@ const registerFirstStepFields = [
     document.getElementById('weight'),
     document.getElementById('gender')
 ];
-const registerGenderButtons = document.querySelectorAll('[data-register-gender]');
+const registerGenderButtons = Array.from(document.querySelectorAll('[data-register-gender]'));
 const registerGenderControl = registerGenderButtons[0]?.closest('.register-gender-control');
 const btnNext1 = document.getElementById('btn-next-1');
 let activeRegisterStep = 1;
@@ -137,6 +137,12 @@ function setRegisterGender(value) {
     genderInput.value = value;
 
     if (registerGenderControl) {
+        const activeGenderIndex = registerGenderButtons.findIndex(button => button.dataset.registerGender === value);
+
+        if (activeGenderIndex >= 0) {
+            registerGenderControl.style.setProperty('--active-gender-index', activeGenderIndex);
+        }
+
         registerGenderControl.dataset.activeGender = value;
     }
 
@@ -371,11 +377,25 @@ document.getElementById('btn-edit-profile').onclick = () => {
     showScreen('profileEdit');
 };
 
-const themeChoiceInputs = document.querySelectorAll('[data-theme-choice]');
+const themeChoiceInputs = Array.from(document.querySelectorAll('[data-theme-choice]'));
 const themeSwitcher = themeChoiceInputs[0]?.closest('.theme-switcher');
+const themeSwitcherIndicator = themeSwitcher?.querySelector('.theme-switcher__indicator');
+
+function setThemeSwitcherIndex(index) {
+    if (!themeSwitcher || index < 0) return;
+
+    themeSwitcher.style.setProperty('--active-theme-index', index);
+
+    if (themeSwitcherIndicator) {
+        themeSwitcherIndicator.style.transform = `translateX(calc(${index} * (100% + var(--theme-gap))))`;
+    }
+}
 
 function updateThemeControls() {
     const currentTheme = window.appTheme?.get?.() || 'system';
+    const activeThemeIndex = themeChoiceInputs.findIndex(input => input.dataset.themeChoice === currentTheme);
+
+    setThemeSwitcherIndex(activeThemeIndex);
 
     themeChoiceInputs.forEach(input => {
         const isActive = input.dataset.themeChoice === currentTheme;
@@ -385,33 +405,13 @@ function updateThemeControls() {
     });
 }
 
-function trackThemeSwitcherPrevious(switcher) {
-    if (!switcher) return;
-
-    const radios = switcher.querySelectorAll('input[type="radio"]');
-    let previousValue = switcher.querySelector('input[type="radio"]:checked')?.getAttribute('c-option') || null;
-
-    if (previousValue) {
-        switcher.setAttribute('c-previous', previousValue);
-    }
-
-    radios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (!radio.checked) return;
-
-            switcher.setAttribute('c-previous', previousValue ?? '');
-            previousValue = radio.getAttribute('c-option');
-        });
-    });
-}
-
 updateThemeControls();
-trackThemeSwitcherPrevious(themeSwitcher);
 
 themeChoiceInputs.forEach(input => {
     input.addEventListener('change', () => {
         if (!input.checked) return;
 
+        setThemeSwitcherIndex(themeChoiceInputs.indexOf(input));
         window.appTheme?.set?.(input.dataset.themeChoice);
         updateThemeControls();
     });

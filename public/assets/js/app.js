@@ -8,6 +8,7 @@ const screens = {
 };
 
 const appTabBar = document.getElementById('app-tab-bar');
+const tabItems = Array.from(document.querySelectorAll('.tab-item'));
 
 let userData = null;
 
@@ -41,7 +42,7 @@ async function checkUserStatus() {
     }
 }
 
-document.querySelectorAll('.tab-item').forEach(tab => {
+tabItems.forEach(tab => {
     tab.onclick = () => {
         if (tab.classList.contains('active')) {
             return;
@@ -88,7 +89,13 @@ function updateTabBar(screenName) {
     const activeTab = screenNameToTab(screenName);
     appTabBar.classList.toggle('hidden', !activeTab);
 
-    document.querySelectorAll('.tab-item').forEach(item => {
+    const activeIndex = tabItems.findIndex(item => item.dataset.tab === activeTab);
+
+    if (activeIndex >= 0) {
+        appTabBar.style.setProperty('--active-tab-index', activeIndex);
+    }
+
+    tabItems.forEach(item => {
         item.classList.toggle('active', item.dataset.tab === activeTab);
     });
 }
