@@ -22,7 +22,7 @@ final class ErrorMiddlewareFactory
         );
 
         $errorMiddleware->setDefaultErrorHandler(
-            static function (
+            function (
                 Request $request,
                 Throwable $exception,
                 bool $displayErrorDetails

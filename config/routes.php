@@ -7,10 +7,11 @@ use App\Controllers\HomeController;
 use App\Controllers\TelegramBotController;
 use App\Controllers\UserController;
 use App\Services\RouteLoader;
+use Psr\Container\ContainerInterface;
 use Slim\App;
 
-return static function (App $app): void {
-    $routeLoader = new RouteLoader($app, [
+return function (App $app, ContainerInterface $container): void {
+    $routeLoader = new RouteLoader($app, $container, [
         HomeController::class,
         UserController::class,
         AnalyzeController::class,

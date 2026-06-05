@@ -42,24 +42,24 @@ use function DI\autowire;
 $builder = new ContainerBuilder();
 
 $builder->addDefinitions([
-    PDO::class => static fn(): PDO => Database::getConnection(),
+    PDO::class => fn(): PDO => Database::getConnection(),
 
-    AIProviderConfig::class => static fn(): AIProviderConfig => AIProviderConfig::fromEnv($_ENV),
+    AIProviderConfig::class => fn(): AIProviderConfig => AIProviderConfig::fromEnv($_ENV),
 
-    AIChatClientInterface::class => static fn(ContainerInterface $container): AIChatClientInterface => new OpenAICompatibleChatClient(
+    AIChatClientInterface::class => fn(ContainerInterface $container): AIChatClientInterface => new OpenAICompatibleChatClient(
         $container->get(AIProviderConfig::class)
     ),
 
-    TelegramAuthConfig::class => static fn(): TelegramAuthConfig => TelegramAuthConfig::fromEnv($_ENV),
-    TelegramBotConfig::class => static fn(): TelegramBotConfig => TelegramBotConfig::fromEnv($_ENV),
+    TelegramAuthConfig::class => fn(): TelegramAuthConfig => TelegramAuthConfig::fromEnv($_ENV),
+    TelegramBotConfig::class => fn(): TelegramBotConfig => TelegramBotConfig::fromEnv($_ENV),
     ResponseFactory::class => autowire(),
 
-    TelegramAuthService::class => static fn(ContainerInterface $container): TelegramAuthService => new TelegramAuthService(
+    TelegramAuthService::class => fn(ContainerInterface $container): TelegramAuthService => new TelegramAuthService(
         $container->get(TelegramAuthConfig::class)->botToken,
         $container->get(TelegramAuthConfig::class)->maxAgeSeconds
     ),
 
-    TelegramAuthMiddleware::class => static function (ContainerInterface $container): TelegramAuthMiddleware {
+    TelegramAuthMiddleware::class => function (ContainerInterface $container): TelegramAuthMiddleware {
         $config = $container->get(TelegramAuthConfig::class);
 
         return new TelegramAuthMiddleware(
@@ -90,7 +90,7 @@ $builder->addDefinitions([
     MealService::class => autowire(),
     SummaryService::class => autowire(),
 
-    UploadedFileStorage::class => static fn(): UploadedFileStorage => new UploadedFileStorage(
+    UploadedFileStorage::class => fn(): UploadedFileStorage => new UploadedFileStorage(
         dirname(__DIR__) . '/storage/uploads/'
     ),
     MealAnalysisService::class => autowire(),

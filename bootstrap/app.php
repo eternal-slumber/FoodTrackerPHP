@@ -17,6 +17,6 @@ $app->add($container->get(TelegramAuthMiddleware::class));
 $displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 ErrorMiddlewareFactory::create($app, $displayErrorDetails);
 
-(require dirname(__DIR__) . '/config/routes.php')($app);
+(require dirname(__DIR__) . '/config/routes.php')($app, $container);
 
 return $app;
