@@ -43,6 +43,10 @@ async function checkUserStatus() {
 
 document.querySelectorAll('.tab-item').forEach(tab => {
     tab.onclick = () => {
+        if (tab.classList.contains('active')) {
+            return;
+        }
+
         showScreen(tabToScreenName(tab.dataset.tab));
     };
 });

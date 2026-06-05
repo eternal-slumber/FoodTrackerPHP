@@ -4,10 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/assets/css/style.css?v=20260601-settings-top-align">
+    <link rel="stylesheet" href="/assets/css/style.css?v=20260605-daily-stats-glass">
     <title>FoodTracker AI</title>
 </head>
 <body>
+    <svg xmlns="http://www.w3.org/2000/svg" role="presentation" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+        <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%" filterUnits="objectBoundingBox">
+            <feTurbulence type="fractalNoise" baseFrequency="0.001 0.005" numOctaves="1" seed="17" result="turbulence"/>
+            <feComponentTransfer in="turbulence" result="mapped">
+                <feFuncR type="gamma" amplitude="1" exponent="10" offset="0.5"/>
+                <feFuncG type="gamma" amplitude="0" exponent="1" offset="0"/>
+                <feFuncB type="gamma" amplitude="0" exponent="1" offset="0.5"/>
+            </feComponentTransfer>
+            <feGaussianBlur in="turbulence" stdDeviation="3" result="softMap"/>
+            <feSpecularLighting in="softMap" surfaceScale="5" specularConstant="1" specularExponent="100" lighting-color="white" result="specLight">
+                <fePointLight x="-200" y="-200" z="300"/>
+            </feSpecularLighting>
+            <feComposite in="specLight" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" result="litImage"/>
+            <feDisplacementMap in="SourceGraphic" in2="softMap" scale="200" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <filter id="container-glass" x="0%" y="0%" width="100%" height="100%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise"/>
+            <feGaussianBlur in="noise" stdDeviation="0.02" result="blur"/>
+            <feDisplacementMap in="SourceGraphic" in2="blur" scale="77" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+    </svg>
     <div id="app">
         <!-- Экран приветствия -->
         <div id="screen-welcome" class="screen">
@@ -105,13 +126,15 @@
                         </div>
                         <div class="form-group">
                             <label for="gender">Пол</label>
-                            <select id="gender">
-                                <option value="">Выберите пол</option>
-                                <option value="male">Мужчина</option>
-                                <option value="female">Женщина</option>
-                            </select>
+                            <input type="hidden" id="gender" value="">
+                            <div class="register-gender-control" role="group" aria-label="Пол">
+                                <button type="button" data-register-gender="male" aria-pressed="false">Мужчина</button>
+                                <button type="button" data-register-gender="female" aria-pressed="false">Женщина</button>
+                            </div>
                         </div>
-                        <button id="btn-next-1" class="main-button" disabled>Далее</button>
+                        <div class="register-button-shell">
+                            <button id="btn-next-1" class="main-button" disabled><span class="register-button-label">Далее</span></button>
+                        </div>
                     </div>
                     </div>
 
@@ -160,8 +183,8 @@
                             </label>
                         </div>
                         <div class="button-group">
-                            <button id="btn-back-2" class="back-button">Назад</button>
-                            <button id="btn-next-2" class="main-button">Далее</button>
+                            <button id="btn-back-2" class="back-button"><span class="register-button-label">Назад</span></button>
+                            <button id="btn-next-2" class="main-button"><span class="register-button-label">Далее</span></button>
                         </div>
                     </div>
                     </div>
@@ -197,8 +220,8 @@
                             </label>
                         </div>
                         <div class="button-group">
-                            <button id="btn-back-3" class="back-button">Назад</button>
-                            <button id="btn-save" class="main-button">Рассчитать и начать</button>
+                            <button id="btn-back-3" class="back-button"><span class="register-button-label">Назад</span></button>
+                            <button id="btn-save" class="main-button"><span class="register-button-label">Рассчитать и начать</span></button>
                         </div>
                     </div>
                     </div>
@@ -302,14 +325,26 @@
                                     </span>
                                 </button>
                                 <button class="entry-method" id="btn-gallery">
-                                    <span class="method-icon">🖼️</span>
+                                    <span class="method-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                                            <path d="M9 22H15C20 22 22 20 22 15V9C22 4 20 2 15 2H9C4 2 2 4 2 9V15C2 20 4 22 9 22Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M9 10C10.1046 10 11 9.10457 11 8C11 6.89543 10.1046 6 9 6C7.89543 6 7 6.89543 7 8C7 9.10457 7.89543 10 9 10Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                            <path d="M2.67004 18.9496L7.60004 15.6396C8.39004 15.1096 9.53004 15.1696 10.24 15.7796L10.57 16.0696C11.35 16.7396 12.61 16.7396 13.39 16.0696L17.55 12.4996C18.33 11.8296 19.59 11.8296 20.37 12.4996L22 13.8996" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </span>
                                     <span>
                                         <strong>Выбрать фото и распознать</strong>
                                         <small>AI заполнит черновик по фото</small>
                                     </span>
                                 </button>
                                 <button class="entry-method" id="btn-manual-entry">
-                                    <span class="method-icon">✍️</span>
+                                    <span class="method-icon" aria-hidden="true">
+                                        <svg viewBox="0 0 24 24" fill="none" focusable="false">
+                                            <path d="M5.53999 19.5196C4.92999 19.5196 4.35999 19.3096 3.94999 18.9196C3.42999 18.4296 3.17999 17.6896 3.26999 16.8896L3.63999 13.6496C3.70999 13.0396 4.07999 12.2296 4.50999 11.7896L12.72 3.09956C14.77 0.929561 16.91 0.869561 19.08 2.91956C21.25 4.96956 21.31 7.10956 19.26 9.27956L11.05 17.9696C10.63 18.4196 9.84999 18.8396 9.23999 18.9396L6.01999 19.4896C5.84999 19.4996 5.69999 19.5196 5.53999 19.5196ZM15.93 2.90956C15.16 2.90956 14.49 3.38956 13.81 4.10956L5.59999 12.8096C5.39999 13.0196 5.16999 13.5196 5.12999 13.8096L4.75999 17.0496C4.71999 17.3796 4.79999 17.6496 4.97999 17.8196C5.15999 17.9896 5.42999 18.0496 5.75999 17.9996L8.97999 17.4496C9.26999 17.3996 9.74999 17.1396 9.94999 16.9296L18.16 8.23956C19.4 6.91956 19.85 5.69956 18.04 3.99956C17.24 3.22956 16.55 2.90956 15.93 2.90956Z" fill="currentColor"/>
+                                            <path d="M17.3399 10.9508C17.3199 10.9508 17.2899 10.9508 17.2699 10.9508C14.1499 10.6408 11.6399 8.27083 11.1599 5.17083C11.0999 4.76083 11.3799 4.38083 11.7899 4.31083C12.1999 4.25083 12.5799 4.53083 12.6499 4.94083C13.0299 7.36083 14.9899 9.22083 17.4299 9.46083C17.8399 9.50083 18.1399 9.87083 18.0999 10.2808C18.0499 10.6608 17.7199 10.9508 17.3399 10.9508Z" fill="currentColor"/>
+                                            <path d="M21 22.75H3C2.59 22.75 2.25 22.41 2.25 22C2.25 21.59 2.59 21.25 3 21.25H21C21.41 21.25 21.75 21.59 21.75 22C21.75 22.41 21.41 22.75 21 22.75Z" fill="currentColor"/>
+                                        </svg>
+                                    </span>
                                     <span>
                                         <strong>Ввести вручную</strong>
                                         <small>Фото можно добавить без AI</small>
@@ -573,11 +608,39 @@
                             <span class="settings-label">Тема</span>
                             <span class="settings-control-hint">Выберите оформление приложения</span>
                         </div>
-                        <div class="theme-segmented" role="group" aria-label="Тема приложения">
-                            <button type="button" data-theme-choice="system">Системная</button>
-                            <button type="button" data-theme-choice="light">Светлая</button>
-                            <button type="button" data-theme-choice="dark">Темная</button>
+                        <fieldset class="theme-switcher">
+                            <legend class="theme-switcher__legend">Тема приложения</legend>
+                            <label class="theme-switcher__option" title="Системная">
+                                <input class="theme-switcher__input" type="radio" name="app_theme" value="system" data-theme-choice="system" c-option="1">
+                                <svg class="theme-switcher__icon" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+                                    <path fill="var(--c)" d="M5 21a1 1 0 0 1 1-1h24a1 1 0 1 1 0 2H6a1 1 0 0 1-1-1ZM12 25a1 1 0 0 1 1-1h10a1 1 0 1 1 0 2H13a1 1 0 0 1-1-1ZM15 29a1 1 0 0 1 1-1h4a1 1 0 1 1 0 2h-4a1 1 0 0 1-1-1ZM18 13a6 6 0 0 1 5.915 7h-2.041A4.005 4.005 0 0 0 18 15a4 4 0 0 0-3.874 5h-2.041A6 6 0 0 1 18 13ZM17 7.038a1 1 0 1 1 2 0v3a1 1 0 0 1-2 0v-3ZM24.244 8.742a1 1 0 1 1 1.618 1.176L24.1 12.345a1 1 0 1 1-1.618-1.176l1.763-2.427ZM29.104 14.379a1 1 0 0 1 .618 1.902l-2.854.927a1 1 0 1 1-.618-1.902l2.854-.927ZM6.278 16.28a1 1 0 1 1 .618-1.901l2.853.927a1 1 0 1 1-.618 1.902l-2.853-.927ZM10.137 9.918a1 1 0 0 1 1.618-1.176l1.764 2.427a1 1 0 0 1-1.618 1.176l-1.764-2.427Z"/>
+                                </svg>
+                            </label>
+                            <label class="theme-switcher__option" title="Светлая">
+                                <input class="theme-switcher__input" type="radio" name="app_theme" value="light" data-theme-choice="light" c-option="2">
+                                <svg class="theme-switcher__icon" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+                                    <path fill="var(--c)" fill-rule="evenodd" d="M18 12a6 6 0 1 1 0 12 6 6 0 0 1 0-12Zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z" clip-rule="evenodd"/>
+                                    <path fill="var(--c)" d="M17 6.038a1 1 0 1 1 2 0v3a1 1 0 0 1-2 0v-3ZM24.244 7.742a1 1 0 1 1 1.618 1.176L24.1 11.345a1 1 0 1 1-1.618-1.176l1.763-2.427ZM29.104 13.379a1 1 0 0 1 .618 1.902l-2.854.927a1 1 0 1 1-.618-1.902l2.854-.927ZM29.722 20.795a1 1 0 0 1-.619 1.902l-2.853-.927a1 1 0 1 1 .618-1.902l2.854.927ZM25.862 27.159a1 1 0 0 1-1.618 1.175l-1.763-2.427a1 1 0 1 1 1.618-1.175l1.763 2.427ZM19 30.038a1 1 0 0 1-2 0v-3a1 1 0 1 1 2 0v3ZM11.755 28.334a1 1 0 0 1-1.618-1.175l1.764-2.427a1 1 0 1 1 1.618 1.175l-1.764 2.427ZM6.896 22.697a1 1 0 1 1-.618-1.902l2.853-.927a1 1 0 1 1 .618 1.902l-2.853.927ZM6.278 15.28a1 1 0 1 1 .618-1.901l2.853.927a1 1 0 1 1-.618 1.902l-2.853-.927ZM10.137 8.918a1 1 0 0 1 1.618-1.176l1.764 2.427a1 1 0 0 1-1.618 1.176l-1.764-2.427Z"/>
+                                </svg>
+                            </label>
+                            <label class="theme-switcher__option" title="Темная">
+                                <input class="theme-switcher__input" type="radio" name="app_theme" value="dark" data-theme-choice="dark" c-option="3">
+                                <svg class="theme-switcher__icon" viewBox="0 0 36 36" aria-hidden="true" focusable="false">
+                                    <path fill="var(--c)" d="M12.5 8.473a10.968 10.968 0 0 1 8.785-.97 7.435 7.435 0 0 0-3.737 4.672l-.09.373A7.454 7.454 0 0 0 28.732 20.4a10.97 10.97 0 0 1-5.232 7.125l-.497.27c-5.014 2.566-11.175.916-14.234-3.813l-.295-.483C5.53 18.403 7.13 11.93 12.017 8.77l.483-.297Zm4.234.616a8.946 8.946 0 0 0-2.805.883l-.429.234A9 9 0 0 0 10.206 22.5l.241.395A9 9 0 0 0 22.5 25.794l.416-.255a8.94 8.94 0 0 0 2.167-1.99 9.433 9.433 0 0 1-2.782-.313c-5.043-1.352-8.036-6.535-6.686-11.578l.147-.491c.242-.745.573-1.44.972-2.078Z"/>
+                                </svg>
+                            </label>
+                        </fieldset>
+                    </div>
+
+                    <div class="settings-control-row settings-control-row-inline">
+                        <div>
+                            <span class="settings-label">Liquid Glass</span>
+                            <span class="settings-control-hint">Подготовить интерфейс к стеклянному эффекту</span>
                         </div>
+                        <label class="settings-switch">
+                            <input id="toggle-liquid-glass" type="checkbox">
+                            <span aria-hidden="true"></span>
+                        </label>
                     </div>
                 </section>
 
@@ -704,8 +767,8 @@
     <script src="/assets/js/progress.js?v=20260520-progress-tz"></script>
     <script src="/assets/js/history.js?v=20260531-history-placeholder"></script>
     <script src="/assets/js/meal-editor.js?v=20260601-photo-loader-polish"></script>
-    <script src="/assets/js/profile.js?v=20260601-theme-slider"></script>
+    <script src="/assets/js/profile.js?v=20260605-liquid-glass-default-on"></script>
     <script src="/assets/js/summary.js?v=20260529-summary-over-dot"></script>
-    <script src="/assets/js/app.js?v=20260601-profile-tab"></script>
+    <script src="/assets/js/app.js?v=20260605-tab-active-no-reload"></script>
 </body>
 </html>

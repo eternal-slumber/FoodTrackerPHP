@@ -125,9 +125,35 @@ const registerFirstStepFields = [
     document.getElementById('weight'),
     document.getElementById('gender')
 ];
+const registerGenderButtons = document.querySelectorAll('[data-register-gender]');
+const registerGenderControl = registerGenderButtons[0]?.closest('.register-gender-control');
 const btnNext1 = document.getElementById('btn-next-1');
 let activeRegisterStep = 1;
 let isRegisterStepTransitioning = false;
+
+function setRegisterGender(value) {
+    const genderInput = document.getElementById('gender');
+
+    genderInput.value = value;
+
+    if (registerGenderControl) {
+        registerGenderControl.dataset.activeGender = value;
+    }
+
+    registerGenderButtons.forEach(button => {
+        const isActive = button.dataset.registerGender === value;
+
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+    });
+    genderInput.dispatchEvent(new Event('change', { bubbles: true }));
+}
+
+registerGenderButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        setRegisterGender(button.dataset.registerGender);
+    });
+});
 
 function startRegisterFlow() {
     const welcomeScreen = document.getElementById('screen-welcome');
@@ -345,29 +371,86 @@ document.getElementById('btn-edit-profile').onclick = () => {
     showScreen('profileEdit');
 };
 
-const themeChoiceButtons = document.querySelectorAll('[data-theme-choice]');
+const themeChoiceInputs = document.querySelectorAll('[data-theme-choice]');
+const themeSwitcher = themeChoiceInputs[0]?.closest('.theme-switcher');
 
 function updateThemeControls() {
     const currentTheme = window.appTheme?.get?.() || 'system';
-    const themeControl = themeChoiceButtons[0]?.closest('.theme-segmented');
 
-    if (themeControl) {
-        themeControl.dataset.activeTheme = currentTheme;
-    }
+    themeChoiceInputs.forEach(input => {
+        const isActive = input.dataset.themeChoice === currentTheme;
 
-    themeChoiceButtons.forEach(button => {
-        button.classList.toggle('active', button.dataset.themeChoice === currentTheme);
+        input.checked = isActive;
+        input.closest('.theme-switcher__option')?.classList.toggle('active', isActive);
     });
 }
 
-themeChoiceButtons.forEach(button => {
-    button.addEventListener('click', () => {
-        window.appTheme?.set?.(button.dataset.themeChoice);
+function trackThemeSwitcherPrevious(switcher) {
+    if (!switcher) return;
+
+    const radios = switcher.querySelectorAll('input[type="radio"]');
+    let previousValue = switcher.querySelector('input[type="radio"]:checked')?.getAttribute('c-option') || null;
+
+    if (previousValue) {
+        switcher.setAttribute('c-previous', previousValue);
+    }
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (!radio.checked) return;
+
+            switcher.setAttribute('c-previous', previousValue ?? '');
+            previousValue = radio.getAttribute('c-option');
+        });
+    });
+}
+
+updateThemeControls();
+trackThemeSwitcherPrevious(themeSwitcher);
+
+themeChoiceInputs.forEach(input => {
+    input.addEventListener('change', () => {
+        if (!input.checked) return;
+
+        window.appTheme?.set?.(input.dataset.themeChoice);
         updateThemeControls();
     });
 });
 
-updateThemeControls();
+const LIQUID_GLASS_STORAGE_KEY = 'foodTracker.liquidGlass';
+const liquidGlassToggle = document.getElementById('toggle-liquid-glass');
+
+function getLiquidGlassEnabled() {
+    try {
+        const savedValue = localStorage.getItem(LIQUID_GLASS_STORAGE_KEY);
+
+        return savedValue === null ? true : savedValue === '1';
+    } catch (error) {
+        return true;
+    }
+}
+
+function setLiquidGlassEnabled(isEnabled) {
+    document.documentElement.dataset.liquidGlass = isEnabled ? 'on' : 'off';
+
+    if (liquidGlassToggle) {
+        liquidGlassToggle.checked = isEnabled;
+    }
+
+    try {
+        localStorage.setItem(LIQUID_GLASS_STORAGE_KEY, isEnabled ? '1' : '0');
+    } catch (error) {
+        console.debug('[LiquidGlass] save failed:', error);
+    }
+}
+
+setLiquidGlassEnabled(getLiquidGlassEnabled());
+
+if (liquidGlassToggle) {
+    liquidGlassToggle.addEventListener('change', () => {
+        setLiquidGlassEnabled(liquidGlassToggle.checked);
+    });
+}
 
 document.getElementById('btn-profile-edit-back').onclick = async () => {
     if (!isProfileFormDirty()) {

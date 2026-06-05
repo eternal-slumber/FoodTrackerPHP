@@ -179,28 +179,51 @@ body.register-transitioning {
 
 .welcome-cta {
     animation: welcomeCtaPulse 2.8s ease-in-out infinite;
-    border-radius: 16px;
+    background-color: color-mix(in srgb, var(--button-color) 86%, transparent);
+    border-radius: 100vmax;
     box-shadow:
         0 14px 30px color-mix(in srgb, var(--button-color) 34%, transparent),
+        0 0 20px color-mix(in srgb, var(--button-color) 16%, transparent),
         inset 0 1px 0 rgba(255, 255, 255, 0.24);
+    color: var(--button-text);
     font-size: 17px;
     font-weight: 800;
-    min-height: 58px;
+    isolation: isolate;
+    min-height: 62px;
     overflow: hidden;
+    padding-left: 28px;
+    padding-right: 28px;
     position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
     transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
 }
 
-.welcome-cta::before {
-    animation: welcomeCtaShine 3.2s ease-in-out infinite;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
-    bottom: -45%;
+.welcome-cta::before,
+.welcome-cta::after {
+    border-radius: inherit;
     content: '';
-    left: -55%;
+    inset: 0;
+    pointer-events: none;
     position: absolute;
-    top: -45%;
-    transform: rotate(18deg);
-    width: 42%;
+}
+
+.welcome-cta::before {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    filter: url(#glass-distortion);
+    z-index: -1;
+}
+
+.welcome-cta::after {
+    animation: welcomeCtaShine 3.2s ease-in-out infinite;
+    background: linear-gradient(105deg, transparent 0%, transparent 36%, rgba(255, 255, 255, 0.44) 48%, transparent 60%, transparent 100%);
+    background-position: 120% center;
+    background-size: 220% 100%;
+    box-shadow:
+        inset 2px 2px 1px 0 rgba(255, 255, 255, 0.46),
+        inset -1px -1px 1px 1px rgba(255, 255, 255, 0.34),
+        inset 0 0 0 1px color-mix(in srgb, var(--button-text) 10%, transparent);
+    z-index: 0;
 }
 
 .welcome-cta-label {
@@ -231,6 +254,7 @@ body.register-transitioning {
     100% {
         box-shadow:
             0 14px 30px color-mix(in srgb, var(--button-color) 30%, transparent),
+            0 0 20px color-mix(in srgb, var(--button-color) 14%, transparent),
             inset 0 1px 0 rgba(255, 255, 255, 0.24);
         transform: translateY(0);
     }
@@ -238,6 +262,7 @@ body.register-transitioning {
     50% {
         box-shadow:
             0 18px 38px color-mix(in srgb, var(--button-color) 44%, transparent),
+            0 0 24px color-mix(in srgb, var(--button-color) 20%, transparent),
             inset 0 1px 0 rgba(255, 255, 255, 0.3);
         transform: translateY(-1px);
     }
@@ -246,24 +271,12 @@ body.register-transitioning {
 @keyframes welcomeCtaShine {
     0%,
     44% {
-        left: -55%;
+        background-position: 120% center;
     }
 
     68%,
     100% {
-        left: 115%;
-    }
-}
-
-@keyframes btnSaveShine {
-    0%,
-    44% {
-        transform: translateX(-115%);
-    }
-
-    68%,
-    100% {
-        transform: translateX(115%);
+        background-position: -80% center;
     }
 }
 
@@ -309,7 +322,10 @@ body.register-transitioning {
     .welcome-logo,
     .welcome-cta,
     .welcome-cta::before,
-    #btn-save::before,
+    .welcome-cta::after,
+    .add-food-button::after,
+    #screen-register .main-button::after,
+    #screen-register .back-button::after,
     #screen-welcome.register-swipe-out,
     #screen-register.register-swipe-in,
     #screen-register.register-swipe-in .register-content,
@@ -533,6 +549,120 @@ body.register-transitioning {
     font-weight: 500;
 }
 
+.register-gender-control {
+    --gender-glass: #bbbbbc;
+    --gender-light: #fff;
+    --gender-dark: #000;
+    --gender-reflex-dark: 1;
+    --gender-reflex-light: 1;
+    background: var(--secondary-bg);
+    border: 1px solid color-mix(in srgb, var(--hint-color) 16%, transparent);
+    border-radius: 999px;
+    display: grid;
+    gap: 4px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 6px;
+    padding: 4px;
+    position: relative;
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        border-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+}
+
+.register-gender-control::before {
+    background: var(--button-color);
+    border-radius: 999px;
+    bottom: 4px;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--button-color) 22%, transparent);
+    content: '';
+    left: 4px;
+    pointer-events: none;
+    position: absolute;
+    top: 4px;
+    transform: translateX(0);
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+        transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    width: calc((100% - 12px) / 2);
+    z-index: 0;
+}
+
+.register-gender-control:not([data-active-gender])::before {
+    opacity: 0;
+}
+
+.register-gender-control[data-active-gender="male"]::before {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.register-gender-control[data-active-gender="female"]::before {
+    opacity: 1;
+    transform: translateX(calc(100% + 4px));
+}
+
+:root[data-liquid-glass="on"] .register-gender-control {
+    background-color: color-mix(in srgb, var(--gender-glass) 12%, transparent);
+    backdrop-filter: blur(8px) saturate(150%);
+    -webkit-backdrop-filter: blur(8px) saturate(150%);
+    border-color: transparent;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 10%), transparent),
+        inset 1.8px 3px 0 -2px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 90%), transparent),
+        inset -2px -2px 0 -2px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 80%), transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 60%), transparent),
+        inset -0.3px -1px 4px 0 color-mix(in srgb, var(--gender-dark) calc(var(--gender-reflex-dark) * 12%), transparent),
+        inset 0 3px 4px -2px color-mix(in srgb, var(--gender-dark) calc(var(--gender-reflex-dark) * 20%), transparent),
+        0 6px 16px color-mix(in srgb, var(--gender-dark) calc(var(--gender-reflex-dark) * 8%), transparent);
+}
+
+:root[data-app-theme="dark"][data-liquid-glass="on"] .register-gender-control {
+    --gender-reflex-dark: 2;
+    --gender-reflex-light: 0.35;
+}
+
+:root[data-liquid-glass="on"] .register-gender-control::before {
+    background-color: color-mix(in srgb, var(--gender-glass) 38%, transparent);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 12%), transparent),
+        inset 1.5px 1.5px 0 -1px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 80%), transparent),
+        inset -1px -4px 1px -3px color-mix(in srgb, var(--gender-light) calc(var(--gender-reflex-light) * 48%), transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--gender-dark) calc(var(--gender-reflex-dark) * 18%), transparent),
+        0 4px 10px color-mix(in srgb, var(--gender-dark) calc(var(--gender-reflex-dark) * 8%), transparent);
+}
+
+.register-gender-control button {
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--text-color) 78%, var(--hint-color));
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    min-height: 42px;
+    padding: 0 10px;
+    position: relative;
+    transition: color 0.2s ease, transform 0.2s ease;
+    z-index: 1;
+}
+
+.register-gender-control button.active {
+    color: var(--button-text);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+:root[data-liquid-glass="on"] .register-gender-control button.active {
+    color: var(--text-color);
+    text-shadow: 0 1px 2px color-mix(in srgb, var(--bg-color) 45%, transparent);
+}
+
+.register-gender-control button:active {
+    transform: scale(0.98);
+}
+
 #register-step-1 .form-group input:focus,
 #register-step-1 .form-group select:focus {
     border-color: transparent;
@@ -544,8 +674,92 @@ body.register-transitioning {
     font-weight: 500;
 }
 
-#register-step-1 .main-button {
+.register-button-shell {
+    border-radius: 100vmax;
     margin-top: 8px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.register-button-shell .main-button {
+    display: block;
+    margin-top: 0;
+}
+
+#screen-register .main-button,
+#screen-register .back-button {
+    border: none;
+    border-radius: 100vmax;
+    clip-path: inset(0 round 100vmax);
+    isolation: isolate;
+    overflow: hidden;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#screen-register .main-button:not(:disabled) {
+    background-color: color-mix(in srgb, var(--button-color) 86%, transparent);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 -10px 18px color-mix(in srgb, var(--button-color) 18%, transparent),
+        inset 0 0 18px color-mix(in srgb, #ffffff 10%, transparent);
+}
+
+#screen-register .back-button {
+    background-color: color-mix(in srgb, var(--secondary-bg) 82%, transparent);
+    box-shadow:
+        0 10px 22px color-mix(in srgb, var(--text-color) 8%, transparent),
+        0 0 18px color-mix(in srgb, var(--button-color) 7%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+#screen-register .main-button::before,
+#screen-register .main-button::after,
+#screen-register .back-button::before,
+#screen-register .back-button::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+#screen-register .main-button::before,
+#screen-register .back-button::before {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    filter: url(#glass-distortion);
+    z-index: -1;
+}
+
+#screen-register .main-button::after,
+#screen-register .back-button::after {
+    animation: welcomeCtaShine 3.2s ease-in-out infinite;
+    background: linear-gradient(105deg, transparent 0%, transparent 36%, rgba(255, 255, 255, 0.4) 48%, transparent 60%, transparent 100%);
+    background-position: 120% center;
+    background-size: 220% 100%;
+    box-shadow:
+        inset 2px 2px 1px 0 rgba(255, 255, 255, 0.42),
+        inset -1px -1px 1px 1px rgba(255, 255, 255, 0.3),
+        inset 0 0 0 1px color-mix(in srgb, var(--button-text) 9%, transparent);
+    z-index: 0;
+}
+
+#screen-register .main-button:disabled::before,
+#screen-register .main-button:disabled::after {
+    display: none;
+}
+
+.register-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+#screen-register .main-button:active,
+#screen-register .back-button:active {
+    opacity: 1;
+    transform: translateY(1px) scale(0.99);
 }
 
 /* Шаги регистрации */
@@ -720,32 +934,11 @@ body.register-transitioning {
 }
 
 #btn-save {
-    border-radius: 17px;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
     flex: 1 1 auto;
     font-size: 17px;
     font-weight: 800;
-    isolation: isolate;
     min-height: 62px;
-    overflow: hidden;
     padding: 18px 16px;
-    position: relative;
-}
-
-#btn-save::before {
-    animation: btnSaveShine 3.4s ease-in-out infinite;
-    background: linear-gradient(105deg, transparent 0%, transparent 38%, rgba(255, 255, 255, 0.36) 50%, transparent 62%, transparent 100%);
-    border-radius: inherit;
-    content: '';
-    inset: 0;
-    pointer-events: none;
-    position: absolute;
-    transform: translateX(-115%);
-}
-
-#btn-save:active {
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
-    transform: translateY(1px) scale(0.99);
 }
 
 /* Основной экран */
@@ -851,7 +1044,55 @@ body.register-transitioning {
 }
 
 .daily-nutrition-card {
+    isolation: isolate;
     margin-bottom: 20px;
+    overflow: hidden;
+    position: relative;
+}
+
+.daily-nutrition-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.daily-nutrition-card::before,
+.daily-nutrition-card::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.daily-nutrition-card::before {
+    z-index: 0;
+}
+
+.daily-nutrition-card::after {
+    z-index: -1;
+}
+
+:root[data-liquid-glass="on"] .daily-nutrition-card {
+    background-color: color-mix(in srgb, var(--secondary-bg) 54%, transparent);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    box-shadow:
+        inset 2px 2px 0 -2px rgba(255, 255, 255, 0.64),
+        inset 0 0 3px 1px rgba(255, 255, 255, 0.28),
+        inset 0 -14px 24px color-mix(in srgb, var(--text-color) 6%, transparent);
+}
+
+:root[data-liquid-glass="on"] .daily-nutrition-card::before {
+    box-shadow:
+        inset 2px 2px 0 -2px rgba(255, 255, 255, 0.7),
+        inset 0 0 3px 1px rgba(255, 255, 255, 0.34);
+}
+
+:root[data-liquid-glass="on"] .daily-nutrition-card::after {
+    backdrop-filter: blur(0);
+    -webkit-backdrop-filter: blur(0);
+    filter: url(#container-glass);
+    overflow: hidden;
 }
 
 .daily-nutrition-card .summary-body-params {
@@ -2080,6 +2321,11 @@ body.register-transitioning {
 
 /* Таббар */
 .tab-bar {
+    --tab-glass: #bbbbbc;
+    --tab-light: #fff;
+    --tab-dark: #000;
+    --tab-reflex-dark: 1;
+    --tab-reflex-light: 1;
     position: fixed;
     bottom: 0;
     left: 50%;
@@ -2089,10 +2335,84 @@ body.register-transitioning {
     background: var(--bg-color);
     border-top: 1px solid var(--secondary-bg);
     display: flex;
+    gap: 6px;
     justify-content: space-around;
-    padding: 8px 0;
+    padding: 8px;
     padding-bottom: max(8px, env(safe-area-inset-bottom));
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        border-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+        bottom 400ms cubic-bezier(1, 0, 0.4, 1),
+        width 400ms cubic-bezier(1, 0, 0.4, 1);
     z-index: 50;
+}
+
+.tab-bar::before {
+    background: color-mix(in srgb, var(--button-color) 12%, transparent);
+    border-radius: 20px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    box-shadow: none;
+    content: '';
+    left: 8px;
+    pointer-events: none;
+    position: absolute;
+    top: 8px;
+    transform: translateX(0);
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+        transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+    width: calc((100% - 28px) / 3);
+    z-index: 0;
+}
+
+.tab-bar:has(.tab-item[data-tab="home"].active)::before {
+    transform: translateX(0);
+}
+
+.tab-bar:has(.tab-item[data-tab="summary"].active)::before {
+    transform: translateX(calc(100% + 6px));
+}
+
+.tab-bar:has(.tab-item[data-tab="profile"].active)::before {
+    transform: translateX(calc((100% + 6px) * 2));
+}
+
+:root[data-liquid-glass="on"] .tab-bar {
+    background-color: color-mix(in srgb, var(--tab-glass) 14%, transparent);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 0;
+    border-radius: 28px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 12%), transparent),
+        inset 1.8px 3px 0 -2px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 88%), transparent),
+        inset -2px -2px 0 -2px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 78%), transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 58%), transparent),
+        inset -0.3px -1px 4px 0 color-mix(in srgb, var(--tab-dark) calc(var(--tab-reflex-dark) * 12%), transparent),
+        inset 0 3px 4px -2px color-mix(in srgb, var(--tab-dark) calc(var(--tab-reflex-dark) * 18%), transparent),
+        0 10px 28px color-mix(in srgb, var(--tab-dark) calc(var(--tab-reflex-dark) * 12%), transparent);
+    max-width: 406px;
+    padding: 8px;
+    width: calc(100% - 24px);
+}
+
+:root[data-liquid-glass="on"] .tab-bar::before {
+    background-color: color-mix(in srgb, var(--tab-glass) 38%, transparent);
+    bottom: 8px;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 12%), transparent),
+        inset 1.5px 1.5px 0 -1px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 80%), transparent),
+        inset -1px -4px 1px -3px color-mix(in srgb, var(--tab-light) calc(var(--tab-reflex-light) * 48%), transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--tab-dark) calc(var(--tab-reflex-dark) * 18%), transparent),
+        0 4px 10px color-mix(in srgb, var(--tab-dark) calc(var(--tab-reflex-dark) * 8%), transparent);
+}
+
+:root[data-app-theme="dark"][data-liquid-glass="on"] .tab-bar {
+    --tab-reflex-dark: 2;
+    --tab-reflex-light: 0.35;
 }
 
 .tab-item {
@@ -2102,21 +2422,41 @@ body.register-transitioning {
     align-items: center;
     background: none;
     border: none;
-    padding: 8px 16px;
+    border-radius: 20px;
+    min-width: 0;
+    padding: 8px 12px;
     cursor: pointer;
     color: var(--hint-color);
-    transition: color 0.2s;
+    position: relative;
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+    z-index: 1;
 }
 
 .tab-item.active {
     color: var(--button-color);
 }
 
+.tab-item:active {
+    transform: scale(0.98);
+}
+
 .tab-icon {
     display: block;
     height: 24px;
     margin-bottom: 4px;
+    color: currentColor;
+    transition: color 0.2s ease, transform 0.2s ease;
     width: 24px;
+}
+
+.tab-item.active .tab-icon {
+    color: var(--button-color);
+}
+
+.tab-item.active .tab-icon svg {
+    filter: drop-shadow(0 4px 10px color-mix(in srgb, var(--button-color) 20%, transparent));
 }
 
 .tab-icon svg {
@@ -2270,6 +2610,11 @@ body.register-transitioning {
     gap: 12px;
 }
 
+.settings-control-row-inline {
+    align-items: center;
+    grid-template-columns: 1fr auto;
+}
+
 .settings-control-row .settings-label,
 .settings-control-hint {
     display: block;
@@ -2279,54 +2624,231 @@ body.register-transitioning {
     margin-bottom: 3px;
 }
 
-.theme-segmented {
-    background: var(--bg-color);
-    border-radius: 12px;
+.theme-switcher {
+    --switcher-glass: #bbbbbc;
+    --switcher-light: #fff;
+    --switcher-dark: #000;
+    --switcher-content: var(--text-color);
+    --glass-reflex-dark: 1;
+    --glass-reflex-light: 1;
+    --switcher-saturation: 150%;
+    align-items: center;
+    background: var(--secondary-bg);
+    border: 1px solid color-mix(in srgb, var(--hint-color) 16%, transparent);
+    border-radius: 999px;
+    box-shadow: none;
+    box-sizing: border-box;
     display: grid;
-    gap: 4px;
+    gap: 8px;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    padding: 4px;
+    height: 58px;
+    justify-self: stretch;
+    margin: 0 auto;
+    max-width: none;
+    padding: 7px 9px;
     position: relative;
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        border-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+    width: 100%;
 }
 
-.theme-segmented::before {
-    background: var(--button-color);
-    border-radius: 9px;
-    content: '';
-    inset: 4px auto 4px 4px;
-    position: absolute;
-    transform: translateX(0);
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.28s ease;
-    width: calc((100% - 16px) / 3);
-    z-index: 0;
+:root[data-liquid-glass="on"] .theme-switcher {
+    background-color: color-mix(in srgb, var(--switcher-glass) 12%, transparent);
+    backdrop-filter: blur(8px) saturate(var(--switcher-saturation));
+    -webkit-backdrop-filter: blur(8px) saturate(var(--switcher-saturation));
+    border-color: transparent;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 10%), transparent),
+        inset 1.8px 3px 0 -2px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 90%), transparent),
+        inset -2px -2px 0 -2px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 80%), transparent),
+        inset -3px -8px 1px -6px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 60%), transparent),
+        inset -0.3px -1px 4px 0 color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 12%), transparent),
+        inset -1.5px 2.5px 0 -2px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+        inset 0 3px 4px -2px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+        0 6px 16px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
 }
 
-.theme-segmented[data-active-theme="light"]::before {
-    transform: translateX(calc(100% + 4px));
+:root[data-app-theme="dark"][data-liquid-glass="on"] .theme-switcher {
+    --glass-reflex-dark: 2;
+    --glass-reflex-light: 0.35;
 }
 
-.theme-segmented[data-active-theme="dark"]::before {
-    transform: translateX(calc((100% + 4px) * 2));
-}
-
-.theme-segmented button {
-    background: transparent;
+.theme-switcher__legend,
+.theme-switcher__input {
     border: 0;
-    border-radius: 9px;
-    color: var(--hint-color);
+    clip: rect(0 0 0 0);
+    clip-path: inset(100%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+.theme-switcher__option {
+    --c: color-mix(in srgb, var(--switcher-content) 72%, var(--hint-color));
+    align-items: center;
+    border-radius: 999px;
+    box-sizing: border-box;
     cursor: pointer;
-    font: inherit;
-    font-size: 12px;
-    font-weight: 800;
-    min-height: 36px;
-    padding: 0 6px;
+    display: flex;
+    height: 100%;
+    justify-content: center;
+    min-width: 0;
+    padding: 0 12px;
     position: relative;
-    transition: color 0.22s ease;
+    transition: color 160ms ease;
     z-index: 1;
 }
 
-.theme-segmented button.active {
-    color: var(--button-text);
+.theme-switcher__option:hover {
+    --c: var(--button-color);
+}
+
+.theme-switcher__option:has(input:checked) {
+    --c: var(--button-text);
+    cursor: default;
+}
+
+:root[data-liquid-glass="on"] .theme-switcher__option:has(input:checked) {
+    --c: var(--switcher-content);
+}
+
+.theme-switcher__icon {
+    display: block;
+    height: 26px;
+    transition: transform 200ms cubic-bezier(0.5, 0, 0, 1);
+    width: 26px;
+}
+
+.theme-switcher__option:hover .theme-switcher__icon {
+    transform: scale(1.14);
+}
+
+.theme-switcher__option:has(input:checked) .theme-switcher__icon {
+    transform: scale(1);
+}
+
+.theme-switcher::after {
+    background: var(--button-color);
+    border-radius: 999px;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--button-color) 24%, transparent);
+    content: '';
+    display: block;
+    height: calc(100% - 10px);
+    left: 5px;
+    position: absolute;
+    top: 5px;
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1),
+        transform 400ms cubic-bezier(1, 0, 0.4, 1);
+    width: calc((100% - 26px) / 3);
+    z-index: 0;
+}
+
+:root[data-liquid-glass="on"] .theme-switcher::after {
+    background-color: color-mix(in srgb, var(--switcher-glass) 36%, transparent);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 10%), transparent),
+        inset 2px 1px 0 -1px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 90%), transparent),
+        inset -1.5px -1px 0 -1px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 80%), transparent),
+        inset -2px -6px 1px -5px color-mix(in srgb, var(--switcher-light) calc(var(--glass-reflex-light) * 60%), transparent),
+        inset -1px 2px 3px -1px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 20%), transparent),
+        inset 0 -4px 1px -2px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 10%), transparent),
+        0 3px 6px color-mix(in srgb, var(--switcher-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+}
+
+.theme-switcher:has(input[c-option="1"]:checked)::after {
+    animation: themeGlassToggle 440ms ease;
+    transform: translateX(0);
+    transform-origin: right;
+}
+
+.theme-switcher:has(input[c-option="2"]:checked)::after {
+    animation: themeGlassToggleMiddle 440ms ease;
+    transform: translateX(calc(100% + 8px));
+}
+
+.theme-switcher[c-previous="1"]:has(input[c-option="2"]:checked)::after {
+    transform-origin: left;
+}
+
+.theme-switcher[c-previous="3"]:has(input[c-option="2"]:checked)::after {
+    transform-origin: right;
+}
+
+.theme-switcher:has(input[c-option="3"]:checked)::after {
+    animation: themeGlassToggle 440ms ease;
+    transform: translateX(calc((100% + 8px) * 2));
+    transform-origin: left;
+}
+
+@keyframes themeGlassToggle {
+    0% { scale: 1 1; }
+    50% { scale: 1.1 1; }
+    100% { scale: 1 1; }
+}
+
+@keyframes themeGlassToggleMiddle {
+    0% { scale: 1 1; }
+    50% { scale: 1.2 1; }
+    100% { scale: 1 1; }
+}
+
+.settings-switch {
+    cursor: pointer;
+    display: block;
+    height: 32px;
+    position: relative;
+    width: 54px;
+}
+
+.settings-switch input {
+    height: 1px;
+    opacity: 0;
+    position: absolute;
+    width: 1px;
+}
+
+.settings-switch span {
+    background: color-mix(in srgb, var(--hint-color) 28%, var(--bg-color));
+    border-radius: 999px;
+    display: block;
+    height: 100%;
+    position: relative;
+    transition: background 0.22s ease;
+    width: 100%;
+}
+
+.settings-switch span::after {
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+    content: '';
+    height: 26px;
+    left: 3px;
+    position: absolute;
+    top: 3px;
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 26px;
+}
+
+.settings-switch input:checked + span {
+    background: var(--button-color);
+}
+
+.settings-switch input:checked + span::after {
+    transform: translateX(22px);
+}
+
+.settings-switch input:focus-visible + span {
+    outline: 2px solid var(--button-color);
+    outline-offset: 3px;
 }
 
 .settings-danger-details {
@@ -3013,17 +3535,49 @@ body.register-transitioning {
 /* ========== Unified meal entry refinements ========== */
 
 .meal-action {
+    border-radius: 100vmax;
     margin: 8px 0 18px;
+    overflow: hidden;
 }
 
 .add-food-button {
     display: flex;
     align-items: center;
+    border-radius: 100vmax;
+    clip-path: inset(0 round 100vmax);
     gap: 12px;
+    isolation: isolate;
+    overflow: hidden;
+    position: relative;
     text-align: left;
-    border-radius: 14px;
     padding: 14px 16px;
     margin-top: 0;
+    transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-food-button::before,
+.add-food-button::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.add-food-button::before {
+    z-index: -1;
+}
+
+.add-food-button::after {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        inset 0 -8px 14px color-mix(in srgb, var(--button-color) 12%, transparent);
+    z-index: 0;
+}
+
+.add-food-button > * {
+    position: relative;
+    z-index: 1;
 }
 
 .add-food-button strong,
@@ -3036,6 +3590,35 @@ body.register-transitioning {
     font-size: 12px;
     font-weight: 500;
     margin-top: 2px;
+}
+
+:root[data-liquid-glass="on"] .add-food-button {
+    background-color: color-mix(in srgb, var(--button-color) 86%, transparent);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    color: var(--button-text);
+    box-shadow:
+        inset 0 0 0 1px color-mix(in srgb, #ffffff 16%, transparent),
+        inset 2px 2px 1px 0 color-mix(in srgb, #ffffff 48%, transparent),
+        inset -1px -1px 1px 1px color-mix(in srgb, #ffffff 28%, transparent),
+        inset 0 -10px 18px color-mix(in srgb, var(--button-color) 22%, transparent);
+}
+
+:root[data-liquid-glass="on"] .add-food-button::before {
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    filter: url(#glass-distortion);
+}
+
+:root[data-liquid-glass="on"] .add-food-button::after {
+    box-shadow:
+        inset 1px 1px 1px 0 color-mix(in srgb, #ffffff 36%, transparent),
+        inset -1px -1px 1px 1px color-mix(in srgb, #ffffff 22%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, #ffffff 14%, transparent);
+}
+
+:root[data-liquid-glass="on"] .add-food-button small {
+    color: rgba(255, 255, 255, 0.82);
 }
 
 .action-icon {
