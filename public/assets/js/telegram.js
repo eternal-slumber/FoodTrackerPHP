@@ -71,6 +71,8 @@ function createTelegramWebAppMock() {
         initDataUnsafe: {
             user: devUser
         },
+        colorScheme: window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light',
+        themeParams: {},
         MainButton: mainButton,
         BackButton: backButton,
         HapticFeedback: {
@@ -130,8 +132,52 @@ function getStoredAppTheme() {
     }
 }
 
+function normalizeEffectiveTheme(theme) {
+    return theme === 'dark' ? 'dark' : 'light';
+}
+
+function getThemeFromColor(color) {
+    var hex = colorToHex(color || '');
+
+    if (!hex) {
+        return null;
+    }
+
+    var red = parseInt(hex.slice(1, 3), 16);
+    var green = parseInt(hex.slice(3, 5), 16);
+    var blue = parseInt(hex.slice(5, 7), 16);
+    var luminance = (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255;
+
+    return luminance < 0.5 ? 'dark' : 'light';
+}
+
+function getSystemAppTheme() {
+    if (tg?.colorScheme === 'dark' || tg?.colorScheme === 'light') {
+        return tg.colorScheme;
+    }
+
+    var telegramBgTheme = getThemeFromColor(tg?.themeParams?.bg_color);
+
+    if (telegramBgTheme) {
+        return telegramBgTheme;
+    }
+
+    if (window.matchMedia?.('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+    }
+
+    return 'light';
+}
+
+function getEffectiveAppTheme(theme) {
+    var normalizedTheme = normalizeAppTheme(theme);
+
+    return normalizeEffectiveTheme(normalizedTheme === 'system' ? getSystemAppTheme() : normalizedTheme);
+}
+
 function applyAppTheme(theme, options = {}) {
     const normalizedTheme = normalizeAppTheme(theme);
+    const effectiveTheme = getEffectiveAppTheme(normalizedTheme);
 
     if (options.animate) {
         document.documentElement.classList.add('theme-transition');
@@ -141,6 +187,8 @@ function applyAppTheme(theme, options = {}) {
     }
 
     document.documentElement.dataset.appTheme = normalizedTheme;
+    document.documentElement.dataset.appEffectiveTheme = effectiveTheme;
+    document.documentElement.style.colorScheme = effectiveTheme;
 
     if (options.persist) {
         try {
@@ -155,6 +203,15 @@ function applyAppTheme(theme, options = {}) {
     }
 
     return normalizedTheme;
+}
+
+function syncSystemTheme() {
+    if (getStoredAppTheme() === 'system') {
+        applyAppTheme('system');
+        return;
+    }
+
+    applyTelegramViewportSettings();
 }
 
 function colorToHex(color) {
@@ -210,6 +267,14 @@ if (typeof tg.requestFullscreen === 'function') {
 if (typeof tg.onEvent === 'function') {
     tg.onEvent('safeAreaChanged', applyTelegramViewportSettings);
     tg.onEvent('fullscreenChanged', applyTelegramViewportSettings);
+    tg.onEvent('themeChanged', syncSystemTheme);
+}
+
+var systemThemeMediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)');
+if (typeof systemThemeMediaQuery?.addEventListener === 'function') {
+    systemThemeMediaQuery.addEventListener('change', syncSystemTheme);
+} else if (typeof systemThemeMediaQuery?.addListener === 'function') {
+    systemThemeMediaQuery.addListener(syncSystemTheme);
 }
 
 var user = tg.initDataUnsafe?.user;

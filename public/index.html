@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="/assets/css/style.css?v=20260605-slider-indicators">
+    <link rel="stylesheet" href="/assets/css/style.css?v=20260609-history-swipe-gap-fix">
     <title>FoodTracker AI</title>
 </head>
 <body>
@@ -34,7 +34,7 @@
         <div id="screen-welcome" class="screen">
             <div class="welcome-content">
                 <div class="welcome-logo" aria-hidden="true">
-                    <img src="/assets/pics/monochrome_logo.png" alt="">
+                    <img src="/assets/pics/monochrome_logo.webp" alt="">
                 </div>
                 <h1>FoodTracker AI</h1>
                 <p class="welcome-description">
@@ -409,26 +409,33 @@
                             <input type="text" id="meal-name" class="meal-name-input" placeholder="Завтрак, обед, перекус...">
 
                             <div class="draft-image-field">
-                                <div>
+                                <div class="draft-image-copy">
                                     <span class="input-label">Фото приема</span>
                                     <p id="draft-image-status">Можно добавить миниатюру для истории</p>
                                 </div>
+                                <button id="btn-add-manual-photo" class="draft-image-icon-button" type="button" aria-label="Добавить фото для истории" title="Добавить фото для истории">
+                                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+                                        <path d="M7.5 7.25 8.8 5.4c.28-.4.73-.65 1.22-.65h3.96c.49 0 .94.24 1.22.65l1.3 1.85h1.25A3.25 3.25 0 0 1 21 10.5v5.75a3.25 3.25 0 0 1-3.25 3.25H6.25A3.25 3.25 0 0 1 3 16.25V10.5a3.25 3.25 0 0 1 3.25-3.25H7.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                                        <path d="M12 16.25a3.25 3.25 0 1 0 0-6.5 3.25 3.25 0 0 0 0 6.5Z" stroke="currentColor" stroke-width="1.6"/>
+                                    </svg>
+                                </button>
                                 <div id="manual-photo-preview" class="manual-photo-preview hidden">
                                     <img id="manual-photo-img" src="" alt="">
                                 </div>
                                 <div class="draft-image-actions">
-                                    <button id="btn-add-manual-photo" class="secondary-button" type="button">Добавить фото для истории</button>
                                     <button id="btn-remove-manual-photo" class="back-button hidden" type="button">Удалить фото</button>
                                 </div>
                                 <input type="file" id="manual-photo-input" accept="image/*" hidden>
                             </div>
 
                             <div class="editor-toolbar">
-                                <span class="input-label">Продукты</span>
-                                <div class="editor-toolbar-actions">
-                                    <button id="btn-fill-kbju" class="icon-text-button" type="button">Заполнить КБЖУ</button>
-                                    <button id="btn-scan-more" class="icon-text-button" type="button">Сканировать еще</button>
+                                <div>
+                                    <span class="input-label">Продукты</span>
+                                    <p class="editor-toolbar-hint">Добавьте продукт вручную или используйте автозаполнение внутри карточки продукта.</p>
                                 </div>
+                            </div>
+                            <div class="editor-toolbar-actions">
+                                <button id="btn-scan-more" class="icon-text-button" type="button">Сканировать еще</button>
                             </div>
                             <div id="products-list"></div>
                             <div class="product-add-block">
@@ -765,13 +772,13 @@
         </nav>
     </div>
     <script src="/assets/js/utils.js?v=20260520-progress-tz"></script>
-    <script src="/assets/js/telegram.js?v=20260601-theme-transition"></script>
+    <script src="/assets/js/telegram.js?v=20260608-effective-theme"></script>
     <script src="/assets/js/api.js?v=20260512-split-1"></script>
     <script src="/assets/js/progress.js?v=20260520-progress-tz"></script>
-    <script src="/assets/js/history.js?v=20260531-history-placeholder"></script>
-    <script src="/assets/js/meal-editor.js?v=20260601-photo-loader-polish"></script>
+    <script src="/assets/js/history.js?v=20260609-history-swipe-gap-fix"></script>
+    <script src="/assets/js/meal-editor.js?v=20260609-history-refresh"></script>
     <script src="/assets/js/profile.js?v=20260605-theme-indicator-motion"></script>
     <script src="/assets/js/summary.js?v=20260529-summary-over-dot"></script>
-    <script src="/assets/js/app.js?v=20260605-tab-indicator"></script>
+    <script src="/assets/js/app.js?v=20260608-tabbar-states"></script>
 </body>
 </html>

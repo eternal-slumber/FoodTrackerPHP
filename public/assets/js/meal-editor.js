@@ -17,7 +17,6 @@ const btnAnalyzePhotoText = btnAnalyzePhoto.querySelector('.photo-analyze-text')
 const btnChangePhoto = document.getElementById('btn-change-photo');
 const btnCancelDraft = document.getElementById('btn-cancel-draft');
 const btnScanMore = document.getElementById('btn-scan-more');
-const btnFillKbju = document.getElementById('btn-fill-kbju');
 const btnAddProduct = document.getElementById('btn-add-product');
 const btnSaveMeal = document.getElementById('btn-save-meal');
 const btnAddManualPhoto = document.getElementById('btn-add-manual-photo');
@@ -420,8 +419,9 @@ function renderDraftImageField() {
 
     manualPhotoPreview.classList.toggle('hidden', !manualPhotoUrl);
     btnRemoveManualPhoto.classList.toggle('hidden', !hasImage);
-    btnAddManualPhoto.parentElement.classList.toggle('single-action', !hasImage);
-    btnAddManualPhoto.textContent = hasImage ? 'Заменить фото' : 'Добавить фото для истории';
+    btnRemoveManualPhoto.parentElement.classList.toggle('single-action', !hasImage);
+    btnAddManualPhoto.setAttribute('aria-label', hasImage ? 'Заменить фото' : 'Добавить фото для истории');
+    btnAddManualPhoto.title = hasImage ? 'Заменить фото' : 'Добавить фото для истории';
     draftImageStatus.textContent = hasImage
         ? 'Фото будет показано в истории после сохранения'
         : 'Можно добавить миниатюру для истории';
@@ -516,15 +516,50 @@ function removeManualDraftPhoto() {
     haptic('light');
 }
 
-function toggleProductKbju(card) {
+function setProductKbjuExpanded(card, isExpanded) {
     const panel = card.querySelector('.kbju-panel');
     const button = card.querySelector('.kbju-toggle');
-    const isHidden = panel.classList.toggle('hidden');
 
-    card.classList.toggle('kbju-open', !isHidden);
-    button.setAttribute('aria-expanded', String(!isHidden));
-    button.textContent = isHidden ? 'БЖУ' : 'Скрыть БЖУ';
+    panel.classList.toggle('hidden', !isExpanded);
+    card.classList.toggle('kbju-open', isExpanded);
+    button.setAttribute('aria-expanded', String(isExpanded));
+    button.innerHTML = isExpanded
+        ? '<span aria-hidden="true">▴</span><span>Скрыть БЖУ</span>'
+        : '<span aria-hidden="true">▾</span><span>Показать БЖУ</span>';
+}
+
+function toggleProductKbju(card) {
+    setProductKbjuExpanded(card, !card.classList.contains('kbju-open'));
     haptic('light');
+}
+
+function productCardCanAutofillKbju(card) {
+    const name = card.querySelector('.product-name')?.value.trim() || '';
+    const weight = Number(card.querySelector('.product-weight')?.value || 0);
+
+    return name !== '' && weight > 0;
+}
+
+function updateProductKbjuActionState(card) {
+    const button = card.querySelector('.kbju-autofill-button');
+    const helper = card.querySelector('.kbju-autofill-helper');
+
+    if (!button || !helper) {
+        return;
+    }
+
+    const isLoading = card.classList.contains('product-card-kbju-loading');
+    const canAutofill = productCardCanAutofillKbju(card);
+
+    button.disabled = isLoading || isFillingKbju || isAnalyzingPhoto || isSavingMealDraft || !canAutofill;
+    button.querySelector('.kbju-autofill-label').textContent = isLoading ? 'Расчет...' : 'Автозаполнить КБЖУ';
+    helper.textContent = canAutofill
+        ? 'AI предложит примерные значения, которые можно отредактировать'
+        : 'Сначала укажите название и вес';
+}
+
+function updateAllProductKbjuActionStates() {
+    productsList.querySelectorAll('.product-card:not([data-loading="true"])').forEach(updateProductKbjuActionState);
 }
 
 function createProductCard(product, index) {
@@ -553,12 +588,23 @@ function createProductCard(product, index) {
             <select class="processing-select">
                 ${processingOptions}
             </select>
+            <div class="kbju-autofill">
+                <button class="kbju-autofill-button" type="button">
+                    <svg class="kbju-autofill-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M11 2.75a.75.75 0 0 1 1.43-.32l1.77 3.92 3.92 1.77a.75.75 0 0 1 0 1.36l-3.92 1.77-1.77 3.92a.75.75 0 0 1-1.36 0L9.3 11.25 5.38 9.48a.75.75 0 0 1 0-1.36L9.3 6.35l1.77-3.92A.75.75 0 0 1 11 2.75Zm.75 1.8-1.2 2.66a.75.75 0 0 1-.38.38l-2.66 1.2 2.66 1.2c.17.08.3.21.38.38l1.2 2.66 1.2-2.66c.08-.17.21-.3.38-.38l2.66-1.2-2.66-1.2a.75.75 0 0 1-.38-.38l-1.2-2.66ZM18.5 13.25a.75.75 0 0 1 .68.43l.66 1.48 1.48.66a.75.75 0 0 1 0 1.36l-1.48.66-.66 1.48a.75.75 0 0 1-1.36 0l-.66-1.48-1.48-.66a.75.75 0 0 1 0-1.36l1.48-.66.66-1.48a.75.75 0 0 1 .68-.43Zm0 2.58-.08.17a.75.75 0 0 1-.38.38l-.17.08.17.08c.17.08.3.21.38.38l.08.17.08-.17c.08-.17.21-.3.38-.38l.17-.08-.17-.08a.75.75 0 0 1-.38-.38l-.08-.17Z" fill="currentColor"/>
+                    </svg>
+                    <span class="kbju-autofill-label">Автозаполнить КБЖУ</span>
+                </button>
+                <p class="kbju-autofill-helper">AI предложит примерные значения, которые можно отредактировать</p>
+            </div>
             <div class="nutrition-row">
                 <div>
                     <label class="field-label">Ккал / 100г</label>
                     <input type="number" class="product-calories" value="${product.calories}" min="0" placeholder="0">
                 </div>
-                <button class="kbju-toggle" type="button" aria-expanded="false">БЖУ</button>
+                <button class="kbju-toggle" type="button" aria-expanded="false">
+                    <span aria-hidden="true">▾</span><span>Показать БЖУ</span>
+                </button>
             </div>
             <div class="kbju-panel hidden">
                 <div class="kbju-field-wrap">
@@ -638,11 +684,15 @@ function bindProductCardEvents() {
         }
 
         card.querySelectorAll('input').forEach(input => {
-            input.addEventListener('input', recalculateDraftTotal);
+            input.addEventListener('input', () => {
+                recalculateDraftTotal();
+                updateProductKbjuActionState(card);
+            });
         });
 
         card.querySelector('.processing-select').addEventListener('change', () => {
             recalculateDraftTotal();
+            updateProductKbjuActionState(card);
             haptic('light');
         });
 
@@ -670,10 +720,22 @@ function bindProductCardEvents() {
             updateDraftSourceLabel();
             haptic('light');
         };
+
+        updateProductKbjuActionState(card);
     });
 }
 
 productsList.addEventListener('click', event => {
+    const autofillButton = event.target.closest('.kbju-autofill-button');
+    if (autofillButton) {
+        const card = autofillButton.closest('.product-card');
+        if (!card) return;
+
+        event.preventDefault();
+        fillProductKbjuWithAi(card);
+        return;
+    }
+
     const toggle = event.target.closest('.kbju-toggle');
     if (!toggle) return;
 
@@ -769,26 +831,15 @@ function fillMissingCardKbju(card, nutrients) {
 }
 
 function setKbjuLoadingState(card, isLoading) {
-    const controls = card.querySelectorAll('input, select, button');
+    const button = card.querySelector('.kbju-autofill-button');
     card.classList.toggle('product-card-kbju-loading', isLoading);
     card.setAttribute('aria-busy', String(isLoading));
 
-    controls.forEach(control => {
-        control.disabled = isLoading;
-    });
-
-    let overlay = card.querySelector('.kbju-loading-overlay');
-
-    if (isLoading && !overlay) {
-        overlay = document.createElement('div');
-        overlay.className = 'kbju-loading-overlay';
-        overlay.innerHTML = '<span class="shimmer-text">AI заполняет КБЖУ</span>';
-        card.appendChild(overlay);
+    if (button) {
+        button.disabled = isLoading;
     }
 
-    if (!isLoading && overlay) {
-        overlay.remove();
-    }
+    updateProductKbjuActionState(card);
 }
 
 function confirmAsync(message) {
@@ -895,10 +946,10 @@ function updateDraftLimitControls() {
     btnAddProduct.disabled = productsLimitReached || isAnalyzingPhoto;
     btnAddProduct.textContent = productsLimitReached ? 'Лимит продуктов' : '＋ Добавить продукт';
 
-    btnFillKbju.disabled = isFillingKbju || isAnalyzingPhoto;
-    btnFillKbju.textContent = isFillingKbju ? 'Заполняю...' : 'Заполнить КБЖУ';
+    updateAllProductKbjuActionStates();
 
     btnScanMore.classList.toggle('hidden', !canScanMore);
+    btnScanMore.parentElement?.classList.toggle('hidden', !canScanMore);
     btnScanMore.disabled = !canScanMore || productsLimitReached || scanLimitReached || isAnalyzingPhoto;
     btnScanMore.textContent = isAnalyzingPhoto
         ? 'Сканирую...'
@@ -1015,10 +1066,11 @@ async function fillMissingKbjuWithAi() {
         for (const card of cardsToFill) {
             setKbjuLoadingState(card, true);
             const productName = card.querySelector('.product-name').value.trim();
+            const processing = card.querySelector('.processing-select').value;
             const response = await apiFetch('/api/product-nutrition', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ product_name: productName })
+                body: JSON.stringify({ product_name: productName, processing })
             });
             const result = await response.json();
 
@@ -1040,6 +1092,56 @@ async function fillMissingKbjuWithAi() {
         haptic('error');
     } finally {
         cardsToFill.forEach(card => setKbjuLoadingState(card, false));
+        isFillingKbju = false;
+        draftSourceLabel.textContent = previousDraftSourceText;
+        updateDraftLimitControls();
+    }
+}
+
+async function fillProductKbjuWithAi(card) {
+    if (isFillingKbju || isSavingMealDraft || isAnalyzingPhoto) {
+        return;
+    }
+
+    if (!productCardCanAutofillKbju(card)) {
+        tg.showAlert('Сначала укажите название и вес');
+        haptic('error');
+        updateProductKbjuActionState(card);
+        return;
+    }
+
+    isFillingKbju = true;
+    const previousDraftSourceText = draftSourceLabel.textContent;
+    draftSourceLabel.textContent = 'AI заполняет КБЖУ продукта';
+    updateDraftLimitControls();
+    setKbjuLoadingState(card, true);
+
+    try {
+        const productName = card.querySelector('.product-name').value.trim();
+        const processing = card.querySelector('.processing-select').value;
+        const response = await apiFetch('/api/product-nutrition', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ product_name: productName, processing })
+        });
+        const result = await response.json();
+
+        if (!response.ok || result.status !== 'success') {
+            tg.showAlert(result.message || result.error || 'Не удалось заполнить КБЖУ');
+            haptic('error');
+            return;
+        }
+
+        fillMissingCardKbju(card, result.data || {});
+        setProductKbjuExpanded(card, true);
+        syncDraftFromEditor();
+        recalculateDraftTotal();
+        haptic('success');
+    } catch (error) {
+        tg.showAlert('Ошибка при заполнении КБЖУ');
+        haptic('error');
+    } finally {
+        setKbjuLoadingState(card, false);
         isFillingKbju = false;
         draftSourceLabel.textContent = previousDraftSourceText;
         updateDraftLimitControls();
@@ -1117,7 +1219,7 @@ async function saveMealDraft() {
 
         if (result.status === 'success') {
             closeMealSheet();
-            await loadMealHistory();
+            await refreshMealHistory();
             await loadProgress();
             haptic('success');
             tg.showAlert(`Добавлено: ${mealName}, ${result.meal?.calories || 0} ккал`);
@@ -1144,7 +1246,6 @@ btnManualEntry.onclick = startManualDraft;
 btnCancelDraft.onclick = closeMealSheet;
 btnAnalyzePhoto.onclick = analyzeSelectedPhoto;
 btnSaveMeal.onclick = saveMealDraft;
-btnFillKbju.onclick = fillMissingKbjuWithAi;
 btnAddManualPhoto.onclick = startAttachmentPhotoSelection;
 btnRemoveManualPhoto.onclick = removeManualDraftPhoto;
 mealNameInput.addEventListener('input', () => {

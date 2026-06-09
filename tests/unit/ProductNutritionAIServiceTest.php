@@ -25,14 +25,30 @@ class ProductNutritionAIServiceTest extends TestCase
         $this->assertSame(0, $nutrients['fats']);
         $this->assertSame(25.3, $nutrients['carbs']);
     }
+
+    public function testAddsProcessingContextToPrompt(): void
+    {
+        $client = new FakeProductNutritionChatClient('{"calories":155,"proteins":13,"fats":11,"carbs":1}');
+        $service = new ProductNutritionAIService($client, new AIJsonResponseParser());
+
+        $service->getProductNutrients('2 яйца', 'boil');
+
+        $this->assertStringContainsString('2 яйца', $client->lastPrompt);
+        $this->assertStringContainsString('способ обработки: варка', $client->lastPrompt);
+        $this->assertStringContainsString('варёные яйца', $client->lastPrompt);
+    }
 }
 
 class FakeProductNutritionChatClient implements AIChatClientInterface
 {
+    public string $lastPrompt = '';
+
     public function __construct(private readonly ?string $response) {}
 
     public function complete(array $messages, int $timeoutSeconds, string $operation): ?string
     {
+        $this->lastPrompt = (string)($messages[0]['content'] ?? '');
+
         return $this->response;
     }
 }

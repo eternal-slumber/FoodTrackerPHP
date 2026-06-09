@@ -4,19 +4,74 @@ let mealDetailParentBackHandler = null;
 let mealDetailKeepBodyLockedOnClose = false;
 let protectedImagesObserver = null;
 let protectedImagesRenderId = 0;
+let mealHistoryCache = null;
+let mealHistoryDirty = true;
+let mealHistoryLoadPromise = null;
+let historySwipeGesture = null;
 const historyMealDetailsCache = new Map();
+const HISTORY_MAX_SWIPE_X = -120;
+const HISTORY_OPEN_THRESHOLD = -18;
+const HISTORY_INTENT_THRESHOLD = 6;
 
-async function loadMealHistory() {
+async function loadMealHistory(options = {}) {
+    const force = Boolean(options.force);
+    const historyList = document.getElementById('history-list');
+
+    if (!force && !mealHistoryDirty && Array.isArray(mealHistoryCache)) {
+        if (historyList?.dataset.historyRendered !== '1') {
+            renderMealHistory(mealHistoryCache);
+        }
+
+        return mealHistoryCache;
+    }
+
+    if (mealHistoryLoadPromise) {
+        return mealHistoryLoadPromise;
+    }
+
+    mealHistoryLoadPromise = fetchMealHistory();
+
+    try {
+        return await mealHistoryLoadPromise;
+    } finally {
+        mealHistoryLoadPromise = null;
+    }
+}
+
+async function refreshMealHistory() {
+    mealHistoryDirty = true;
+    return loadMealHistory({ force: true });
+}
+
+function updateMealHistoryAfterDelete(mealId) {
+    historyMealDetailsCache.delete(mealId);
+
+    if (Array.isArray(mealHistoryCache)) {
+        mealHistoryCache = mealHistoryCache.filter(meal => Number(meal.id) !== Number(mealId));
+        mealHistoryDirty = false;
+        renderMealHistory(mealHistoryCache);
+        return;
+    }
+
+    mealHistoryDirty = true;
+}
+
+async function fetchMealHistory() {
     try {
         const response = await apiFetch('/api/history');
         const result = await response.json();
 
         if (result.status === 'success') {
-            renderMealHistory(result.data);
+            mealHistoryCache = Array.isArray(result.data) ? result.data : [];
+            mealHistoryDirty = false;
+            renderMealHistory(mealHistoryCache);
+            return mealHistoryCache;
         }
     } catch (error) {
         console.error('Ошибка загрузки истории:', error);
     }
+
+    return mealHistoryCache || [];
 }
 
 // Отрисовка истории приемов пищи
@@ -25,6 +80,8 @@ function renderMealHistory(meals) {
     disconnectProtectedImagesObserver();
     revokeProtectedImageUrls(historyList);
     protectedImagesRenderId++;
+    historySwipeGesture = null;
+    historyList.dataset.historyRendered = '1';
 
     if (!meals || meals.length === 0) {
         historyList.innerHTML = '<p class="history-empty">История пуста</p>';
@@ -43,7 +100,6 @@ function renderMealHistory(meals) {
     `).join('');
 
     observeProtectedImages();
-    bindHistorySwipeActions();
 }
 
 function groupMealsByDate(meals) {
@@ -72,10 +128,10 @@ function renderHistoryItem(meal) {
         : '—';
 
     return `
-        <div class="history-swipe-row">
-            <div class="history-swipe-layer">
-                <button class="history-delete-action" type="button" data-meal-id="${meal.id}">Удалить</button>
-                <div class="history-item" data-meal-id="${meal.id}" aria-expanded="false">
+        <div class="swipe-row history-swipe-row">
+            <button class="delete-action history-delete-action" type="button" data-meal-id="${meal.id}">Удалить</button>
+            <div class="meal-card-wrapper history-card-wrapper">
+                <article class="meal-card history-item" data-meal-id="${meal.id}" aria-expanded="false">
                     <div class="history-card-main">
                         <div class="history-thumbnail">
                             ${renderHistoryThumbnail(meal, description)}
@@ -99,7 +155,7 @@ function renderHistoryItem(meal) {
                     <div class="history-accordion" aria-hidden="true">
                         <div class="history-accordion-inner"></div>
                     </div>
-                </div>
+                </article>
             </div>
         </div>
     `;
@@ -126,121 +182,158 @@ function renderHistoryThumbnail(meal, description) {
     `;
 }
 
-function bindHistorySwipeActions() {
-    const maxSwipeX = -120;
-    const openThreshold = -18;
-    const intentThreshold = 6;
+function bindHistoryInteractions() {
+    const historyList = document.getElementById('history-list');
 
-    document.querySelectorAll('.history-swipe-row').forEach(row => {
-        const item = row.querySelector('.history-item');
-        const deleteButton = row.querySelector('.history-delete-action');
-        let startX = 0;
-        let startY = 0;
-        let currentX = 0;
-        let isPointerDown = false;
-        let isHorizontalSwipe = false;
-        let isVerticalScroll = false;
-        let lastTranslateX = 0;
+    if (!historyList || historyList.dataset.historyInteractionsBound === '1') {
+        return;
+    }
 
-        deleteButton.onclick = () => deleteMeal(Number(deleteButton.dataset.mealId));
+    historyList.dataset.historyInteractionsBound = '1';
+    historyList.addEventListener('click', handleHistoryClick);
+    historyList.addEventListener('pointerdown', handleHistoryPointerDown);
+    document.addEventListener('pointermove', handleHistoryPointerMove);
+    document.addEventListener('pointerup', handleHistoryPointerUp);
+    document.addEventListener('pointercancel', handleHistoryPointerCancel);
+}
 
-        item.addEventListener('click', event => {
-            if (event.target.closest('.history-accordion')) {
-                return;
-            }
+function handleHistoryClick(event) {
+    const deleteButton = event.target.closest('.history-delete-action');
+    if (deleteButton) {
+        const row = deleteButton.closest('.swipe-row');
+        if (!row?.classList.contains('is-open')) {
+            return;
+        }
 
-            if (row.dataset.swipeHandled === '1' || row.classList.contains('open')) {
-                row.dataset.swipeHandled = '';
-                return;
-            }
+        deleteMeal(Number(deleteButton.dataset.mealId));
+        return;
+    }
 
-            toggleHistoryAccordion(row, Number(item.dataset.mealId));
-        });
+    const item = event.target.closest('.meal-card');
+    if (!item || event.target.closest('.history-accordion')) {
+        return;
+    }
 
-        item.addEventListener('pointerdown', event => {
-            if (event.target.closest('.history-accordion')) {
-                return;
-            }
+    const row = item.closest('.swipe-row');
+    if (!row) {
+        return;
+    }
 
-            closeHistorySwipeRows(row);
-            startX = event.clientX;
-            startY = event.clientY;
-            currentX = row.classList.contains('open') ? maxSwipeX : 0;
-            isPointerDown = true;
-            isHorizontalSwipe = false;
-            isVerticalScroll = false;
-            lastTranslateX = currentX;
-            item.style.transition = 'none';
-        });
+    if (row.dataset.swipeHandled === '1' || row.classList.contains('is-open')) {
+        row.dataset.swipeHandled = '';
+        return;
+    }
 
-        item.addEventListener('pointermove', event => {
-            if (!isPointerDown || isVerticalScroll) return;
+    toggleHistoryAccordion(row, Number(item.dataset.mealId));
+}
 
-            const deltaX = event.clientX - startX;
-            const deltaY = event.clientY - startY;
-            const absX = Math.abs(deltaX);
-            const absY = Math.abs(deltaY);
+function handleHistoryPointerDown(event) {
+    const item = event.target.closest('.meal-card');
+    if (!item || event.target.closest('.history-accordion')) {
+        return;
+    }
 
-            if (!isHorizontalSwipe) {
-                if (absX < intentThreshold && absY < intentThreshold) return;
+    const row = item.closest('.swipe-row');
+    const wrapper = item.closest('.meal-card-wrapper');
+    if (!row || !wrapper || row.classList.contains('is-deleting')) {
+        return;
+    }
 
-                if (absY > absX * 1.4) {
-                    isVerticalScroll = true;
-                    item.style.transition = '';
-                    return;
-                }
+    closeHistorySwipeRows(row);
+    historySwipeGesture = {
+        row,
+        item,
+        wrapper,
+        pointerId: event.pointerId,
+        startX: event.clientX,
+        startY: event.clientY,
+        currentX: row.classList.contains('is-open') ? HISTORY_MAX_SWIPE_X : 0,
+        wasOpen: row.classList.contains('is-open'),
+        isHorizontalSwipe: false,
+        isVerticalScroll: false,
+        lastTranslateX: row.classList.contains('is-open') ? HISTORY_MAX_SWIPE_X : 0,
+    };
+    wrapper.style.transition = 'none';
+}
 
-                if (deltaX > 0 && !row.classList.contains('open')) {
-                    isPointerDown = false;
-                    item.style.transition = '';
-                    return;
-                }
+function handleHistoryPointerMove(event) {
+    const gesture = historySwipeGesture;
+    if (!gesture || gesture.pointerId !== event.pointerId || gesture.isVerticalScroll) {
+        return;
+    }
 
-                isHorizontalSwipe = true;
-                row.classList.add('is-horizontal-dragging');
-                item.setPointerCapture?.(event.pointerId);
-            }
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
 
-            event.preventDefault();
+    if (!gesture.isHorizontalSwipe) {
+        if (absX < HISTORY_INTENT_THRESHOLD && absY < HISTORY_INTENT_THRESHOLD) {
+            return;
+        }
 
-            const nextX = Math.max(maxSwipeX, Math.min(0, currentX + deltaX));
-            lastTranslateX = nextX;
-            row.classList.toggle('swiping', nextX < -4);
-            item.style.transform = `translateX(${nextX}px)`;
-        });
+        if (absY > absX * 1.4) {
+            gesture.isVerticalScroll = true;
+            gesture.wrapper.style.transition = '';
+            return;
+        }
 
-        item.addEventListener('pointerup', event => {
-            if (!isPointerDown) return;
+        if (deltaX > 0 && !gesture.row.classList.contains('is-open')) {
+            historySwipeGesture = null;
+            gesture.wrapper.style.transition = '';
+            return;
+        }
 
-            isPointerDown = false;
-            if (isHorizontalSwipe) {
-                item.releasePointerCapture?.(event.pointerId);
-            }
+        gesture.isHorizontalSwipe = true;
+        gesture.row.classList.add('is-horizontal-dragging', 'is-swiping', 'swiping');
+        gesture.item.setPointerCapture?.(event.pointerId);
+    }
 
-            const totalDeltaX = event.clientX - startX;
-            const shouldOpen = isHorizontalSwipe && (lastTranslateX < openThreshold || totalDeltaX < openThreshold);
-            closeHistorySwipeRows(row);
-            row.classList.remove('swiping');
-            row.classList.remove('is-horizontal-dragging');
-            row.classList.toggle('open', shouldOpen);
-            row.dataset.swipeHandled = shouldOpen || isHorizontalSwipe ? '1' : '';
-            item.style.transition = '';
-            item.style.transform = shouldOpen ? `translateX(${maxSwipeX}px)` : '';
-        });
+    event.preventDefault();
 
-        item.addEventListener('pointercancel', event => {
-            isPointerDown = false;
-            if (isHorizontalSwipe) {
-                item.releasePointerCapture?.(event.pointerId);
-            }
-            row.classList.remove('swiping');
-            row.classList.remove('is-horizontal-dragging');
-            item.style.transition = '';
-            const shouldOpen = isHorizontalSwipe && lastTranslateX < openThreshold;
-            row.classList.toggle('open', shouldOpen || row.classList.contains('open'));
-            item.style.transform = row.classList.contains('open') ? `translateX(${maxSwipeX}px)` : '';
-        });
-    });
+    const nextX = Math.max(HISTORY_MAX_SWIPE_X, Math.min(0, gesture.currentX + deltaX));
+    gesture.lastTranslateX = nextX;
+    gesture.row.classList.toggle('is-swiping', nextX < -4);
+    gesture.row.classList.toggle('swiping', nextX < -4);
+    gesture.wrapper.style.transform = `translate3d(${nextX}px, 0, 0)`;
+}
+
+function handleHistoryPointerUp(event) {
+    finishHistoryPointerGesture(event, false);
+}
+
+function handleHistoryPointerCancel(event) {
+    finishHistoryPointerGesture(event, true);
+}
+
+function finishHistoryPointerGesture(event, isCanceled) {
+    const gesture = historySwipeGesture;
+    if (!gesture || gesture.pointerId !== event.pointerId) {
+        return;
+    }
+
+    historySwipeGesture = null;
+
+    if (gesture.isHorizontalSwipe) {
+        gesture.item.releasePointerCapture?.(event.pointerId);
+    }
+
+    gesture.row.classList.remove('swiping', 'is-swiping');
+    gesture.row.classList.remove('is-horizontal-dragging');
+    gesture.wrapper.style.transition = '';
+
+    if (isCanceled) {
+        const shouldRemainOpen = gesture.isHorizontalSwipe && gesture.lastTranslateX < HISTORY_OPEN_THRESHOLD;
+        setHistorySwipeRowOpen(gesture.row, shouldRemainOpen || gesture.row.classList.contains('is-open'));
+        return;
+    }
+
+    const totalDeltaX = event.clientX - gesture.startX;
+    const shouldOpen = gesture.isHorizontalSwipe
+        && (gesture.lastTranslateX < HISTORY_OPEN_THRESHOLD || totalDeltaX < HISTORY_OPEN_THRESHOLD);
+    closeHistorySwipeRows(gesture.row);
+    setHistorySwipeRowOpen(gesture.row, shouldOpen);
+    gesture.row.dataset.swipeHandled = shouldOpen || gesture.isHorizontalSwipe || gesture.wasOpen ? '1' : '';
 }
 
 async function toggleHistoryAccordion(row, mealId) {
@@ -517,7 +610,7 @@ document.querySelector('.meal-detail-panel').onclick = event => event.stopPropag
 document.getElementById('btn-meal-detail-close').onclick = closeMealDetail;
 
 document.addEventListener('pointerdown', event => {
-    const row = event.target.closest('.history-swipe-row');
+    const row = event.target.closest('.swipe-row');
     if (row) {
         closeHistorySwipeRows(row);
         return;
@@ -526,14 +619,37 @@ document.addEventListener('pointerdown', event => {
     closeHistorySwipeRows();
 });
 
+function setHistorySwipeRowOpen(row, isOpen) {
+    const wrapper = row.querySelector('.meal-card-wrapper');
+    if (!wrapper) {
+        return;
+    }
+
+    row.classList.remove('is-closing');
+
+    if (isOpen) {
+        row.classList.add('is-open', 'open');
+        wrapper.style.transform = `translate3d(${HISTORY_MAX_SWIPE_X}px, 0, 0)`;
+        return;
+    }
+
+    const wasOpen = row.classList.contains('is-open') || row.classList.contains('open');
+    row.classList.remove('is-open', 'open');
+    row.classList.toggle('is-closing', wasOpen);
+    wrapper.style.transform = '';
+
+    if (wasOpen) {
+        window.setTimeout(() => row.classList.remove('is-closing'), 340);
+    }
+}
+
 function closeHistorySwipeRows(exceptRow = null) {
-    document.querySelectorAll('.history-swipe-row.open').forEach(row => {
+    document.querySelectorAll('.swipe-row.is-open, .history-swipe-row.open').forEach(row => {
         if (row === exceptRow) return;
 
-        row.classList.remove('open');
-        row.classList.remove('swiping');
-        row.querySelector('.history-item').style.transition = '';
-        row.querySelector('.history-item').style.transform = '';
+        row.classList.remove('swiping', 'is-swiping');
+        row.querySelector('.meal-card-wrapper')?.style.removeProperty('transition');
+        setHistorySwipeRowOpen(row, false);
     });
 }
 
@@ -713,6 +829,14 @@ async function deleteMeal(mealId) {
         return;
     }
 
+    const row = document.querySelector(`.swipe-row .history-delete-action[data-meal-id="${mealId}"]`)?.closest('.swipe-row');
+    const deleteButton = row?.querySelector('.history-delete-action');
+
+    row?.classList.add('is-deleting');
+    if (deleteButton) {
+        deleteButton.disabled = true;
+    }
+
     try {
         const response = await apiFetch('/api/delete-meal', {
             method: 'POST',
@@ -724,12 +848,22 @@ async function deleteMeal(mealId) {
 
         if (result.status === 'success') {
             tg.showAlert('Запись успешно удалена');
-            loadMealHistory();
+            updateMealHistoryAfterDelete(mealId);
             loadProgress();
         } else {
             tg.showAlert(result.message || 'Ошибка при удалении записи');
+            row?.classList.remove('is-deleting');
+            if (deleteButton) {
+                deleteButton.disabled = false;
+            }
         }
     } catch (error) {
+        row?.classList.remove('is-deleting');
+        if (deleteButton) {
+            deleteButton.disabled = false;
+        }
         tg.showAlert('Ошибка соединения с сервером');
     }
 }
+
+bindHistoryInteractions();
