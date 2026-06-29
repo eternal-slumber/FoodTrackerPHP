@@ -1,0 +1,250 @@
+/* Итог регистрации */
+#screen-register-success {
+    --success-accent: #6dbb35;
+    --success-accent-soft: #d6f78a;
+    --success-card: #ffffff;
+    --success-card-soft: #f8faf1;
+    --success-hint: #777a70;
+    --success-page: #f7faef;
+    --success-text: #171717;
+    background: var(--success-page);
+    color: var(--success-text);
+    justify-content: center;
+    min-height: var(--tg-viewport-height, 100dvh);
+    padding: calc(24px + max(var(--tg-safe-area-top), var(--tg-content-safe-area-top))) 18px max(24px, env(safe-area-inset-bottom));
+}
+
+.register-success-content {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    max-width: 400px;
+    text-align: center;
+    width: 100%;
+}
+
+.register-success-mark {
+    align-items: center;
+    animation: registerSuccessMark .58s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--success-accent-soft);
+    border-radius: 24px;
+    color: var(--success-accent);
+    display: flex;
+    height: 72px;
+    justify-content: center;
+    margin-bottom: 20px;
+    width: 72px;
+}
+
+.register-success-mark svg {
+    height: 38px;
+    width: 38px;
+}
+
+.register-success-header {
+    animation: registerSuccessReveal .56s .16s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.register-success-header > span {
+    color: var(--success-accent);
+    font-size: 11px;
+    font-weight: 780;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+}
+
+.register-success-header h1 {
+    color: var(--success-text);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.035em;
+    line-height: 1.05;
+    margin: 7px 0 10px;
+}
+
+.register-success-header p {
+    color: var(--success-hint);
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0 auto;
+    max-width: 330px;
+}
+
+.register-success-plan {
+    animation: registerSuccessReveal .62s .3s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--success-card);
+    border-radius: 26px;
+    margin-top: 24px;
+    padding: 18px;
+    text-align: left;
+    width: 100%;
+}
+
+.register-success-calories {
+    align-items: end;
+    display: flex;
+    justify-content: space-between;
+}
+
+.register-success-calories > span {
+    color: var(--success-hint);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.register-success-calories > strong {
+    color: var(--success-text);
+    font-size: 14px;
+    font-weight: 720;
+}
+
+.register-success-calories b {
+    font-size: 29px;
+    font-weight: 820;
+    letter-spacing: -.04em;
+}
+
+.register-success-macros {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 15px;
+}
+
+.register-success-macros div {
+    background: var(--success-card-soft);
+    border-radius: 15px;
+    padding: 10px 8px;
+    text-align: center;
+}
+
+.register-success-macros strong,
+.register-success-macros span {
+    display: block;
+}
+
+.register-success-macros strong {
+    color: var(--success-text);
+    font-size: 18px;
+    line-height: 1;
+}
+
+.register-success-macros span {
+    color: var(--success-hint);
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+.register-success-details {
+    border-top: 1px solid color-mix(in srgb, var(--success-text) 8%, transparent);
+    display: grid;
+    gap: 9px;
+    margin: 15px 0 0;
+    padding-top: 14px;
+}
+
+.register-success-details div {
+    align-items: center;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+}
+
+.register-success-details dt {
+    color: var(--success-hint);
+    font-size: 12px;
+}
+
+.register-success-details dd {
+    color: var(--success-text);
+    font-size: 12px;
+    font-weight: 700;
+    margin: 0;
+    text-align: right;
+}
+
+#screen-register-success .register-success-button {
+    align-items: center;
+    animation: registerSuccessReveal .58s .46s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--success-accent);
+    border: 0;
+    border-radius: 18px;
+    box-shadow: none;
+    color: #ffffff;
+    display: flex;
+    font-size: 15px;
+    font-weight: 760;
+    justify-content: space-between;
+    margin-top: 18px;
+    min-height: 56px;
+    padding: 0 18px 0 20px;
+}
+
+#screen-register-success .register-success-button span {
+    font-size: 20px;
+}
+
+:root[data-app-effective-theme="dark"] #screen-register-success {
+    --success-accent: #8fd35a;
+    --success-accent-soft: #24351d;
+    --success-card: #121812;
+    --success-card-soft: #182018;
+    --success-hint: #b5b8aa;
+    --success-page: #0b100c;
+    --success-text: #f6f3e8;
+}
+
+:root[data-app-effective-theme="dark"] #screen-register-success .register-success-button {
+    color: #10150e;
+}
+
+@keyframes registerSuccessMark {
+    from {
+        opacity: 0;
+        transform: scale(.55) rotate(-12deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) rotate(0);
+    }
+}
+
+@keyframes registerSuccessReveal {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-height: 650px) {
+    .register-success-mark {
+        height: 58px;
+        margin-bottom: 14px;
+        width: 58px;
+    }
+
+    .register-success-header h1 {
+        font-size: 26px;
+    }
+
+    .register-success-plan {
+        margin-top: 17px;
+        padding: 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .register-success-mark,
+    .register-success-header,
+    .register-success-plan,
+    #screen-register-success .register-success-button {
+        animation: none;
+    }
+}

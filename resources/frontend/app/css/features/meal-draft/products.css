@@ -1,0 +1,293 @@
+/* Additional product cards */
+#bottom-sheet .meal-draft-card .draft-product-card{
+    background: #f8faf1;
+    border: 0;
+    border-radius: 28px;
+    box-shadow: none;
+    filter: none;
+    gap: 9px;
+    outline: 0;
+    padding: 13px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card::before,
+#bottom-sheet .meal-draft-card .draft-product-card::after {
+    content: none;
+    display: none;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card.product-card-kbju-loading {
+    box-shadow: none;
+    outline: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card.product-card-kbju-loading > * {
+    filter: none;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-product-loading-overlay {
+    align-items: center;
+    background: color-mix(in srgb, #f8faf1 90%, transparent);
+    display: none;
+    flex-direction: column;
+    inset: 0;
+    justify-content: center;
+    padding: 18px;
+    position: absolute;
+    text-align: center;
+    z-index: 20;
+    -webkit-backdrop-filter: blur(2px);
+    backdrop-filter: blur(2px);
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card.product-card-kbju-loading > *:not(.draft-product-loading-overlay) {
+    filter: blur(1.5px);
+    opacity: .32;
+    pointer-events: none;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card.product-card-kbju-loading .draft-product-loading-overlay {
+    display: flex;
+}
+
+#bottom-sheet .draft-product-loading-spinner {
+    animation: draftProductLoadingSpin .8s linear infinite;
+    border: 3px solid color-mix(in srgb, var(--button-color) 20%, transparent);
+    border-radius: 999px;
+    border-top-color: var(--button-color);
+    height: 34px;
+    margin-bottom: 10px;
+    width: 34px;
+}
+
+#bottom-sheet .draft-product-loading-label {
+    animation: draftProductLoadingShine 1.35s linear infinite;
+    background: linear-gradient(90deg, var(--hint-color), var(--button-color), var(--text-color), var(--button-color), var(--hint-color));
+    background-clip: text;
+    background-size: 240% auto;
+    color: transparent;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+    -webkit-background-clip: text;
+}
+
+#bottom-sheet .draft-product-loading-overlay small {
+    color: var(--hint-color);
+    font-size: 11px;
+    line-height: 1.25;
+    margin-top: 5px;
+}
+
+@keyframes draftProductLoadingSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes draftProductLoadingShine {
+    from { background-position: 200% center; }
+    to { background-position: -40% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #bottom-sheet .draft-product-loading-spinner,
+    #bottom-sheet .draft-product-loading-label {
+        animation: none;
+    }
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .product-name,
+#bottom-sheet .meal-draft-card .draft-product-card .product-weight,
+#bottom-sheet .meal-draft-card .draft-product-card .product-calories,
+#bottom-sheet .meal-draft-card .draft-product-card .kbju-field{
+    background: #ffffff;
+    border: 0;
+    border-radius: 16px;
+    box-shadow: none;
+    min-height: 42px;
+    padding: 9px 11px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .product-name {
+    min-height: 46px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .kbju-autofill-button {
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, .10);
+    border-radius: 16px;
+    box-shadow: none;
+    color: var(--text-color);
+    min-height: 42px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .kbju-toggle {
+    background: #ffffff;
+    border: 1px solid rgba(17, 17, 17, .10);
+    border-radius: 16px;
+    box-shadow: none;
+    height: 42px;
+    min-height: 42px;
+    padding: 0 8px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row {
+    background: #ffffff;
+    border-radius: 16px;
+    min-height: 44px;
+    padding: 8px 12px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row > span {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row .processing-select {
+    font-size: 12px;
+    font-weight: 700;
+    max-width: 55%;
+    min-height: 0;
+    padding: 0 22px 0 6px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row::after {
+    right: 12px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-product-base-row {
+    align-items: start;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(92px, .82fr);
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-product-base-row > div,
+#bottom-sheet .meal-draft-card .draft-product-card .draft-kbju-toggle-wrap {
+    display: grid;
+    grid-template-rows: 16px 42px;
+    min-width: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-product-base-row .field-label {
+    align-self: start;
+    line-height: 11px;
+    margin: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-kbju-toggle-wrap {
+    min-width: 0;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card{
+    background: #121c12;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .draft-product-loading-overlay {
+    background: color-mix(in srgb, #121c12 92%, transparent);
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .product-name,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .product-weight,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .product-calories,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .kbju-field,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .kbju-autofill-button,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .kbju-toggle,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row {
+    background: #182418;
+    border-color: rgba(255, 255, 255, .08);
+}
+
+#bottom-sheet .draft-scan-more-row .draft-main-autofill {
+    margin-bottom: 0;
+    width: 100%;
+}
+
+#bottom-sheet .draft-save-button {
+    background: var(--button-color);
+    color: var(--button-text);
+    margin: 0;
+}
+
+#bottom-sheet .draft-save-button:disabled {
+    background: var(--card-soft);
+    color: var(--hint-color);
+}
+
+#bottom-sheet .draft-save-button.is-analyzing {
+    color: transparent;
+    overflow: hidden;
+    position: relative;
+}
+
+#bottom-sheet .draft-save-button.is-analyzing::after {
+    animation: draftSaveAnalyzingShine 1.25s linear infinite;
+    background: linear-gradient(90deg, var(--hint-color), var(--button-color), var(--text-color), var(--button-color), var(--hint-color));
+    background-clip: text;
+    background-size: 240% auto;
+    color: transparent;
+    content: 'Идет анализ...';
+    display: grid;
+    font-size: inherit;
+    font-weight: inherit;
+    inset: 0;
+    line-height: inherit;
+    padding: 0;
+    place-items: center;
+    position: absolute;
+    -webkit-background-clip: text;
+}
+
+@keyframes draftSaveAnalyzingShine {
+    from { background-position: 200% center; }
+    to { background-position: -40% center; }
+}
+
+#bottom-sheet .draft-add-row {
+    margin-top: 14px;
+}
+
+#bottom-sheet .draft-meal-picker {
+    flex: 0 0 52px;
+}
+
+#bottom-sheet .draft-meal-picker:focus-within {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-color) 32%, transparent);
+}
+
+#bottom-sheet .draft-products-list {
+    gap: 10px;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-photo-hero {
+    background: #16270f;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet.bottom-sheet {
+    --black: #10150e;
+    --card-soft: #182018;
+    --soft-accent-bg: #182018;
+    --strong-accent: #8fd35a;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card {
+    background: #080c08;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-icon-button,
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-photo-upload {
+    background: rgba(43, 45, 43, .9);
+    color: var(--text-color);
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-photo-upload small {
+    color: var(--hint-color);
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .product-card,
+:root[data-app-effective-theme="dark"] #bottom-sheet .draft-add-product-toggle {
+    background: #121c12;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-main-product-form {
+    background: transparent;
+}
+

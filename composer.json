@@ -7,7 +7,9 @@
     },
     "scripts": {
         "migrate": "php scripts/migrate.php",
-        "cleanup:uploads": "php scripts/cleanup_uploads.php"
+        "cleanup:uploads": "php scripts/cleanup_uploads.php",
+        "build:frontend": "php scripts/build_frontend.php",
+        "test:frontend": "node --test tests/frontend/*.test.js"
     },
     "require": {
         "php": "^8.5",

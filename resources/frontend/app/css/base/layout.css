@@ -1,0 +1,8 @@
+.screen {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 20px;
+    padding-top: calc(20px + var(--tg-safe-area-top));
+    padding-bottom: calc(104px + env(safe-area-inset-bottom)); /* Место для таббара */
+}

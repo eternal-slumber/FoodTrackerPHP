@@ -1,0 +1,339 @@
+/* Production full-screen draft shell */
+#bottom-sheet.bottom-sheet {
+    --black: #111111;
+    --button-color: #69c52f;
+    --card-soft: #f8faf1;
+    --soft-accent-bg: #d6f78a;
+    --strong-accent: #111111;
+    background: var(--bg-color);
+    display: block;
+    overflow: hidden;
+}
+
+#bottom-sheet .sheet-overlay {
+    display: none;
+}
+
+#bottom-sheet .sheet-content {
+    animation: mealDraftEnter .24s ease;
+    background: var(--bg-color);
+    border-radius: 0;
+    height: 100vh;
+    height: var(--tg-viewport-height);
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 0;
+}
+
+#bottom-sheet #sheet-screen-editor {
+    animation: none;
+    min-height: 100%;
+}
+
+#bottom-sheet .meal-draft-card {
+    background: #ffffff;
+    padding-bottom: calc(28px + env(safe-area-inset-bottom));
+}
+
+#bottom-sheet .meal-photo-preview {
+    height: 100%;
+}
+
+#bottom-sheet .meal-photo-card {
+    height: 100%;
+}
+
+#bottom-sheet .photo-processing-overlay {
+    z-index: 3;
+}
+
+#bottom-sheet .meal-draft-topbar {
+    pointer-events: none;
+}
+
+#bottom-sheet .meal-draft-topbar button {
+    pointer-events: auto;
+}
+
+#bottom-sheet .meal-photo-upload {
+    font: inherit;
+}
+
+#bottom-sheet .meal-draft-card .product-card {
+    background: var(--card-soft);
+    border: 0;
+    box-shadow: none;
+    isolation: auto;
+    margin: 0;
+    padding: 14px;
+}
+
+#bottom-sheet .meal-draft-card .product-card::before,
+#bottom-sheet .meal-draft-card .product-card::after{
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    content: none;
+    display: none;
+}
+
+#bottom-sheet .meal-draft-card .draft-main-product-form {
+    background: transparent;
+    border-radius: 0;
+    display: grid;
+    gap: 10px;
+    padding: 6px 0 8px;
+}
+
+#bottom-sheet .draft-main-product-heading {
+    min-width: 0;
+}
+
+#bottom-sheet .draft-main-product-heading h2 {
+    color: var(--text-color);
+    display: block;
+    font-size: 21px;
+    font-weight: 760;
+    line-height: 1.1;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#bottom-sheet .draft-main-product-heading p {
+    color: var(--hint-color);
+    display: block;
+    font-size: 12px;
+    line-height: 1.2;
+    margin: 3px 0 0;
+}
+
+#bottom-sheet .draft-main-total {
+    color: var(--text-color);
+    flex: 0 0 auto;
+    font-size: 18px;
+    font-weight: 760;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+#bottom-sheet .draft-main-total span {
+    color: inherit;
+    font: inherit;
+    margin-top: 3px;
+}
+
+#bottom-sheet .draft-main-product-form .product-card-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    margin-bottom: 2px;
+}
+
+#bottom-sheet .draft-main-product-form > .kbju-autofill {
+    margin: 0;
+}
+
+#bottom-sheet .draft-main-product-form > .kbju-autofill .draft-main-autofill {
+    appearance: none;
+    background: color-mix(in srgb, var(--button-color) 12%, var(--secondary-bg));
+    border: 0;
+    border-radius: 18px;
+    box-shadow: none;
+    color: var(--button-color);
+    font-size: 13px;
+    font-weight: 760;
+    margin: 0;
+    min-height: 44px;
+    padding: 12px;
+    width: 100%;
+}
+
+#bottom-sheet .draft-main-product-form > .draft-nutrition-summary {
+    margin-top: 0;
+}
+
+#bottom-sheet .draft-main-product-form > .draft-main-kbju-grid {
+    margin-top: 0;
+}
+
+#bottom-sheet .meal-draft-card .product-row.inline {
+    margin-bottom: 10px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card {
+    background: var(--card-soft);
+    border: 0;
+    border-radius: 28px;
+    box-shadow: none;
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .product-card-header {
+    order: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .name-wrap {
+    order: 1;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .kbju-autofill {
+    order: 2;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .draft-product-base-row {
+    order: 3;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .kbju-panel {
+    order: 4;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card > .draft-processing-row {
+    order: 5;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .product-card-header {
+    gap: 10px;
+    grid-template-columns: 52px minmax(0, 1fr) auto 40px;
+    margin-bottom: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .product-delete {
+    display: flex;
+    height: 40px;
+    width: 40px;
+}
+
+#bottom-sheet .meal-draft-card .draft-product-card .draft-processing-row {
+    background: var(--secondary-bg);
+}
+
+#bottom-sheet .meal-draft-card .draft-processing-row .processing-select{
+    background: transparent;
+    box-shadow: none;
+}
+
+#bottom-sheet .draft-product-thumb {
+    background: var(--secondary-bg);
+    border-radius: 18px;
+    color: var(--button-color);
+    display: grid;
+    font-size: 20px;
+    font-weight: 760;
+    height: 52px;
+    overflow: hidden;
+    place-items: center;
+    width: 52px;
+}
+
+#bottom-sheet .draft-product-thumb img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+#bottom-sheet .draft-product-name-summary {
+    color: var(--text-color);
+    font-size: 15px;
+    font-weight: 760;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#bottom-sheet .meal-draft-card .name-wrap {
+    min-width: 0;
+}
+
+#bottom-sheet .meal-draft-card .weight-wrap {
+    flex: 0 0 92px;
+    width: 92px;
+}
+
+#bottom-sheet .meal-draft-card .draft-main-portions {
+    margin-bottom: 0;
+}
+
+#bottom-sheet .meal-draft-card .draft-portion-stepper {
+    max-width: 180px;
+}
+
+#bottom-sheet .meal-draft-card .field-label {
+    margin-bottom: 5px;
+}
+
+#bottom-sheet .meal-draft-card .product-name,
+#bottom-sheet .meal-draft-card .product-weight,
+#bottom-sheet .meal-draft-card .processing-select,
+#bottom-sheet .meal-draft-card .product-calories,
+#bottom-sheet .meal-draft-card .kbju-field {
+    background: var(--card-soft);
+    border: 0;
+    border-radius: 16px;
+    box-shadow: none;
+    min-height: 44px;
+    outline: none;
+}
+
+#bottom-sheet .meal-draft-card .kbju-autofill-button {
+    background: var(--secondary-bg);
+    border: 1px solid color-mix(in srgb, var(--button-color) 20%, var(--surface-border));
+    box-shadow: none;
+    min-height: 46px;
+}
+
+#bottom-sheet .meal-draft-card .kbju-autofill-helper {
+    color: var(--hint-color);
+    font-size: 11px;
+    line-height: 1.3;
+    margin: 5px 0 0;
+}
+
+#bottom-sheet .meal-draft-card .kbju-autofill-button[hidden],
+#bottom-sheet .meal-draft-card .kbju-autofill-helper[hidden] {
+    display: none;
+}
+
+#bottom-sheet .meal-draft-card input:focus,
+#bottom-sheet .meal-draft-card select:focus,
+#bottom-sheet .meal-draft-card button:focus {
+    outline: none;
+}
+
+#bottom-sheet .meal-draft-card input:focus-visible,
+#bottom-sheet .meal-draft-card select:focus-visible,
+#bottom-sheet .meal-draft-card button:focus-visible {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-color) 32%, transparent);
+}
+
+#bottom-sheet .draft-main-autofill {
+    margin-top: 10px;
+}
+
+#bottom-sheet .meal-photo-preview-actions button {
+    appearance: none;
+    background: var(--black);
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 12px 14px;
+}
+
+#bottom-sheet #btn-remove-main-photo {
+    background: #f3d9d5;
+    color: #a83f36;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet #btn-remove-main-photo {
+    background: #4a2522;
+    color: #f3a19a;
+}
+

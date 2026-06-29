@@ -1,0 +1,160 @@
+/* Production history screen */
+#screen-history {
+    --black: #151713;
+    --button-color: #6dbb35;
+    --card-border: rgba(17, 17, 17, 0.07);
+    --card-soft: #f4f8ec;
+    background: #f7faef;
+    color: var(--text-color);
+    padding: 20px 18px;
+    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-bottom: calc(112px + env(safe-area-inset-bottom));
+}
+
+#screen-history .history-content {
+    margin: 0 auto;
+    max-width: 430px;
+    width: 100%;
+}
+
+#screen-history .history-calendar-card,
+#screen-history .history-day-detail {
+    background: #ffffff;
+}
+
+#screen-history .profile-button {
+    appearance: none;
+    align-items: center;
+    background: #ffffff;
+    border: 0;
+    border-radius: 999px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: grid;
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 0;
+    place-items: center;
+    width: 40px;
+}
+
+#screen-history .profile-button svg {
+    display: block;
+    height: 24px;
+    width: 24px;
+}
+
+#screen-history .history-month-button:disabled {
+    cursor: wait;
+    opacity: 0.48;
+}
+
+#screen-history .history-calendar-day:focus-visible,
+#screen-history .history-month-button:focus-visible,
+#screen-history .history-day-expand:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--button-color) 52%, transparent);
+    outline-offset: 2px;
+}
+
+#screen-history .history-day-expanded {
+    max-height: 0;
+}
+
+#screen-history .history-day-meal-thumb img {
+    display: block;
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+#screen-history .history-day-detail.is-empty .history-day-expanded {
+    max-height: 260px;
+}
+
+#screen-history .history-calendar-error {
+    color: var(--hint-color);
+    font-size: 13px;
+    grid-column: 1 / -1;
+    padding: 28px 8px;
+    text-align: center;
+}
+
+#screen-history .history-calendar-error button {
+    appearance: none;
+    background: var(--button-color);
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    display: block;
+    font: inherit;
+    font-weight: 700;
+    margin: 12px auto 0;
+    min-height: 38px;
+    padding: 0 18px;
+}
+
+:root[data-app-effective-theme="dark"] #screen-history {
+    --black: #f5f5f1;
+    --button-color: #8fd35a;
+    --card-border: rgba(255, 255, 255, 0.08);
+    --card-soft: #1a2419;
+    background: #0b100c;
+}
+
+:root[data-app-effective-theme="dark"] #screen-history .history-calendar-card,
+:root[data-app-effective-theme="dark"] #screen-history .history-day-detail,
+:root[data-app-effective-theme="dark"] #screen-history .profile-button {
+    background: #121812;
+}
+
+:root[data-app-effective-theme="dark"] #screen-history .history-month-button,
+:root[data-app-effective-theme="dark"] #screen-history .history-day-macros div,
+:root[data-app-effective-theme="dark"] #screen-history .history-day-empty,
+:root[data-app-effective-theme="dark"] #screen-history .history-day-meal {
+    background: var(--card-soft);
+}
+
+:root[data-app-effective-theme="dark"] #screen-history .history-day-meal {
+    box-shadow: none;
+}
+
+:root[data-app-effective-theme="dark"] #screen-history .history-food-generic {
+    background:
+        radial-gradient(circle at 38% 34%, color-mix(in srgb, var(--button-color) 54%, transparent) 0 18%, transparent 19%),
+        linear-gradient(135deg, var(--card-soft), #121812);
+}
+
+:root[data-app-effective-theme="dark"] #screen-history .day-empty .history-calendar-ring,
+:root[data-app-effective-theme="dark"] #screen-history .history-day-ring.day-empty {
+    --ring-track-color: var(--surface-border);
+}
+
+@media (max-width: 360px) {
+    #screen-history {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #screen-history .history-calendar-card,
+    #screen-history .history-day-detail {
+        border-radius: 22px;
+        padding: 12px;
+    }
+
+    #screen-history .history-calendar-grid {
+        gap: 7px 3px;
+    }
+
+    #screen-history .history-calendar-ring {
+        --ring-size: 37px;
+    }
+
+    #screen-history .history-day-overview {
+        gap: 10px;
+        grid-template-columns: minmax(0, 1fr) 94px;
+    }
+
+    #screen-history .history-day-ring {
+        --ring-size: 122px;
+    }
+}

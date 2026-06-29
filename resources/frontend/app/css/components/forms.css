@@ -1,0 +1,143 @@
+/* Метки полей */
+.input-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 8px;
+}
+
+.meal-name-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--hint-color);
+    border-radius: 12px;
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.meal-name-input:focus {
+    outline: none;
+    border-color: var(--button-color);
+}
+
+.draft-image-field {
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 8px 12px;
+    margin-bottom: 16px;
+    padding: 12px;
+}
+
+.draft-image-field p {
+    color: var(--hint-color);
+    font-size: 12px;
+    line-height: 1.35;
+    margin: 4px 0 0;
+}
+
+.draft-image-copy {
+    min-width: 0;
+}
+
+.draft-image-icon-button {
+    align-items: center;
+    background: color-mix(in srgb, var(--button-color) 10%, var(--surface-input));
+    border: 1px solid color-mix(in srgb, var(--button-color) 34%, var(--surface-border));
+    border-radius: 50%;
+    box-shadow: 0 8px 18px -16px color-mix(in srgb, var(--button-color) 44%, transparent);
+    color: var(--button-color);
+    cursor: pointer;
+    display: inline-flex;
+    height: 40px;
+    justify-content: center;
+    margin-left: auto;
+    padding: 0;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+    width: 40px;
+}
+
+.draft-image-icon-button svg {
+    height: 21px;
+    width: 21px;
+}
+
+.draft-image-icon-button:active {
+    transform: scale(0.96);
+}
+
+.manual-photo-preview {
+    aspect-ratio: 1;
+    border-radius: 10px;
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    overflow: hidden;
+    width: 40px;
+}
+
+.manual-photo-preview img {
+    height: 100%;
+    object-fit: cover;
+    width: 100%;
+}
+
+.draft-image-actions {
+    display: grid;
+    gap: 10px;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
+    margin-top: 2px;
+}
+
+.draft-image-actions .secondary-button,
+.draft-image-actions .back-button {
+    margin: 0;
+}
+
+.draft-image-actions.single-action {
+    display: none;
+}
+
+.meal-name-display {
+    display: block;
+    font-size: 14px;
+    color: var(--button-color);
+    font-weight: 600;
+    margin-top: 4px;
+    text-align: center;
+}
+
+.sheet-header {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--hint-color);
+    margin-bottom: 4px;
+    margin-top: 8px;
+}
+
+.field-label:first-of-type {
+    margin-top: 0;
+}
+
+.input-sublabel {
+    display: block;
+    font-size: 12px;
+    color: var(--hint-color);
+    margin-top: 4px;
+}
+

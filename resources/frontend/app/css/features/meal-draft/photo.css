@@ -1,0 +1,412 @@
+/* Current meal draft */
+
+.meal-draft-page {
+    min-height: 100vh;
+    min-height: var(--tg-viewport-height);
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+}
+
+.meal-photo-hero {
+    background: var(--soft-accent-bg);
+    min-height: 310px;
+    padding: calc(16px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top))) 18px 38px;
+    position: relative;
+}
+
+.meal-main-product-hero {
+    min-height: 354px;
+    overflow: hidden;
+}
+
+.meal-draft-topbar {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin: 0 auto 22px;
+    max-width: 430px;
+    position: relative;
+    z-index: 2;
+}
+
+.meal-draft-icon-button {
+    -webkit-appearance: none;
+    align-items: center;
+    appearance: none;
+    background: rgba(255, 255, 255, .72);
+    border: 0;
+    border-radius: 999px;
+    color: var(--black);
+    cursor: pointer;
+    display: flex;
+    height: 38px;
+    justify-content: center;
+    padding: 0;
+    width: 38px;
+}
+
+.meal-draft-icon-button svg {
+    height: 22px;
+    width: 22px;
+}
+
+.meal-draft-icon-button.is-active {
+    background: var(--black);
+    color: #ffffff;
+}
+
+.meal-main-product-visual {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    margin: 0 auto;
+    max-width: 430px;
+    min-height: 235px;
+}
+
+.meal-photo-upload-input {
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    width: 1px;
+}
+
+.meal-photo-upload {
+    align-items: center;
+    background: rgba(255, 255, 255, .46);
+    border: 1px dashed rgba(17, 17, 17, .16);
+    border-radius: 30px;
+    color: var(--black);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    justify-content: center;
+    min-height: 214px;
+    padding: 24px;
+    text-align: center;
+    width: min(100%, 340px);
+}
+
+.meal-photo-upload-icon {
+    align-items: center;
+    background: var(--black);
+    border-radius: 999px;
+    color: #ffffff;
+    display: flex;
+    height: 54px;
+    justify-content: center;
+    width: 54px;
+}
+
+.meal-photo-upload-icon svg {
+    height: 28px;
+    width: 28px;
+}
+
+.meal-photo-upload strong {
+    font-size: 18px;
+    font-weight: 760;
+    line-height: 1.15;
+}
+
+.meal-photo-upload small {
+    color: color-mix(in srgb, var(--black) 58%, transparent);
+    font-size: 13px;
+    line-height: 1.35;
+    max-width: 245px;
+}
+
+.meal-dish-photo {
+    height: 250px;
+    position: relative;
+    width: min(100%, 340px);
+}
+
+.meal-dish-plate {
+    background:
+        radial-gradient(circle at 50% 52%, #f8faf1 0 53%, #e6eadf 54% 58%, #ffffff 59% 100%);
+    border-radius: 50%;
+    box-shadow: 0 18px 34px rgba(40, 70, 20, .16);
+    display: block;
+    height: 238px;
+    left: 50%;
+    position: absolute;
+    top: 6px;
+    transform: translateX(-50%);
+    width: 238px;
+}
+
+.meal-dish-salad {
+    background:
+        radial-gradient(circle at 24% 35%, #79b94a 0 9%, transparent 10%),
+        radial-gradient(circle at 72% 28%, #8bc75c 0 12%, transparent 13%),
+        radial-gradient(circle at 36% 70%, #6cab3d 0 12%, transparent 13%),
+        radial-gradient(circle at 68% 72%, #7fb74f 0 11%, transparent 12%),
+        #bfdc75;
+    border-radius: 50%;
+    height: 178px;
+    left: 30px;
+    position: absolute;
+    top: 30px;
+    width: 178px;
+}
+
+.meal-dish-chicken {
+    background: linear-gradient(135deg, #f5b06a, #fff4dc 62%, #d27d38);
+    border-radius: 999px;
+    box-shadow:
+        inset 10px 0 0 rgba(86, 48, 20, .12),
+        inset -8px 0 0 rgba(86, 48, 20, .1);
+    height: 34px;
+    position: absolute;
+    width: 92px;
+}
+
+.meal-dish-chicken::before,
+.meal-dish-chicken::after {
+    background: rgba(35, 22, 14, .72);
+    border-radius: 999px;
+    content: "";
+    height: 3px;
+    position: absolute;
+    top: 11px;
+    transform: rotate(19deg);
+    width: 74px;
+}
+
+.meal-dish-chicken::after {
+    top: 22px;
+}
+
+.chicken-a {
+    left: 73px;
+    top: 82px;
+    transform: rotate(25deg);
+}
+
+.chicken-b {
+    left: 80px;
+    top: 124px;
+    transform: rotate(-13deg);
+}
+
+.meal-dish-tomato {
+    background: radial-gradient(circle at 40% 35%, #ffb548 0 12%, #f2552b 13% 100%);
+    border-radius: 50%;
+    height: 36px;
+    position: absolute;
+    width: 36px;
+}
+
+.tomato-a {
+    left: 46px;
+    top: 64px;
+}
+
+.tomato-b {
+    right: 44px;
+    top: 58px;
+}
+
+.meal-dish-leaf {
+    background: linear-gradient(135deg, #66a638, #b4d96e);
+    border-radius: 100% 0 100% 0;
+    height: 92px;
+    opacity: .92;
+    position: absolute;
+    width: 54px;
+}
+
+.leaf-left {
+    left: 2px;
+    top: 84px;
+    transform: rotate(-72deg);
+}
+
+.leaf-right {
+    bottom: 4px;
+    right: 0;
+    transform: rotate(31deg);
+}
+
+.meal-photo-empty,
+.meal-photo-preview {
+    margin: 0 auto;
+    max-width: 430px;
+}
+
+.meal-main-product-hero.has-photo {
+    background: var(--black);
+}
+
+.meal-main-product-hero.has-photo .meal-photo-preview {
+    inset: 0;
+    margin: 0;
+    max-width: none;
+    position: absolute;
+    z-index: 0;
+}
+
+.meal-photo-empty {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.meal-photo-icon {
+    align-items: center;
+    background: var(--black);
+    border-radius: 24px;
+    color: #ffffff;
+    display: flex;
+    height: 64px;
+    justify-content: center;
+    margin-bottom: 14px;
+    width: 64px;
+}
+
+.meal-photo-icon svg {
+    height: 32px;
+    width: 32px;
+}
+
+.meal-photo-empty h1 {
+    color: var(--black);
+    font-size: 22px;
+    font-weight: 760;
+    line-height: 1.14;
+    margin: 0 0 7px;
+}
+
+.meal-photo-empty p {
+    color: color-mix(in srgb, var(--black) 62%, transparent);
+    font-size: 13px;
+    line-height: 1.36;
+    margin: 0;
+    max-width: 280px;
+}
+
+.meal-photo-empty-actions,
+.meal-photo-preview-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.meal-photo-action,
+.meal-photo-preview-actions button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--black);
+    border: 0;
+    border-radius: 999px;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 12px 14px;
+}
+
+.meal-photo-action.secondary,
+.meal-photo-preview-actions button:last-child {
+    background: rgba(255, 255, 255, .72);
+    color: var(--black);
+}
+
+#draft-remove-photo-button {
+    background: #F3D9D5;
+    color: #A83F36;
+}
+
+.meal-photo-card {
+    align-items: flex-end;
+    aspect-ratio: 1.45;
+    background: var(--card-soft);
+    border-radius: 28px;
+    color: var(--text-color);
+    display: flex;
+    font-size: 13px;
+    font-weight: 720;
+    justify-content: flex-start;
+    overflow: hidden;
+    padding: 16px;
+    position: relative;
+}
+
+.meal-photo-card img {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    width: 100%;
+}
+
+.meal-photo-card span {
+    background: rgba(255, 255, 255, .78);
+    border-radius: 999px;
+    color: var(--black);
+    padding: 8px 12px;
+    position: relative;
+    z-index: 1;
+}
+
+.meal-main-product-hero.has-photo .meal-photo-card {
+    aspect-ratio: auto;
+    border-radius: 0;
+    height: 100%;
+    padding: 0;
+    width: 100%;
+}
+
+.meal-main-product-hero.has-photo .meal-photo-card::after {
+    background: linear-gradient(180deg, rgba(0, 0, 0, .22), transparent 34%, rgba(0, 0, 0, .18));
+    content: "";
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 1;
+}
+
+.meal-main-product-hero.has-photo .meal-photo-card span,
+.meal-main-product-hero.has-photo .meal-photo-dots {
+    display: none;
+}
+
+.meal-main-product-hero.has-photo .meal-photo-preview-actions {
+    bottom: 44px;
+    justify-content: center;
+    left: 18px;
+    margin: 0;
+    position: absolute;
+    right: 18px;
+    z-index: 2;
+}
+
+.meal-photo-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.meal-photo-dots span {
+    background: rgba(17, 17, 17, .18);
+    border-radius: 999px;
+    height: 6px;
+    width: 6px;
+}
+
+.meal-photo-dots .active {
+    background: var(--black);
+    width: 18px;
+}
+
+.meal-photo-preview-actions {
+    justify-content: center;
+    margin-top: 12px;
+}
+

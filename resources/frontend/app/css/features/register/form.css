@@ -1,0 +1,313 @@
+/* New production registration visual */
+#screen-register {
+    --register-accent: #6dbb35;
+    --register-card: #ffffff;
+    --register-card-soft: #f8faf1;
+    --register-hint: #777a70;
+    --register-page: #f7faef;
+    --register-step-idle: #eceee9;
+    --register-text: #171717;
+    background: var(--register-page);
+    color: var(--register-text);
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-top: calc(72px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+}
+
+#screen-register .register-content {
+    max-width: 430px;
+}
+
+#screen-register .register-stepper {
+    align-items: end;
+    gap: 9px;
+    margin-bottom: 18px;
+    min-height: 60px;
+    padding: 0;
+}
+
+#screen-register .register-stepper-item {
+    background: var(--register-step-idle);
+    border: 0;
+    border-radius: 16px;
+    color: var(--register-hint);
+    display: grid;
+    gap: 4px;
+    justify-items: center;
+    min-height: 42px;
+    padding: 14px 5px 5px;
+    transform: none;
+    transition:
+        background-color .34s ease,
+        color .34s ease,
+        min-height .38s cubic-bezier(.16, 1, .3, 1),
+        transform .38s cubic-bezier(.16, 1, .3, 1);
+}
+
+#screen-register .register-stepper-item::after {
+    display: none;
+}
+
+#screen-register .register-stepper-item > .register-step-marker {
+    background: var(--register-card);
+    border: 2px solid color-mix(in srgb, var(--register-hint) 20%, var(--register-card));
+    border-radius: 50%;
+    box-shadow: none;
+    color: var(--register-hint);
+    display: grid;
+    font-size: 12px;
+    height: 26px;
+    left: 50%;
+    place-items: center;
+    position: absolute;
+    top: 0;
+    transform: translate(-50%, -50%);
+    transition:
+        background-color .34s ease,
+        border-color .34s ease,
+        color .34s ease,
+        transform .38s cubic-bezier(.16, 1, .3, 1);
+    width: 26px;
+}
+
+#screen-register .register-step-marker i {
+    font-style: normal;
+    grid-area: 1 / 1;
+    line-height: 1;
+    transition: opacity .22s ease, transform .3s cubic-bezier(.16, 1, .3, 1);
+}
+
+#screen-register .register-step-check {
+    opacity: 0;
+    transform: rotate(-28deg) scale(.45);
+}
+
+#screen-register .register-stepper-item strong {
+    font-size: 10px;
+    font-weight: 700;
+}
+
+#screen-register .register-stepper-item.active {
+    background: var(--register-accent);
+    box-shadow: none;
+    color: #ffffff;
+    min-height: 50px;
+    transform: translateY(-6px);
+    z-index: 2;
+}
+
+#screen-register .register-stepper-item.active > .register-step-marker {
+    background: var(--register-card);
+    border-color: var(--register-accent);
+    color: var(--register-accent);
+    transform: translate(-50%, -50%) scale(1.04);
+}
+
+#screen-register .register-stepper-item.completed > .register-step-marker {
+    background: var(--register-accent);
+    border-color: var(--register-card);
+    color: #ffffff;
+}
+
+#screen-register .register-stepper-item.completed {
+    background: var(--register-step-idle);
+    color: var(--register-hint);
+}
+
+#screen-register .register-stepper-item.completed .register-step-number {
+    opacity: 0;
+    transform: rotate(28deg) scale(.45);
+}
+
+#screen-register .register-stepper-item.completed .register-step-check {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+}
+
+#screen-register .register-step {
+    background: var(--register-card);
+    border-radius: 30px;
+    padding: 22px 18px 18px;
+}
+
+#screen-register .register-content header {
+    margin-bottom: 22px;
+    text-align: left;
+}
+
+#screen-register .register-content header h1 {
+    color: var(--register-text);
+    font-size: 25px;
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 7px;
+}
+
+#screen-register .register-content header p {
+    color: var(--register-hint);
+    font-size: 13px;
+}
+
+#screen-register #register-step-1 .form-group {
+    background: var(--register-card-soft);
+    border: 1px solid transparent;
+    border-radius: 18px;
+    box-shadow: none;
+    padding: 11px 14px;
+}
+
+#screen-register #register-step-1 .form-group:focus-within {
+    background: var(--register-card-soft);
+    border-color: color-mix(in srgb, var(--register-accent) 55%, transparent);
+    box-shadow: none;
+    transform: none;
+}
+
+#screen-register #register-step-1 .form-group label {
+    color: var(--register-hint);
+}
+
+#screen-register .register-gender-control {
+    background: var(--register-card);
+    border: 1px solid color-mix(in srgb, var(--register-text) 8%, transparent);
+    box-shadow: none;
+}
+
+#screen-register .register-gender-indicator {
+    background: var(--register-accent);
+    box-shadow: none;
+}
+
+#screen-register .register-gender-control button.active {
+    color: #ffffff;
+    text-shadow: none;
+}
+
+#screen-register .option-group {
+    gap: 9px;
+}
+
+#screen-register .option-card {
+    background: var(--register-card-soft);
+    border: 1px solid transparent;
+    border-radius: 18px;
+    padding: 14px;
+}
+
+#screen-register .option-card:hover {
+    border-color: transparent;
+}
+
+#screen-register .option-card:has(input:checked) {
+    background: color-mix(in srgb, var(--register-accent) 12%, var(--register-card-soft));
+    border-color: var(--register-accent);
+}
+
+#screen-register .option-title {
+    color: var(--register-text);
+    font-size: 15px;
+    font-weight: 750;
+}
+
+#screen-register .option-desc {
+    color: var(--register-hint);
+}
+
+#screen-register .main-button,
+#screen-register .back-button {
+    border-radius: 18px;
+    box-shadow: none;
+    clip-path: none;
+    text-shadow: none;
+}
+
+#screen-register .main-button:not(:disabled) {
+    background: var(--register-accent);
+    box-shadow: none;
+    color: #ffffff;
+}
+
+#screen-register .back-button {
+    background: var(--register-card-soft);
+    box-shadow: none;
+    color: var(--register-text);
+}
+
+#screen-register .main-button::before,
+#screen-register .main-button::after,
+#screen-register .back-button::before,
+#screen-register .back-button::after {
+    display: none;
+}
+
+#screen-register .main-button:disabled {
+    background: color-mix(in srgb, var(--register-text) 10%, var(--register-card-soft));
+    color: color-mix(in srgb, var(--register-hint) 78%, transparent);
+}
+
+:root[data-app-effective-theme="dark"] #screen-register {
+    --register-accent: #8fd35a;
+    --register-card: #121812;
+    --register-card-soft: #182018;
+    --register-hint: #b5b8aa;
+    --register-page: #0b100c;
+    --register-step-idle: #20241f;
+    --register-text: #f6f3e8;
+}
+
+:root[data-app-effective-theme="dark"] #screen-register .register-stepper-item.completed > .register-step-marker,
+:root[data-app-effective-theme="dark"] #screen-register .main-button:not(:disabled) {
+    color: #10150e;
+}
+
+:root[data-app-effective-theme="dark"] #screen-register .register-stepper-item.active {
+    color: #10150e;
+}
+
+@media (max-width: 360px) {
+    #screen-register {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: calc(62px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    }
+
+    #screen-register .register-step {
+        border-radius: 24px;
+        padding: 18px 14px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #screen-register .register-stepper-item,
+    #screen-register .register-stepper-item > .register-step-marker,
+    #screen-register .register-step-marker i {
+        transition: none;
+    }
+}
+
+#screen-register #register-step-1 .form-group.has-error {
+    border-color: var(--danger-color);
+}
+
+#screen-register #register-step-1 .form-group.has-error:focus-within {
+    border-color: var(--danger-color);
+}
+
+#screen-register .register-gender-control.has-error {
+    border-color: var(--danger-color);
+}
+
+.register-field-error,
+.register-step-error {
+    color: var(--danger-color);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.3;
+    margin: 6px 0 0;
+    text-align: left;
+}
+
+.register-step-error {
+    margin: 8px 2px 0;
+}
+

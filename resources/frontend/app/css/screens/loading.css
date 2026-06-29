@@ -1,0 +1,38 @@
+.app-loading-screen {
+    align-items: center;
+    justify-content: center;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.app-loading-content {
+    max-width: 320px;
+    text-align: center;
+    width: 100%;
+}
+
+.app-loading-spinner {
+    animation: appLoadingSpin 0.8s linear infinite;
+    border: 3px solid var(--surface-border);
+    border-top-color: var(--button-color);
+    border-radius: 999px;
+    height: 42px;
+    margin: 0 auto 20px;
+    width: 42px;
+}
+
+.app-loading-content h1 {
+    font-size: 24px;
+    margin: 0 0 10px;
+}
+
+.app-loading-content p {
+    color: var(--hint-color);
+    line-height: 1.5;
+    margin: 0 0 24px;
+}
+
+@keyframes appLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
