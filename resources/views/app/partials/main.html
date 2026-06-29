@@ -1,0 +1,137 @@
+        <!-- Основной экран приложения -->
+        <div id="screen-main" class="screen hidden">
+            <div class="main-content">
+                <header class="home-header">
+                    <div class="home-greeting">
+                        <span id="home-greeting-text" class="home-greeting-text">Добрый день</span>
+                        <span class="home-greeting-comma">, </span><strong id="home-greeting-name" class="home-greeting-name">пользователь</strong>
+                    </div>
+                    <button id="btn-home-profile" class="profile-button" type="button" aria-label="Профиль">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <path d="M12 12.25C9.86 12.25 8.13 10.52 8.13 8.38C8.13 6.24 9.86 4.5 12 4.5C14.14 4.5 15.87 6.24 15.87 8.38C15.87 10.52 14.14 12.25 12 12.25ZM12 6C10.69 6 9.63 7.07 9.63 8.38C9.63 9.69 10.69 10.75 12 10.75C13.31 10.75 14.37 9.69 14.37 8.38C14.37 7.07 13.31 6 12 6Z" fill="currentColor"/>
+                            <path d="M18 20.25C17.59 20.25 17.25 19.91 17.25 19.5C17.25 17.47 14.9 15.82 12 15.82C9.1 15.82 6.75 17.47 6.75 19.5C6.75 19.91 6.41 20.25 6 20.25C5.59 20.25 5.25 19.91 5.25 19.5C5.25 16.64 8.28 14.32 12 14.32C15.72 14.32 18.75 16.64 18.75 19.5C18.75 19.91 18.41 20.25 18 20.25Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </header>
+
+                <section id="home-progress-card" class="progress-card daily-nutrition-card" data-state="loading" aria-label="Дневная сводка" aria-busy="true">
+                    <div class="progress-header">
+                        <div class="daily-summary-title">
+                            <h1>Сегодня</h1>
+                            <p id="user-body-params" class="summary-body-params">Параметры не указаны</p>
+                        </div>
+                        <div class="completion-chip" aria-label="Заполнение дня">
+                            <strong id="progress-percentage">0%</strong>
+                        </div>
+                    </div>
+
+                    <div class="daily-calories-panel">
+                        <div id="progress-fill" class="calorie-gauge-block" style="--day-progress: 0">
+                            <svg class="calorie-gauge" viewBox="0 0 248 124" role="img" aria-label="Прогресс калорий за день">
+                                <path class="calorie-gauge-track" d="M 24 112 A 100 100 0 0 1 224 112" pathLength="100"></path>
+                                <path class="calorie-gauge-progress" d="M 24 112 A 100 100 0 0 1 224 112" pathLength="100"></path>
+                            </svg>
+                            <div class="calorie-consumed">
+                                <strong id="today-calories">0</strong>
+                                <span>съедено</span>
+                            </div>
+                        </div>
+                        <div class="calorie-balance">
+                            <div class="calorie-target">
+                                <strong><span id="daily-goal">0</span> <span>ккал</span></strong>
+                                <span>норма</span>
+                            </div>
+                            <span class="calorie-balance-line" aria-hidden="true"></span>
+                            <div class="calorie-left">
+                                <strong><span id="remaining-calories">0</span> <span>ккал</span></strong>
+                                <span>осталось</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="home-progress-feedback" class="home-progress-feedback" role="status" aria-live="polite">
+                        <span class="home-progress-spinner" aria-hidden="true"></span>
+                        <p id="home-progress-feedback-text">Загружаем дневной прогресс...</p>
+                        <button id="btn-retry-progress" class="home-progress-retry hidden" type="button">Повторить</button>
+                    </div>
+                </section>
+
+                <section class="macro-cards" aria-label="БЖУ за день">
+                    <article id="proteins-progress-fill" class="macro-card macro-card-proteins" style="--macro-progress: 0%" role="progressbar" aria-label="Белки" aria-valuemin="0" aria-valuenow="0" aria-valuemax="0">
+                        <div class="macro-card-head">
+                            <span class="macro-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path d="M12 3.2c3.4 0 6.4 4.6 6.4 9.8 0 4.5-2.4 7.8-6.4 7.8S5.6 17.5 5.6 13c0-5.2 3-9.8 6.4-9.8Z" fill="currentColor"/>
+                                    <path d="M12 7.5c1.8 0 3.4 2.4 3.4 5.2 0 2.4-1.2 4.1-3.4 4.1s-3.4-1.7-3.4-4.1c0-2.8 1.6-5.2 3.4-5.2Z" fill="rgba(255,255,255,0.68)"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Белки</h2>
+                                <p><strong id="today-proteins">0</strong> / <span id="goal-proteins">0</span> г</p>
+                            </div>
+                        </div>
+                        <div class="macro-bar" aria-hidden="true"><span></span></div>
+                        <p id="proteins-warning" class="macro-warning hidden">Выше нормы</p>
+                    </article>
+
+                    <article id="fats-progress-fill" class="macro-card macro-card-fats" style="--macro-progress: 0%" role="progressbar" aria-label="Жиры" aria-valuemin="0" aria-valuenow="0" aria-valuemax="0">
+                        <div class="macro-card-head">
+                            <span class="macro-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path d="M13 2.8c.3 2.5-.4 4.3-2.1 5.6C9 9.8 7.4 11.6 7.4 14.2c0 3 2.3 5.2 5.2 5.2 3.1 0 5.4-2.2 5.4-5.4 0-2.7-1.4-4.8-3-6.7-.8-1-1.5-2.4-1.7-4.5-.1-.4-.3-.4-.3 0Z" fill="currentColor"/>
+                                    <path d="M10.2 16.8c.1-1.5.9-2.5 2-3.3.7-.6 1.1-1.2 1.2-2 .9 1 1.9 2.1 1.9 3.6 0 1.7-1.2 3-2.8 3-1.2 0-2.1-.6-2.3-1.3Z" fill="rgba(255,255,255,0.72)"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Жиры</h2>
+                                <p><strong id="today-fats">0</strong> / <span id="goal-fats">0</span> г</p>
+                            </div>
+                        </div>
+                        <div class="macro-bar" aria-hidden="true"><span></span></div>
+                        <p id="fats-warning" class="macro-warning hidden">Выше нормы</p>
+                    </article>
+
+                    <article id="carbs-progress-fill" class="macro-card macro-card-carbs" style="--macro-progress: 0%" role="progressbar" aria-label="Углеводы" aria-valuemin="0" aria-valuenow="0" aria-valuemax="0">
+                        <div class="macro-card-head">
+                            <span class="macro-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" focusable="false">
+                                    <path d="M11.2 4.1c0-.5.4-.9.8-.9s.8.4.8.9v16.2c0 .5-.4.9-.8.9s-.8-.4-.8-.9V4.1Z" fill="currentColor"/>
+                                    <path d="M10.4 6.6c-2.1.2-3.5 1.3-4.2 3.1-.2.5.2 1 .7.9 2.1-.2 3.5-1.2 4.2-3.1.2-.5-.2-1-.7-.9ZM13.6 6.6c2.1.2 3.5 1.3 4.2 3.1.2.5-.2 1-.7.9-2.1-.2-3.5-1.2-4.2-3.1-.2-.5.2-1 .7-.9ZM10.4 10.6c-2.1.2-3.5 1.3-4.2 3.1-.2.5.2 1 .7.9 2.1-.2 3.5-1.2 4.2-3.1.2-.5-.2-1-.7-.9ZM13.6 10.6c2.1.2 3.5 1.3 4.2 3.1.2.5-.2 1-.7.9-2.1-.2-3.5-1.2-4.2-3.1-.2-.5.2-1 .7-.9Z" fill="currentColor"/>
+                                    <path d="M10.4 14.6c-2 .2-3.3 1.1-4 2.7-.2.5.2 1 .7.9 1.9-.2 3.3-1.1 4-2.7.2-.5-.2-1-.7-.9ZM13.6 14.6c2 .2 3.3 1.1 4 2.7.2.5-.2 1-.7.9-1.9-.2-3.3-1.1-4-2.7-.2-.5.2-1 .7-.9Z" fill="currentColor"/>
+                                </svg>
+                            </span>
+                            <div>
+                                <h2>Углеводы</h2>
+                                <p><strong id="today-carbs">0</strong> / <span id="goal-carbs">0</span> г</p>
+                            </div>
+                        </div>
+                        <div class="macro-bar" aria-hidden="true"><span></span></div>
+                        <p id="carbs-warning" class="macro-warning hidden">Выше нормы</p>
+                    </article>
+                </section>
+
+                <section id="home-ai-insight-card" class="ai-recommendation-card" data-insight-state="loading" role="button" tabindex="0" aria-label="Открыть AI-рекомендацию в сводке">
+                    <span class="ai-recommendation-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <path d="M12.9 3.5 14 7.1c.2.7.8 1.3 1.5 1.5l3.6 1.1c.8.2.8 1.4 0 1.6l-3.6 1.1c-.7.2-1.3.8-1.5 1.5l-1.1 3.6c-.2.8-1.4.8-1.6 0l-1.1-3.6c-.2-.7-.8-1.3-1.5-1.5l-3.6-1.1c-.8-.2-.8-1.4 0-1.6l3.6-1.1c.7-.2 1.3-.8 1.5-1.5l1.1-3.6c.2-.8 1.4-.8 1.6 0Z" fill="currentColor"/>
+                            <path d="M18.6 15.4 19 17c.1.3.3.5.6.6l1.6.4c.4.1.4.7 0 .8l-1.6.4c-.3.1-.5.3-.6.6l-.4 1.6c-.1.4-.7.4-.8 0l-.4-1.6c-.1-.3-.3-.5-.6-.6l-1.6-.4c-.4-.1-.4-.7 0-.8l1.6-.4c.3-.1.5-.3.6-.6l.4-1.6c.1-.4.7-.4.8 0Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <div class="ai-recommendation-content">
+                        <h2>AI-рекомендация</h2>
+                        <p id="home-ai-insight-short">Загружаем рекомендацию...</p>
+                    </div>
+                    <span class="ai-recommendation-arrow" aria-hidden="true">›</span>
+                </section>
+
+                <section class="meals-section" aria-label="Сегодняшние приемы">
+                    <h2 class="meals-section-title">Сегодняшние приемы</h2>
+                    <div id="history-list" class="meal-accordion" aria-live="polite">
+                        <p class="home-meals-loading">Загружаем приёмы...</p>
+                    </div>
+                </section>
+            </div>
+
+
+        {{> app/partials/meal-draft.html}}
+        </div>

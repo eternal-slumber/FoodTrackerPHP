@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/assets/app/dist/app.css?v={{frontend_asset_version}}">
+    <title>FoodTracker AI</title>
+</head>
+<body class="app-body">
+    <div id="app">
+        {{> app/partials/loading.html}}
+
+        {{> app/partials/welcome.html}}
+
+        {{> app/partials/register.html}}
+
+        {{> app/partials/register-success.html}}
+
+        {{> app/partials/main.html}}
+
+        {{> app/partials/summary.html}}
+
+        {{> app/partials/history.html}}
+
+        {{> app/partials/profile.html}}
+
+        {{> app/partials/profile-edit.html}}
+
+        {{> app/partials/goal-edit.html}}
+
+        {{> app/partials/tabbar.html}}
+
+    </div>
+    <script src="/assets/app/dist/app.js?v={{frontend_asset_version}}"></script>
+</body>
+</html>

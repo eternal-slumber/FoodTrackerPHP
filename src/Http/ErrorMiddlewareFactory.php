@@ -13,7 +13,7 @@ use Throwable;
 
 final class ErrorMiddlewareFactory
 {
-    public static function create(App $app, bool $displayErrorDetails): ErrorMiddleware
+    public static function create(App $app, bool $displayErrorDetails, ?callable $telemetryFactory = null): ErrorMiddleware
     {
         $errorMiddleware = $app->addErrorMiddleware(
             $displayErrorDetails,
@@ -26,7 +26,7 @@ final class ErrorMiddlewareFactory
                 Request $request,
                 Throwable $exception,
                 bool $displayErrorDetails
-            ) use ($app): Response {
+            ) use ($app, $telemetryFactory): Response {
                 $statusCode = $exception instanceof HttpException ? $exception->getCode() : 500;
                 $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
@@ -49,6 +49,24 @@ final class ErrorMiddlewareFactory
                     (string) $request->getUri(),
                     $exception->getMessage()
                 ));
+
+                if ($telemetryFactory !== null) {
+                    try {
+                        $telemetryFactory()->recordSystemError(
+                            $statusCode >= 500 ? 'error' : 'warning',
+                            'http',
+                            $exception->getMessage(),
+                            [
+                                'status_code' => $statusCode,
+                                'method' => $request->getMethod(),
+                                'path' => $request->getUri()->getPath(),
+                            ],
+                            $exception
+                        );
+                    } catch (Throwable $telemetryError) {
+                        error_log('HTTP error telemetry write failed: ' . $telemetryError->getMessage());
+                    }
+                }
 
                 return ResponseResponder::json($app->getResponseFactory()->createResponse(), $payload, $statusCode);
             }

@@ -1,0 +1,68 @@
+        <!-- Экран редактирования профиля -->
+        <div id="screen-profile-edit" class="screen hidden">
+            <div class="profile-edit-content">
+                <header class="profile-edit-header">
+                    <button id="btn-profile-edit-back" class="profile-edit-back" type="button" aria-label="Назад">‹</button>
+                    <div>
+                        <h1>Личные данные</h1>
+                        <p>Возраст и параметры тела</p>
+                    </div>
+                </header>
+
+                <form id="settings-profile-form" class="profile-edit-form">
+                    <section class="profile-form-card profile-personal-form-card">
+                        <div class="profile-section-heading">
+                            <h2>Параметры</h2>
+                            <p>Эти данные используются для расчёта дневной нормы</p>
+                        </div>
+                        <div class="profile-fields-grid">
+                            <label class="profile-edit-field" for="settings-input-age">
+                                <span>Возраст</span>
+                                <span class="profile-edit-input-wrap">
+                                    <input type="number" id="settings-input-age" min="10" max="100" placeholder="25">
+                                    <small>лет</small>
+                                </span>
+                            </label>
+                            <label class="profile-edit-field" for="settings-input-height">
+                                <span>Рост</span>
+                                <span class="profile-edit-input-wrap">
+                                    <input type="number" id="settings-input-height" min="100" max="220" placeholder="175">
+                                    <small>см</small>
+                                </span>
+                            </label>
+                            <label class="profile-edit-field" for="settings-input-weight">
+                                <span>Вес</span>
+                                <span class="profile-edit-input-wrap">
+                                    <input type="number" id="settings-input-weight" min="30" max="250" step="0.1" placeholder="70">
+                                    <small>кг</small>
+                                </span>
+                            </label>
+                            <label class="profile-edit-field" for="settings-input-gender">
+                                <span>Пол</span>
+                                <span class="profile-edit-input-wrap profile-edit-select-wrap">
+                                    <select id="settings-input-gender">
+                                        <option value="male">Мужчина</option>
+                                        <option value="female">Женщина</option>
+                                    </select>
+                                </span>
+                            </label>
+                        </div>
+                    </section>
+                    <section class="profile-form-card profile-activity-edit-card">
+                        <div class="profile-section-heading">
+                            <h2>Активность</h2>
+                            <p>Средний уровень движения в течение недели</p>
+                        </div>
+                        <div class="profile-activity-options">
+                            <label><input type="radio" name="settings_activity_level" value="minimal"><span>Минимальная</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="low"><span>Низкая</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="medium"><span>Средняя</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="high"><span>Высокая</span></label>
+                            <label><input type="radio" name="settings_activity_level" value="extra"><span>Очень высокая</span></label>
+                        </div>
+                    </section>
+                    <button id="btn-save-profile" class="profile-edit-save" type="submit">Сохранить данные</button>
+                </form>
+            </div>
+        </div>
+

@@ -34,7 +34,11 @@ class ProductNutritionAIService
         $textResponse = $this->client->complete([[
             'role' => 'user',
             'content' => $prompt,
-        ]], 45, 'getProductNutrients');
+        ]], 45, 'getProductNutrients', [
+            'model_purpose' => 'text',
+            'temperature' => 0.1,
+            'json_schema' => $this->responseSchema(),
+        ]);
 
         if ($textResponse === null) {
             return $this->emptyNutrients();
@@ -69,5 +73,26 @@ class ProductNutritionAIService
     private function emptyNutrients(): array
     {
         return ['calories' => 0, 'proteins' => 0, 'fats' => 0, 'carbs' => 0];
+    }
+
+    private function responseSchema(): array
+    {
+        $nutrient = ['type' => 'number', 'minimum' => 0];
+
+        return [
+            'name' => 'product_nutrition',
+            'strict' => true,
+            'schema' => [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['calories', 'proteins', 'fats', 'carbs'],
+                'properties' => [
+                    'calories' => $nutrient,
+                    'proteins' => $nutrient,
+                    'fats' => $nutrient,
+                    'carbs' => $nutrient,
+                ],
+            ],
+        ];
     }
 }

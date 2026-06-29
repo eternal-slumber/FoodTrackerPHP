@@ -1,0 +1,36 @@
+        <!-- Итог регистрации -->
+        <div id="screen-register-success" class="screen hidden">
+            <div class="register-success-content">
+                <div class="register-success-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="m6.5 12.5 3.4 3.4 7.6-8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/>
+                    </svg>
+                </div>
+                <header class="register-success-header">
+                    <span>Расчёт завершён</span>
+                    <h1>Ваш план готов</h1>
+                    <p>Мы рассчитали ориентиры на день. Их можно изменить позже в профиле.</p>
+                </header>
+
+                <section class="register-success-plan" aria-label="Рассчитанная норма питания">
+                    <div class="register-success-calories">
+                        <span>Дневная норма</span>
+                        <strong><b id="register-success-calories">0</b> ккал</strong>
+                    </div>
+                    <div class="register-success-macros">
+                        <div><strong id="register-success-proteins">0</strong><span>белки, г</span></div>
+                        <div><strong id="register-success-fats">0</strong><span>жиры, г</span></div>
+                        <div><strong id="register-success-carbs">0</strong><span>углеводы, г</span></div>
+                    </div>
+                    <dl class="register-success-details">
+                        <div><dt>Цель</dt><dd id="register-success-goal">—</dd></div>
+                        <div><dt>Активность</dt><dd id="register-success-activity">—</dd></div>
+                    </dl>
+                </section>
+
+                <button id="btn-register-finish" class="main-button register-success-button" type="button">
+                    Перейти в дневник
+                    <span aria-hidden="true">→</span>
+                </button>
+            </div>
+        </div>

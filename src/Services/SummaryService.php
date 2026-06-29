@@ -75,7 +75,7 @@ class SummaryService
             return 'empty';
         }
 
-        if ($percentage < 70) {
+        if ($percentage < 60) {
             return 'low';
         }
 

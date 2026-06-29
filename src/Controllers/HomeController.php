@@ -7,26 +7,49 @@ namespace App\Controllers;
 use App\Attributes\RouteAttribute;
 use App\Config\TelegramAuthConfig;
 use App\Http\ResponseResponder;
+use App\View\ViewRenderer;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
 class HomeController
 {
-    public function __construct(private readonly TelegramAuthConfig $telegramAuthConfig) {}
+    private readonly string $publicPath;
+
+    public function __construct(
+        private readonly TelegramAuthConfig $telegramAuthConfig,
+        private readonly ViewRenderer $viewRenderer,
+        ?string $publicPath = null
+    ) {
+        $this->publicPath = rtrim($publicPath ?? dirname(__DIR__, 2) . '/public', '/');
+    }
 
     #[RouteAttribute('/', 'GET')]
     public function index(Request $request, Response $response): Response
     {
-        $htmlPath = __DIR__ . '/../../public/index.html';
-        
-        if (file_exists($htmlPath)) {
-            return ResponseResponder::html(
-                $response,
-                $this->injectFrontendConfig((string)file_get_contents($htmlPath))
-            );
+        $html = $this->viewRenderer->render('app/home.html', [
+            'frontend_asset_version' => $this->frontendAssetVersion(),
+        ]);
+
+        return ResponseResponder::html(
+            $response,
+            $this->injectFrontendConfig($html)
+        );
+    }
+
+    private function frontendAssetVersion(): string
+    {
+        $latestModifiedAt = 0;
+
+        foreach (['app.css', 'app.js'] as $asset) {
+            $path = $this->publicPath . '/assets/app/dist/' . $asset;
+            $modifiedAt = is_file($path) ? filemtime($path) : false;
+
+            if ($modifiedAt !== false) {
+                $latestModifiedAt = max($latestModifiedAt, $modifiedAt);
+            }
         }
 
-        return ResponseResponder::json($response, ['error' => 'HTML file not found'], 404);
+        return $latestModifiedAt > 0 ? (string)$latestModifiedAt : 'unbuilt';
     }
 
     private function injectFrontendConfig(string $html): string

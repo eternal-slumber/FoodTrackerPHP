@@ -142,6 +142,86 @@ class MealService
         ];
     }
 
+    public function saveManualMealsAsCards(
+        int $tgId,
+        string $mealName,
+        array $products,
+        ?string $imagePath = null
+    ): array {
+        $user = $this->findUser($tgId);
+        $mealType = $this->mealTypePrefix($mealName);
+        $mainImagePath = $this->storage->sanitizeDraftImagePath($imagePath, $tgId);
+        $savedMeals = [];
+
+        $this->meals->beginTransaction();
+
+        try {
+            foreach (array_values($products) as $index => $product) {
+                $processedProducts = $this->nutrition->processProducts([$product]);
+                $processedProduct = $processedProducts[0];
+                $totals = $this->nutrition->sumProducts($processedProducts);
+                $totalWeight = $this->nutrition->sumWeight($processedProducts);
+                $productName = substr(trim((string)($processedProduct['name'] ?? 'Продукт')), 0, 120);
+                $description = substr($mealType . ': ' . $productName, 0, 120);
+                $productImagePath = $index === 0
+                    ? $mainImagePath
+                    : $this->storage->sanitizeDraftImagePath(
+                        isset($product['draft_image_path']) ? (string)$product['draft_image_path'] : null,
+                        $tgId
+                    );
+
+                $meal = new Meal(
+                    userId: (int)$user->id,
+                    description: $description,
+                    calories: $totals['calories'],
+                    proteins: $totals['proteins'],
+                    fats: $totals['fats'],
+                    carbs: $totals['carbs'],
+                    totalWeight: $totalWeight,
+                    imagePath: $productImagePath
+                );
+
+                if (!$this->meals->save($meal) || !$meal->id) {
+                    throw new \RuntimeException('Failed to save meal card');
+                }
+
+                $this->mealProducts->saveMany(
+                    $meal->id,
+                    [MealProduct::fromProcessedProduct($meal->id, $processedProduct)]
+                );
+
+                $savedMeals[] = [
+                    'id' => $meal->id,
+                    'description' => $description,
+                    'calories' => $totals['calories'],
+                    'proteins' => $totals['proteins'],
+                    'fats' => $totals['fats'],
+                    'carbs' => $totals['carbs'],
+                    'weight' => $totalWeight,
+                ];
+            }
+
+            $this->meals->commit();
+        } catch (\Throwable $e) {
+            $this->meals->rollBack();
+            throw $e;
+        }
+
+        return [
+            'status' => 'success',
+            'today_calories' => $this->users->getTodayCalories((int)$user->id),
+            'meal' => $savedMeals[0] ?? null,
+            'meals' => $savedMeals,
+        ];
+    }
+
+    private function mealTypePrefix(string $mealName): string
+    {
+        $prefix = trim(explode(':', $mealName, 2)[0] ?? '');
+
+        return $prefix !== '' ? substr($prefix, 0, 40) : 'Прием пищи';
+    }
+
     public function getMealDetails(int $mealId, int $tgId): array
     {
         $user = $this->findUser($tgId);

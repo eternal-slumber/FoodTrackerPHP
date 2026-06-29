@@ -12,10 +12,13 @@ use App\Exceptions\AppException;
 use App\Exceptions\ValidationException;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Http\ResponseResponder;
+use App\Repositories\UserRepository;
 use App\Services\MealAnalysisService;
 use App\Services\MealNutritionService;
 use App\Services\NutritionCalculatorService;
+use App\Services\AiQuotaService;
 use App\Services\RateLimiterService;
+use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
 use App\Validators\AnalyzeValidator;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -32,9 +35,43 @@ class AnalyzeController
         private readonly MealAnalysisService $mealAnalysisService,
         private readonly NutritionCalculatorService $nutritionCalculator,
         private readonly RateLimiterService $rateLimiter,
+        private readonly AiQuotaService $aiQuota,
         private readonly UploadedFileStorage $uploadedFileStorage,
-        private readonly ProductNutritionAIService $productNutrition
+        private readonly ProductNutritionAIService $productNutrition,
+        private readonly UserRepository $users,
+        private readonly TelemetryService $telemetry
     ) {}
+
+    private function currentUser(Request $request): CurrentUser
+    {
+        $currentUser = $request->getAttribute(TelegramAuthMiddleware::CURRENT_USER_ATTRIBUTE);
+
+        if (!$currentUser instanceof CurrentUser) {
+            throw new \RuntimeException('Authenticated Telegram user is missing');
+        }
+
+        return $currentUser;
+    }
+
+    private function currentUserId(int $telegramId): ?int
+    {
+        $user = $this->users->findByTelegramId($telegramId);
+
+        return $user?->id !== null ? (int)$user->id : null;
+    }
+
+    private function recordServerAppException(AppException $exception, string $action): void
+    {
+        $statusCode = $exception->getCode() ?: 500;
+        if ($statusCode < 500) {
+            return;
+        }
+
+        $this->telemetry->recordSystemError('error', 'analyze', $exception->getMessage(), [
+            'action' => $action,
+            'status_code' => $statusCode,
+        ], $exception);
+    }
 
     #[RouteAttribute('/api/processing-options', 'GET')]
     public function processingOptions(Request $request, Response $response): Response
@@ -59,7 +96,7 @@ class AnalyzeController
                 throw new ValidationException('Введите название продукта');
             }
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'ai_daily', 20, 86400)) {
+            if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
                 return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
             }
 
@@ -70,9 +107,15 @@ class AnalyzeController
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'product_nutrition');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Product nutrition error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'product_nutrition',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -107,7 +150,7 @@ class AnalyzeController
                 return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
             }
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'ai_daily', 20, 86400)) {
+            if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
                 return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
             }
 
@@ -124,9 +167,15 @@ class AnalyzeController
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'analyze_draft');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Upload error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'analyze_draft',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -161,9 +210,15 @@ class AnalyzeController
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'upload_draft_image');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Draft image upload error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'upload_draft_image',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -188,9 +243,15 @@ class AnalyzeController
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'history');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('History error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'history',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -218,15 +279,24 @@ class AnalyzeController
 
             // 3. Удаляем запись
             $result = $this->mealAnalysisService->deleteMeal((int)$mealId, $tgId);
+            $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_deleted', [
+                'meal_id' => (int)$mealId,
+            ], $request);
  
             return ResponseResponder::json($response, $result);
 
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'delete_meal');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Delete meal error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'delete_meal',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -243,6 +313,7 @@ class AnalyzeController
             $mealName = trim($data['meal_name'] ?? 'Прием пищи');
             $products = $data['products'] ?? [];
             $draftImagePath = isset($data['draft_image_path']) ? (string)$data['draft_image_path'] : null;
+            $splitProducts = ($data['split_products'] ?? false) === true;
 
             if (empty($products)) {
                 throw new ValidationException('Список продуктов пуст');
@@ -279,16 +350,29 @@ class AnalyzeController
                 return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
             }
 
-            $result = $this->mealAnalysisService->saveManualMeal($tgId, $mealName, $products, $draftImagePath);
+            $result = $splitProducts
+                ? $this->mealAnalysisService->saveManualMealsAsCards($tgId, $mealName, $products, $draftImagePath)
+                : $this->mealAnalysisService->saveManualMeal($tgId, $mealName, $products, $draftImagePath);
+            $mealId = $result['meal']['id'] ?? null;
+            $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_created', [
+                'meal_id' => is_numeric($mealId) ? (int)$mealId : null,
+                'source' => 'manual',
+            ], $request);
             
             return ResponseResponder::json($response, $result);
 
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'save_meal');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Save meal error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'save_meal',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
     }
@@ -359,21 +443,17 @@ class AnalyzeController
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (AppException $e) {
+            $this->recordServerAppException($e, 'meal_details');
+
             return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
         } catch (\Exception $e) {
             error_log('Meal details error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
+                'action' => 'meal_details',
+            ], $e);
+
             return ResponseResponder::json($response, ['error' => 'Not Found'], 404);
         }
     }
 
-    private function currentUser(Request $request): CurrentUser
-    {
-        $currentUser = $request->getAttribute(TelegramAuthMiddleware::CURRENT_USER_ATTRIBUTE);
-
-        if (!$currentUser instanceof CurrentUser) {
-            throw new \RuntimeException('Authenticated Telegram user is missing');
-        }
-
-        return $currentUser;
-    }
 }

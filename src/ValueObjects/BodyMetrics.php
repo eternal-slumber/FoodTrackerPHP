@@ -23,14 +23,13 @@ class BodyMetrics
         )
     {
         match(true){
-            $this->age <= self::MIN_AGE || $this->age > self::MAX_AGE 
+            $this->age < self::MIN_AGE || $this->age > self::MAX_AGE
                 => throw new \InvalidArgumentException("Возраст должен быть от " . self::MIN_AGE . " до " . self::MAX_AGE),
-            $this->height <= self::MIN_HEIGHT || $this->height > self::MAX_HEIGHT 
+            $this->height < self::MIN_HEIGHT || $this->height > self::MAX_HEIGHT
                 => throw new \InvalidArgumentException("Рост должен быть от " . self::MIN_HEIGHT . " до " . self::MAX_HEIGHT),
-            $this->weight <= self::MIN_WEIGHT || $this->weight > self::MAX_WEIGHT 
+            $this->weight < self::MIN_WEIGHT || $this->weight > self::MAX_WEIGHT
                 => throw new \InvalidArgumentException("Вес должен быть от " . self::MIN_WEIGHT . " до " . self::MAX_WEIGHT),
             default => true,          
         };
     }
 }
-

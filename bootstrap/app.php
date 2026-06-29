@@ -15,7 +15,11 @@ $app->addBodyParsingMiddleware();
 $app->add($container->get(TelegramAuthMiddleware::class));
 
 $displayErrorDetails = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
-ErrorMiddlewareFactory::create($app, $displayErrorDetails);
+ErrorMiddlewareFactory::create(
+    $app,
+    $displayErrorDetails,
+    fn() => $container->get(App\Services\TelemetryService::class)
+);
 
 (require dirname(__DIR__) . '/config/routes.php')($app, $container);
 
