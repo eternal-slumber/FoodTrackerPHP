@@ -40,8 +40,8 @@ Telegram Mini App для отслеживания питания и калори
 1. Клонировать репозиторий
 2. `composer install`
 3. Создать `.env` файл (см. `.env.example`)
-4. Создать базу данных из `schema.sql`
-5. Запустить миграции: `composer migrate`
+4. Для новой пустой БД выполнить `composer db:bootstrap`
+5. Для последующих обновлений запускать `composer migrate`
 6. Настроить веб-сервер на `public/`
 
 ## Docker запуск
