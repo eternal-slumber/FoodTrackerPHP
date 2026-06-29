@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/assets/admin/css/admin.css?v=20260620-pages">
+    <link rel="stylesheet" href="/assets/admin/css/dashboard.css?v=20260620-pages">
+    <link rel="stylesheet" href="/assets/admin/css/responsive.css?v=20260620-pages">
+    <title>{{DOCUMENT_TITLE}}</title>
+</head>
+<body class="admin-body admin-dashboard-page">
+    <div class="admin-shell">
+        <aside class="admin-sidebar" aria-label="Навигация">
+            <div class="admin-brand">
+                <img class="admin-brand-logo" src="/assets/app/pics/monochrome_logo.webp" alt="">
+                <div class="admin-brand-text">
+                    <strong>FoodTracker</strong>
+                    <span>Панель управления</span>
+                </div>
+                <button class="admin-sidebar-toggle" type="button" data-admin-sidebar-toggle aria-label="Свернуть меню" aria-expanded="true">
+                    <span data-admin-sidebar-toggle-icon>&lt;</span>
+                </button>
+            </div>
+
+            <nav class="admin-nav" aria-label="Навигация">
+                <a class="admin-nav-link {{OVERVIEW_ACTIVE_CLASS}}" href="{{ADMIN_DASHBOARD_PATH}}" title="Главная">
+                    <span class="admin-nav-short" aria-hidden="true">Г</span>
+                    <span class="admin-nav-label">Главная</span>
+                </a>
+                <a class="admin-nav-link {{VISITS_ACTIVE_CLASS}}" href="{{ADMIN_VISITS_PATH}}" title="Активность пользователей">
+                    <span class="admin-nav-short" aria-hidden="true">А</span>
+                    <span class="admin-nav-label">Активность пользователей</span>
+                </a>
+                <a class="admin-nav-link {{MEALS_ACTIVE_CLASS}}" href="{{ADMIN_MEALS_PATH}}" title="Активность приёмов">
+                    <span class="admin-nav-short" aria-hidden="true">П</span>
+                    <span class="admin-nav-label">Активность приёмов</span>
+                </a>
+                <a class="admin-nav-link {{AI_ACTIVE_CLASS}}" href="{{ADMIN_AI_PATH}}" title="Активность ИИ">
+                    <span class="admin-nav-short" aria-hidden="true">И</span>
+                    <span class="admin-nav-label">Активность ИИ</span>
+                </a>
+            </nav>
+
+            <div class="admin-sidebar-footer">
+                <div class="admin-account-meta">
+                    <span>{{ROLE}}</span>
+                    <strong>{{ADMIN_LOGIN}}</strong>
+                </div>
+                <button class="admin-logout-button admin-logout-button-muted" type="button" data-admin-action="logout" title="Выйти">Выйти</button>
+            </div>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-topbar">
+                <div class="admin-page-heading">
+                    <p class="admin-eyebrow">Панель управления</p>
+                    <h1>{{PAGE_TITLE}}</h1>
+                    <p>{{PAGE_DESCRIPTION}}</p>
+                </div>
+            </header>
+
+            {{PAGE_CONTENT}}
+        </main>
+    </div>
+
+    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}}</script>
+    <script id="admin-user-activity-chart-data" type="application/json">{{USER_ACTIVITY_CHART_JSON}}</script>
+    <script id="admin-meal-hourly-chart-data" type="application/json">{{MEAL_HOURLY_CHART_JSON}}</script>
+    <script id="admin-ai-requests-chart-data" type="application/json">{{AI_REQUEST_CHART_JSON}}</script>
+    <script id="admin-ai-types-chart-data" type="application/json">{{AI_REQUEST_TYPES_JSON}}</script>
+    <script src="/assets/admin/js/admin.js?v=20260618-sidebar-toggle"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="/assets/admin/js/activity.js?v=20260620-pages"></script>
+    <script src="/assets/admin/js/overview.js?v=20260620-pages"></script>
+    <script src="/assets/admin/js/meal-activity.js?v=20260620-pages"></script>
+    <script src="/assets/admin/js/ai-activity.js?v=20260620-pages"></script>
+</body>
+</html>

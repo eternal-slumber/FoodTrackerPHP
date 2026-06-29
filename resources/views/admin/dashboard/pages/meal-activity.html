@@ -1,0 +1,72 @@
+<section class="admin-page admin-meals-page admin-is-active" aria-label="Активность приёмов">
+    <div class="admin-meals-layout">
+        <section class="admin-card admin-meal-summary-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Day</span>
+                    <h2>Сводка приёмов</h2>
+                </div>
+            </div>
+            <div class="admin-visit-metric-grid">
+                <div>
+                    <span>Приёмов за день</span>
+                    <strong>{{MEALS_SELECTED_DAY}}</strong>
+                </div>
+                <div>
+                    <span>Дата</span>
+                    <strong>{{MEAL_DAY_LABEL}}</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card admin-meal-hourly-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Hours</span>
+                    <h2>Приёмы по часам</h2>
+                </div>
+                <div class="admin-meal-chart-actions">
+                    <form class="admin-filter-form admin-filter-form-inline" method="get" action="{{ADMIN_MEALS_PATH}}" data-admin-meal-filter>
+                        <input type="hidden" name="day" value="{{MEAL_DAY_OFFSET}}">
+                        <label for="admin-meal-user-filter">Пользователь</label>
+                        <select id="admin-meal-user-filter" name="user_id">
+                            {{MEAL_USER_OPTIONS}}
+                        </select>
+                        <button class="admin-chart-toggle admin-is-active" type="submit">Показать</button>
+                    </form>
+                    <div class="admin-week-nav" aria-label="Навигация по дням">
+                        <a class="admin-week-arrow" href="{{MEAL_PREVIOUS_DAY_URL}}" aria-label="Предыдущий день">&lt;</a>
+                        <span>{{MEAL_DAY_LABEL}}</span>
+                        <a class="admin-week-arrow {{MEAL_NEXT_DAY_CLASS}}" href="{{MEAL_NEXT_DAY_URL}}" aria-disabled="{{MEAL_NEXT_DAY_ARIA_DISABLED}}" aria-label="Следующий день">&gt;</a>
+                        <a class="admin-chart-toggle" href="{{MEAL_CURRENT_DAY_URL}}">Сегодня</a>
+                    </div>
+                </div>
+            </div>
+            <div class="admin-chart-shell admin-meal-hourly-chart-shell">
+                <canvas id="admin-meal-hourly-chart"></canvas>
+                <p class="admin-chart-empty admin-hidden" data-meal-chart-empty>Приёмов за выбранный день нет.</p>
+            </div>
+        </section>
+
+        <section class="admin-card admin-meal-log-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Logs</span>
+                    <h2>Логи приёмов</h2>
+                </div>
+            </div>
+            <div class="admin-activity-list" aria-label="Логи приёмов пищи">
+                <div class="admin-placeholder-row admin-placeholder-head admin-meal-row">
+                    <span>Время</span>
+                    <span>Пользователь</span>
+                    <span>Описание</span>
+                    <span>Калории</span>
+                    <span>КБЖУ / вес</span>
+                </div>
+                <div class="admin-activity-scroll">
+                    {{MEAL_ACTIVITY_ROWS}}
+                </div>
+            </div>
+        </section>
+    </div>
+</section>

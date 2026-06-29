@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="stylesheet" href="/assets/admin/css/admin.css">
+    <title>FoodTracker Вход</title>
+</head>
+<body class="admin-body admin-login-page">
+    <main>
+        <h1>FoodTracker Control</h1>
+        <p>Введите логин администратора и пароль.</p>
+        <div class="admin-login-health">
+            <span>MySQL</span>
+            <strong class="admin-badge {{DATABASE_STATUS_CLASS}}">{{DATABASE_STATUS_TEXT}}</strong>
+        </div>
+        <form id="admin-login-form">
+            <label for="admin-login">Логин</label>
+            <input id="admin-login" name="admin_login" autocomplete="username" required>
+
+            <label for="admin-password">Пароль</label>
+            <input id="admin-password" name="password" type="password" autocomplete="current-password" required>
+
+            <button type="submit" id="admin-login-button">Войти</button>
+        </form>
+        <div class="admin-status" id="admin-login-status"></div>
+    </main>
+    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}}</script>
+    <script src="/assets/admin/js/admin.js?v=20260618-sidebar-toggle"></script>
+    <script src="/assets/admin/js/login.js?v=20260618-auth-path"></script>
+</body>
+</html>

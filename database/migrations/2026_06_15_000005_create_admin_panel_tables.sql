@@ -1,93 +1,6 @@
--- FoodTracker Database Schema
-
--- Таблица пользователей
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    tg_id BIGINT UNIQUE NOT NULL,
-    weight FLOAT NOT NULL,
-    height INT NOT NULL,
-    age INT NOT NULL,
-    gender ENUM('male', 'female') NOT NULL,
-    activity_level VARCHAR(20) DEFAULT 'medium',
-    goal VARCHAR(20) DEFAULT 'maintenance',
-    daily_goal INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    INDEX idx_tg_id (tg_id)
-);
-
--- Таблица приемов пищи
-CREATE TABLE IF NOT EXISTS meals (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    food_description TEXT,
-    calories INT NOT NULL,
-    proteins FLOAT DEFAULT 0,
-    fats FLOAT DEFAULT 0,
-    carbs FLOAT DEFAULT 0,
-    total_weight INT DEFAULT NULL,
-    image_path VARCHAR(500),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    INDEX idx_user_id (user_id),
-    INDEX idx_created_at (created_at),
-    INDEX idx_meals_user_created (user_id, created_at)
-);
-
--- Таблица продуктов внутри приема пищи
-CREATE TABLE IF NOT EXISTS meal_products (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    meal_id INT NOT NULL,
-    name VARCHAR(120) NOT NULL,
-    weight INT NOT NULL,
-    processing VARCHAR(50) DEFAULT '',
-    calories INT NOT NULL DEFAULT 0,
-    proteins FLOAT DEFAULT 0,
-    fats FLOAT DEFAULT 0,
-    carbs FLOAT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE,
-    INDEX idx_meal_products_meal_id (meal_id)
-);
-
--- Кэш единого AI-вывода по питанию за локальный день пользователя
-CREATE TABLE IF NOT EXISTS daily_nutrition_insights (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    local_date DATE NOT NULL,
-    timezone_offset SMALLINT NOT NULL DEFAULT 0,
-    context_hash CHAR(64) NOT NULL,
-    short_summary VARCHAR(280) NOT NULL,
-    day_analysis TEXT NOT NULL,
-    next_meal JSON NOT NULL,
-    model VARCHAR(180) NOT NULL,
-    generated_at DATETIME NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uniq_daily_insight_user_date (user_id, local_date),
-    INDEX idx_daily_insight_generated (generated_at),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- Таблица rate limit / daily quota окон
-CREATE TABLE IF NOT EXISTS rate_limits (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    scope_key VARCHAR(120) NOT NULL,
-    action VARCHAR(60) NOT NULL,
-    window_start DATETIME NOT NULL,
-    attempts INT NOT NULL DEFAULT 0,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uniq_rate_limit_window (scope_key, action, window_start),
-    INDEX idx_rate_limits_cleanup (window_start)
-);
-
--- Таблицы админ-панели
 CREATE TABLE IF NOT EXISTS admin_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     telegram_id BIGINT NOT NULL,
-    admin_login VARCHAR(190) DEFAULT NULL,
-    password_hash VARCHAR(255) DEFAULT NULL,
     username VARCHAR(120) DEFAULT NULL,
     role VARCHAR(40) NOT NULL DEFAULT 'admin',
     is_active TINYINT(1) NOT NULL DEFAULT 1,
@@ -95,7 +8,6 @@ CREATE TABLE IF NOT EXISTS admin_users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uniq_admin_users_telegram_id (telegram_id),
-    UNIQUE KEY uniq_admin_users_admin_login (admin_login),
     INDEX idx_admin_users_active_role (is_active, role)
 );
 
@@ -192,3 +104,10 @@ CREATE TABLE IF NOT EXISTS system_logs (
     INDEX idx_system_logs_channel_created (channel, created_at),
     INDEX idx_system_logs_trace_id (trace_id)
 );
+
+INSERT IGNORE INTO app_settings (setting_key, setting_value, value_type, description) VALUES
+    ('current_ai_model', '', 'string', 'Active AI model key'),
+    ('fallback_ai_model', '', 'string', 'Fallback AI model key'),
+    ('daily_scan_limit', '20', 'integer', 'Daily AI scan limit per user'),
+    ('maintenance_mode', 'false', 'boolean', 'Disable user-facing write actions');
+

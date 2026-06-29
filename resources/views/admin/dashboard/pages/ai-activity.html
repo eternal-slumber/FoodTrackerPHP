@@ -1,0 +1,84 @@
+<section class="admin-page admin-ai-page admin-is-active" aria-label="Активность ИИ">
+    <div class="admin-ai-layout">
+        <section class="admin-card admin-ai-summary-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Week</span>
+                    <h2>Сводка ИИ</h2>
+                </div>
+            </div>
+            <div class="admin-ai-total">
+                <span>Запросов за неделю</span>
+                <strong>{{AI_REQUESTS_SELECTED_WEEK}}</strong>
+                <small>{{WEEK_LABEL}}</small>
+            </div>
+            <div class="admin-visit-metric-grid">
+                <div>
+                    <span>Сканирования</span>
+                    <strong>{{AI_SCAN_REQUESTS_TODAY}}</strong>
+                </div>
+                <div>
+                    <span>Автозаполнение</span>
+                    <strong>{{AI_AUTOCOMPLETE_REQUESTS_TODAY}}</strong>
+                </div>
+                <div>
+                    <span>Прочее</span>
+                    <strong>{{AI_OTHER_REQUESTS_TODAY}}</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card admin-ai-chart-card admin-ai-types-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Types</span>
+                    <h2>Типы запросов</h2>
+                </div>
+            </div>
+            <div class="admin-chart-shell admin-ai-pie-chart-shell">
+                <canvas id="admin-ai-types-chart"></canvas>
+                <p class="admin-chart-empty admin-hidden" data-ai-types-empty>Нет данных для распределения типов.</p>
+            </div>
+        </section>
+
+        <section class="admin-card admin-ai-chart-card admin-ai-daily-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Daily</span>
+                    <h2>Запросы по дням</h2>
+                </div>
+                <div class="admin-week-nav" aria-label="Навигация по неделям">
+                    <a class="admin-week-arrow" href="{{PREVIOUS_WEEK_URL}}" aria-label="Предыдущая неделя">&lt;</a>
+                    <span>{{WEEK_LABEL}}</span>
+                    <a class="admin-week-arrow {{NEXT_WEEK_CLASS}}" href="{{NEXT_WEEK_URL}}" aria-disabled="{{NEXT_WEEK_ARIA_DISABLED}}" aria-label="Следующая неделя">&gt;</a>
+                    <a class="admin-chart-toggle" href="{{CURRENT_WEEK_URL}}">Сейчас</a>
+                </div>
+            </div>
+            <div class="admin-chart-shell admin-ai-bar-chart-shell">
+                <canvas id="admin-ai-requests-chart"></canvas>
+                <p class="admin-chart-empty admin-hidden" data-ai-chart-empty>AI-запросов за период пока нет.</p>
+            </div>
+        </section>
+
+        <section class="admin-card admin-ai-table-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">List</span>
+                    <h2>Последние AI-запросы</h2>
+                </div>
+            </div>
+            <div class="admin-activity-list" aria-label="Список AI-запросов">
+                <div class="admin-placeholder-row admin-placeholder-head admin-ai-request-row">
+                    <span>Время</span>
+                    <span>Тип</span>
+                    <span>Статус</span>
+                    <span>Время ответа</span>
+                    <span>Ошибка</span>
+                </div>
+                <div class="admin-activity-scroll">
+                    {{AI_REQUEST_ROWS}}
+                </div>
+            </div>
+        </section>
+    </div>
+</section>
