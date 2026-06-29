@@ -2,6 +2,8 @@
 /.env
 /.env.*
 !/.env.example
+!/.env.admin.example
+!/.env.db.example
 /storage/uploads/*
 /storage/.DS_Store
 /.idea/
@@ -10,3 +12,5 @@
 /.phpunit.result.cache
 /docker/storage/
 /.kilo/
+/.agents/
+/legacy/
