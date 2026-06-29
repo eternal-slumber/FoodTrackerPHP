@@ -1,0 +1,74 @@
+<section class="admin-page admin-visits-page admin-is-active" aria-label="Активность пользователей">
+    <section class="admin-card admin-activity-chart-card">
+        <div class="admin-card-heading">
+            <div>
+                <span class="admin-kicker">Dynamics</span>
+                <h2>Динамика активности</h2>
+            </div>
+            <div class="admin-chart-controls" aria-label="Настройки графика">
+                <div class="admin-week-nav" aria-label="Навигация по неделям">
+                    <a class="admin-week-arrow" href="{{PREVIOUS_WEEK_URL}}" aria-label="Предыдущая неделя">&lt;</a>
+                    <span>{{WEEK_LABEL}}</span>
+                    <a class="admin-week-arrow {{NEXT_WEEK_CLASS}}" href="{{NEXT_WEEK_URL}}" aria-disabled="{{NEXT_WEEK_ARIA_DISABLED}}" aria-label="Следующая неделя">&gt;</a>
+                    <a class="admin-chart-toggle" href="{{CURRENT_WEEK_URL}}">Сейчас</a>
+                </div>
+                <div class="admin-segmented-control" aria-label="Метрика">
+                    <button class="admin-chart-toggle admin-is-active" type="button" data-chart-metric="unique_entries">Уникальные входы</button>
+                    <button class="admin-chart-toggle" type="button" data-chart-metric="visits">Все посещения</button>
+                </div>
+                <div class="admin-segmented-control" aria-label="Тренд">
+                    <button class="admin-chart-toggle" type="button" data-chart-trend aria-pressed="false">Тренд</button>
+                </div>
+            </div>
+        </div>
+        <div class="admin-chart-shell">
+            <canvas id="admin-user-activity-chart"></canvas>
+            <p class="admin-chart-empty admin-hidden" data-chart-empty>Недостаточно данных для графика.</p>
+        </div>
+    </section>
+
+    <div class="admin-visits-layout">
+        <section class="admin-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Today</span>
+                    <h2>Сводка посещений</h2>
+                </div>
+            </div>
+            <div class="admin-visit-metric-grid">
+                <div>
+                    <span>Открытий сегодня</span>
+                    <strong>{{APP_OPENED_TODAY}}</strong>
+                </div>
+                <div>
+                    <span>Активных всего</span>
+                    <strong>{{ACTIVE_USERS_TOTAL}}</strong>
+                </div>
+                <div class="admin-visit-source">
+                    <span>Источник данных</span>
+                    <strong>app.opened</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">List</span>
+                    <h2>Список активности</h2>
+                </div>
+            </div>
+            <div class="admin-activity-list" aria-label="Список активности пользователей">
+                <div class="admin-placeholder-row admin-placeholder-head">
+                    <span>Время</span>
+                    <span>Пользователь</span>
+                    <span>Событие</span>
+                    <span>Источник</span>
+                </div>
+                <div class="admin-activity-scroll">
+                    {{USER_ACTIVITY_ROWS}}
+                </div>
+            </div>
+        </section>
+    </div>
+</section>

@@ -39,9 +39,14 @@ class UserValidator
         // activity_level (опционально)
         $activityLevel = null;
         if (!empty($data['activity_level'])) {
-            try {
+            $activityValue = trim((string)$data['activity_level']);
+            $allowedActivityValues = [
+                'minimal', 'low', 'medium', 'high', 'extra',
+                '1.2', '1.375', '1.55', '1.725', '1.9',
+            ];
+            if (in_array($activityValue, $allowedActivityValues, true)) {
                 $activityLevel = ActivityLevel::fromValue((string)$data['activity_level']);
-            } catch (\InvalidArgumentException $e) {
+            } else {
                 $errors['activity_level'] = 'Неверный уровень активности';
             }
         }
@@ -49,9 +54,11 @@ class UserValidator
         // goal (опционально)
         $goal = null;
         if (!empty($data['goal'])) {
-            try {
+            $goalValue = trim((string)$data['goal']);
+            $allowedGoalValues = ['deficit', 'maintenance', 'surplus', '0.8', '1.0', '1.15'];
+            if (in_array($goalValue, $allowedGoalValues, true)) {
                 $goal = Goal::fromValue((string)$data['goal']);
-            } catch (\InvalidArgumentException $e) {
+            } else {
                 $errors['goal'] = 'Неверная цель';
             }
         }

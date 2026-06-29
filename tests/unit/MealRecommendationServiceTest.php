@@ -74,8 +74,11 @@ class FakeRecommendationDailySummaryService extends DailyNutritionSummaryService
 {
     public function __construct(private readonly ?array $summary) {}
 
-    public function getForTelegramUser(int $telegramId, int $timezoneOffsetMinutes = 0): ?array
-    {
+    public function getForTelegramUser(
+        int $telegramId,
+        int $timezoneOffsetMinutes = 0,
+        ?DateTimeImmutable $nowUtc = null
+    ): ?array {
         return $this->summary;
     }
 }

@@ -1,0 +1,108 @@
+        <!-- Экран истории -->
+        <div id="screen-history" class="screen hidden">
+            <div class="history-content">
+                <header class="history-page-header">
+                    <div>
+                        <h1>История</h1>
+                        <p>Календарь питания и активность по дням.</p>
+                    </div>
+                    <button id="btn-history-profile" class="profile-button" type="button" aria-label="Профиль">
+                        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                            <path d="M12 12.25C9.86 12.25 8.13 10.52 8.13 8.38C8.13 6.24 9.86 4.5 12 4.5C14.14 4.5 15.87 6.24 15.87 8.38C15.87 10.52 14.14 12.25 12 12.25ZM12 6C10.69 6 9.63 7.07 9.63 8.38C9.63 9.69 10.69 10.75 12 10.75C13.31 10.75 14.37 9.69 14.37 8.38C14.37 7.07 13.31 6 12 6Z" fill="currentColor"/>
+                            <path d="M18 20.25C17.59 20.25 17.25 19.91 17.25 19.5C17.25 17.47 14.9 15.82 12 15.82C9.1 15.82 6.75 17.47 6.75 19.5C6.75 19.91 6.41 20.25 6 20.25C5.59 20.25 5.25 19.91 5.25 19.5C5.25 16.64 8.28 14.32 12 14.32C15.72 14.32 18.75 16.64 18.75 19.5C18.75 19.91 18.41 20.25 18 20.25Z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </header>
+
+                <section class="history-calendar-card" aria-label="Календарь питания">
+                    <div class="history-month-nav">
+                        <button id="btn-history-prev-month" class="history-month-button" type="button" aria-label="Предыдущий месяц">‹</button>
+                        <p id="history-month-label">Месяц</p>
+                        <button id="btn-history-next-month" class="history-month-button" type="button" aria-label="Следующий месяц">›</button>
+                    </div>
+                    <div class="history-calendar-weekdays" aria-hidden="true">
+                        <span>Пн</span>
+                        <span>Вт</span>
+                        <span>Ср</span>
+                        <span>Чт</span>
+                        <span>Пт</span>
+                        <span>Сб</span>
+                        <span>Вс</span>
+                    </div>
+                    <div id="history-calendar-grid" class="history-calendar-grid"></div>
+                </section>
+
+                <section id="history-day-detail" class="history-day-detail" aria-live="polite">
+                    <div class="history-day-content">
+                        <p id="history-day-date" class="history-day-date">День</p>
+                        <div class="history-day-overview">
+                            <div id="history-day-ring" class="history-day-ring history-progress-ring day-empty">
+                                <svg class="history-ring-svg" viewBox="0 0 132 132" aria-hidden="true" focusable="false">
+                                    <circle class="history-ring-track" cx="66" cy="66" r="57" pathLength="100"></circle>
+                                    <circle class="history-ring-progress" cx="66" cy="66" r="57" pathLength="100"></circle>
+                                </svg>
+                                <span class="history-ring-dot" aria-hidden="true"></span>
+                                <span class="history-day-ring-inner">
+                                    <strong id="history-day-percent">0%</strong>
+                                    <small>нормы</small>
+                                </span>
+                            </div>
+                            <div class="history-day-calories">
+                                <div>
+                                    <strong id="history-day-calories">0</strong>
+                                    <span>съедено</span>
+                                </div>
+                                <i aria-hidden="true"></i>
+                                <div>
+                                    <strong id="history-day-goal-calories">0</strong>
+                                    <span id="history-day-goal">норма</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="history-day-expand" class="history-day-expand" type="button" aria-expanded="false">
+                            <span id="history-day-expand-label">Развернуть</span>
+                            <svg class="history-day-expand-icon" viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+                                <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/>
+                            </svg>
+                        </button>
+                        <div class="history-day-expanded">
+                            <div class="history-day-macros">
+                                <div><strong id="history-day-proteins">0</strong><span>белки</span></div>
+                                <div><strong id="history-day-fats">0</strong><span>жиры</span></div>
+                                <div><strong id="history-day-carbs">0</strong><span>углеводы</span></div>
+                            </div>
+                            <div class="history-day-meals">
+                                <h2>Приёмы пищи</h2>
+                                <div id="history-day-meals-list"></div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div id="meal-detail-sheet" class="meal-detail-sheet hidden">
+            <div class="meal-detail-overlay"></div>
+            <div class="meal-detail-panel">
+                <button id="btn-meal-detail-close" class="meal-detail-close" type="button" aria-label="Закрыть">×</button>
+                <div class="meal-detail-content">
+                    <p id="meal-detail-time" class="meal-detail-time">Прием пищи</p>
+                    <h2 id="meal-detail-title">Прием пищи</h2>
+                    <div class="meal-detail-total">
+                        <strong id="meal-detail-calories">0</strong>
+                        <span>ккал</span>
+                    </div>
+                    <div class="meal-detail-macros">
+                        <div><strong id="meal-detail-weight">0</strong><span>граммы</span></div>
+                        <div><strong id="meal-detail-proteins">0</strong><span>белки</span></div>
+                        <div><strong id="meal-detail-fats">0</strong><span>жиры</span></div>
+                        <div><strong id="meal-detail-carbs">0</strong><span>углеводы</span></div>
+                    </div>
+                    <div class="meal-detail-products">
+                        <h3>Продукты</h3>
+                        <div id="meal-detail-products-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+

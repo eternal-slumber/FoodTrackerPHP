@@ -46,11 +46,22 @@ Telegram Mini App для отслеживания питания и калори
 
 ## Docker запуск
 
+Обычный запуск поднимает только Mini App, Nginx и БД. Незавершённая админка в него не входит:
+
 ```bash
-docker compose -f docker/docker-compose.yml up -d
-docker compose -f docker/docker-compose.yml run --rm app composer install
-docker compose -f docker/docker-compose.yml run --rm app composer migrate
+docker compose --env-file .env.db -f docker/docker-compose.yml up -d
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer install
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer migrate
 ```
+
+Админка подключается отдельно только через Docker profile после настройки `.env.admin`:
+
+```bash
+docker compose --env-file .env.db -f docker/docker-compose.yml --profile admin up -d
+```
+
+Для основного приложения оставляй `ADMIN_ENABLED=false`. В admin-контейнере должны быть
+`ADMIN_ENABLED=true`, `ADMIN_ONLY=true` и отдельный непредсказуемый `ADMIN_PATH`.
 
 ## Web root / DocumentRoot
 
@@ -206,7 +217,7 @@ UPLOAD_ORPHAN_TTL_SECONDS=86400
 ## Запуск тестов
 
 ```bash
-docker compose -f docker/docker-compose.yml run --rm app ./vendor/bin/phpunit tests/unit/
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app ./vendor/bin/phpunit tests/unit/
 ```
 
 ## Структура проекта

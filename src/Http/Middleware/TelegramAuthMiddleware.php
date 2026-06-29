@@ -56,7 +56,7 @@ class TelegramAuthMiddleware implements MiddlewareInterface
 
         try {
             $currentUser = $this->telegramAuthService->validateInitData($initData);
-        } catch (ValidationException $e) {
+        } catch (ValidationException|\RuntimeException $e) {
             return ResponseResponder::json(
                 $this->responseFactory->createResponse(),
                 ['error' => 'Unauthorized', 'message' => 'Invalid Telegram auth data'],

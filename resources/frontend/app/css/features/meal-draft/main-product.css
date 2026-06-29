@@ -1,0 +1,379 @@
+.meal-draft-card {
+    background: var(--secondary-bg);
+    border-radius: 30px 30px 0 0;
+    margin: -24px auto 0;
+    max-width: 430px;
+    min-height: 420px;
+    padding: 18px;
+    position: relative;
+    z-index: 2;
+}
+
+.meal-draft-header {
+    align-items: flex-start;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.meal-draft-header p {
+    color: var(--hint-color);
+    font-size: 12px;
+    line-height: 1.2;
+    margin: 0 0 3px;
+}
+
+.meal-draft-header h2 {
+    color: var(--text-color);
+    font-size: 21px;
+    font-weight: 760;
+    line-height: 1.1;
+    margin: 0;
+}
+
+.meal-draft-header strong {
+    color: var(--text-color);
+    flex: 0 0 auto;
+    font-size: 18px;
+    font-weight: 760;
+    line-height: 1.1;
+}
+
+.draft-nutrition-summary {
+    display: grid;
+    gap: 7px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 5px;
+}
+
+.draft-kbju-caption {
+    color: var(--hint-color);
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.2;
+    margin: 8px 0 0;
+}
+
+.draft-main-product-form .draft-kbju-caption {
+    margin-top: 2px;
+}
+
+.draft-nutrition-summary div {
+    background: var(--card-soft);
+    border-radius: 16px;
+    min-width: 0;
+    padding: 9px 7px;
+    text-align: center;
+}
+
+.draft-nutrition-summary strong {
+    color: var(--text-color);
+    display: block;
+    font-size: 14px;
+    font-weight: 760;
+    line-height: 1.05;
+}
+
+.draft-nutrition-summary span {
+    color: var(--hint-color);
+    display: block;
+    font-size: 10px;
+    line-height: 1.2;
+    margin-top: 4px;
+}
+
+.draft-main-product-form {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.draft-main-form-grid,
+.draft-main-kbju-grid {
+    display: grid;
+    gap: 8px;
+}
+
+.draft-main-form-grid {
+    grid-template-columns: 1fr;
+}
+
+.draft-main-portion-row {
+    align-items: end;
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.draft-main-weight-field {
+    min-width: 0;
+}
+
+.draft-main-portions > span {
+    color: var(--hint-color);
+    display: block;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.draft-portion-stepper {
+    align-items: center;
+    background: var(--card-soft);
+    border-radius: 16px;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    min-height: 44px;
+    overflow: hidden;
+}
+
+.draft-portion-stepper button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--button-color);
+    cursor: pointer;
+    font: inherit;
+    font-size: 20px;
+    height: 44px;
+    padding: 0;
+}
+
+.draft-portion-stepper output {
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 760;
+    text-align: center;
+}
+
+.draft-main-kbju-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.draft-main-field.wide {
+    grid-column: 1 / -1;
+}
+
+.draft-main-field span {
+    color: var(--hint-color);
+    display: block;
+    font-size: 11px;
+    font-weight: 650;
+    line-height: 1.2;
+    margin-bottom: 5px;
+}
+
+.draft-main-field input {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--card-soft);
+    border: 0;
+    border-radius: 16px;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    min-height: 44px;
+    padding: 11px 12px;
+    width: 100%;
+}
+
+.draft-main-form-grid .draft-main-field:not(.wide) input,
+.draft-main-kbju-grid input {
+    text-align: center;
+}
+
+.draft-main-autofill {
+    -webkit-appearance: none;
+    appearance: none;
+    background: color-mix(in srgb, var(--button-color) 12%, var(--secondary-bg));
+    border: 0;
+    border-radius: 18px;
+    color: var(--button-color);
+    cursor: pointer;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 760;
+    line-height: 1.2;
+    animation: draft-main-ai-enter .28s ease both;
+    margin: 0 0 8px;
+    min-height: 44px;
+    padding: 12px;
+    width: 100%;
+}
+
+.draft-main-autofill[hidden] {
+    display: none;
+}
+
+@keyframes draft-main-ai-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.draft-add-row {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: minmax(0, 1fr) 52px;
+    margin-top: 12px;
+}
+
+.draft-form-row,
+.draft-link-row {
+    align-items: center;
+    background: var(--card-soft);
+    border-radius: 18px;
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 8px;
+    min-height: 46px;
+    padding: 12px;
+}
+
+.draft-form-row span,
+.draft-link-row span {
+    color: var(--hint-color);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.draft-form-row select {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    color: var(--text-color);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 720;
+    text-align: right;
+}
+
+.draft-link-row {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 0;
+    color: inherit;
+    cursor: pointer;
+    font: inherit;
+    width: 100%;
+}
+
+.draft-link-row strong {
+    color: var(--button-color);
+    font-size: 13px;
+    font-weight: 720;
+}
+
+.draft-products-section {
+    margin-top: 16px;
+}
+
+.draft-section-title {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 9px;
+}
+
+.draft-section-title h3 {
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 740;
+    line-height: 1.2;
+    margin: 0;
+}
+
+.draft-section-title span {
+    color: var(--hint-color);
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.draft-products-list {
+    display: grid;
+    gap: 8px;
+}
+
+.draft-add-product-choice {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.draft-add-product-toggle {
+    -webkit-appearance: none;
+    appearance: none;
+    align-items: center;
+    background: var(--card-soft);
+    border: 0;
+    border-radius: 20px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    gap: 11px;
+    justify-content: space-between;
+    min-height: 58px;
+    padding: 13px 14px;
+    text-align: left;
+    width: 100%;
+}
+
+.draft-add-product-toggle:disabled {
+    cursor: default;
+    opacity: .62;
+}
+
+.draft-add-product-icon {
+    align-items: center;
+    background: color-mix(in srgb, var(--button-color) 14%, var(--secondary-bg));
+    border-radius: 14px;
+    color: var(--button-color);
+    display: flex;
+    flex: 0 0 36px;
+    font-size: 24px;
+    font-weight: 450;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    width: 36px;
+}
+
+.draft-add-product-toggle:disabled .draft-add-product-icon {
+    background: var(--secondary-bg);
+    color: var(--hint-color);
+}
+
+.draft-add-product-copy {
+    display: block;
+    min-width: 0;
+}
+
+.draft-add-product-copy strong {
+    color: var(--text-color);
+    display: block;
+    font-size: 14px;
+    font-weight: 760;
+    line-height: 1.15;
+}
+
+.draft-add-product-copy small {
+    color: var(--hint-color);
+    display: block;
+    font-size: 11px;
+    line-height: 1.25;
+    margin-top: 4px;
+}
+

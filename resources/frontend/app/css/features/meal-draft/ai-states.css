@@ -1,0 +1,193 @@
+/* Main product AI states */
+#bottom-sheet .meal-photo-preview img {
+    transition: filter .2s ease, opacity .2s ease, transform .2s ease;
+}
+
+#bottom-sheet .meal-photo-preview.is-processing img {
+    filter: blur(9px);
+    opacity: .58;
+    transform: scale(1.04);
+}
+
+#bottom-sheet .meal-photo-preview.is-processing .photo-processing-overlay {
+    align-items: center;
+    background: rgba(10, 16, 9, .34);
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#bottom-sheet .photo-processing-overlay > strong {
+    font-size: 14px;
+    font-weight: 750;
+    letter-spacing: .01em;
+}
+
+#bottom-sheet .ai-photo-scan-animation {
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .24);
+    border-radius: 999px;
+    display: block;
+    height: 72px;
+    margin: 18px 0 8px;
+    position: relative;
+    width: 126px;
+}
+
+#bottom-sheet .ai-photo-scan-animation::before,
+#bottom-sheet .ai-photo-scan-animation::after {
+    background: rgba(255, 255, 255, .16);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-bottom: 0;
+    border-radius: 999px 999px 0 0;
+    content: '';
+    position: absolute;
+}
+
+#bottom-sheet .ai-photo-scan-animation::before {
+    height: 45px;
+    left: 19px;
+    top: -24px;
+    width: 54px;
+}
+
+#bottom-sheet .ai-photo-scan-animation::after {
+    height: 35px;
+    right: 17px;
+    top: -15px;
+    width: 43px;
+}
+
+#bottom-sheet .ai-photo-scan-magnifier {
+    animation: aiPhotoMagnifierSweep 1.8s ease-in-out infinite;
+    color: #ffffff;
+    height: 54px;
+    left: 34px;
+    position: absolute;
+    top: 10px;
+    width: 54px;
+    z-index: 2;
+}
+
+#bottom-sheet .ai-photo-scan-star {
+    animation: aiPhotoStarPulse 1.6s ease-in-out infinite;
+    color: #ffffff;
+    height: 17px;
+    opacity: 0;
+    position: absolute;
+    width: 17px;
+    z-index: 3;
+}
+
+#bottom-sheet .ai-photo-scan-star.star-one {
+    left: 11px;
+    top: 12px;
+}
+
+#bottom-sheet .ai-photo-scan-star.star-two {
+    animation-delay: .52s;
+    right: 10px;
+    top: 9px;
+}
+
+#bottom-sheet .ai-photo-scan-star.star-three {
+    animation-delay: 1.04s;
+    bottom: 8px;
+    left: 22px;
+}
+
+#bottom-sheet .meal-draft-card .draft-main-product-form.main-product-scan-loading > * {
+    opacity: .42;
+    pointer-events: none;
+    transition: opacity .18s ease;
+}
+
+#bottom-sheet .meal-draft-card .draft-main-product-form .draft-main-product-loading-overlay {
+    align-items: center;
+    background: color-mix(in srgb, #ffffff 90%, transparent);
+    display: none;
+    flex-direction: column;
+    inset: 0;
+    justify-content: center;
+    padding: 18px;
+    position: absolute;
+    text-align: center;
+    z-index: 20;
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+}
+
+#bottom-sheet .meal-draft-card .draft-main-product-form.product-card-kbju-loading[data-loading-mode="nutrition"] > *:not(.draft-main-product-loading-overlay) {
+    filter: blur(3px);
+    opacity: .3;
+    pointer-events: none;
+}
+
+#bottom-sheet .meal-draft-card .draft-main-product-form.product-card-kbju-loading[data-loading-mode="nutrition"] .draft-main-product-loading-overlay {
+    display: flex;
+    filter: none;
+    opacity: 1;
+}
+
+#bottom-sheet .draft-main-product-loading-spinner {
+    animation: draftProductLoadingSpin .8s linear infinite;
+    border: 3px solid color-mix(in srgb, var(--button-color) 20%, transparent);
+    border-radius: 999px;
+    border-top-color: var(--button-color);
+    height: 36px;
+    margin-bottom: 11px;
+    width: 36px;
+}
+
+#bottom-sheet .draft-main-product-loading-overlay strong {
+    color: var(--text-color);
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+#bottom-sheet .draft-main-product-loading-overlay small {
+    color: var(--hint-color);
+    font-size: 11px;
+    line-height: 1.3;
+    margin-top: 5px;
+}
+
+:root[data-app-effective-theme="dark"] #bottom-sheet .meal-draft-card .draft-main-product-form .draft-main-product-loading-overlay {
+    background: color-mix(in srgb, #0b100c 91%, transparent);
+}
+
+@keyframes aiPhotoMagnifierSweep {
+    0%, 100% { transform: translate(-11px, 4px) rotate(-8deg); }
+    50% { transform: translate(12px, -5px) rotate(8deg); }
+}
+
+@keyframes aiPhotoStarPulse {
+    0%, 28%, 100% { opacity: 0; }
+    45%, 68% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #bottom-sheet .ai-photo-scan-magnifier,
+    #bottom-sheet .ai-photo-scan-star,
+    #bottom-sheet .draft-main-product-loading-spinner {
+        animation: none;
+    }
+
+    #bottom-sheet .draft-save-button.is-analyzing::after {
+        animation: none;
+    }
+}
+
+@keyframes mealDraftEnter {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

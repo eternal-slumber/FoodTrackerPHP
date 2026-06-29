@@ -46,7 +46,9 @@ PROMPT;
                 ['type' => 'text', 'text' => $prompt],
                 ['type' => 'image_url', 'image_url' => ['url' => "data:{$mimeType};base64,{$imageData}"]],
             ],
-        ]], 60, 'analyze');
+        ]], 60, 'analyze', [
+            'model_purpose' => 'vision',
+        ]);
 
         if ($textResponse === null) {
             throw new AppException('AI API не ответил вовремя или недоступен', 502);

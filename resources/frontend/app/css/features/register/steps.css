@@ -1,0 +1,183 @@
+/* Шаги регистрации */
+.register-step {
+    width: 100%;
+}
+
+.register-step.is-step-leaving {
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    z-index: 1;
+}
+
+.register-step.is-step-entering {
+    position: relative;
+    z-index: 2;
+}
+
+.register-step.is-step-entering-forward {
+    animation: registerStepEnterForward 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.register-step.is-step-leaving-forward {
+    animation: registerStepLeaveForward 0.24s ease both;
+}
+
+.register-step.is-step-entering-back {
+    animation: registerStepEnterBack 0.34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.register-step.is-step-leaving-back {
+    animation: registerStepLeaveBack 0.24s ease both;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes registerStepEnterForward {
+    from {
+        opacity: 0;
+        transform: translateX(34px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes registerStepLeaveForward {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(-22px);
+    }
+}
+
+@keyframes registerStepEnterBack {
+    from {
+        opacity: 0;
+        transform: translateX(-34px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes registerStepLeaveBack {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(22px);
+    }
+}
+
+/* Группа опций (активность, цель) */
+.option-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.option-card {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    background: var(--secondary-bg);
+    border-radius: 12px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.option-card:hover {
+    border-color: var(--hint-color);
+}
+
+.option-card:has(input:checked) {
+    border-color: var(--button-color);
+    background: rgba(36, 129, 204, 0.1);
+}
+
+.option-card input[type="radio"] {
+    display: none;
+}
+
+.option-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.option-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.option-desc {
+    font-size: 12px;
+    line-height: 1.35;
+    color: var(--hint-color);
+}
+
+/* Группа кнопок */
+.button-group {
+    align-items: stretch;
+    display: flex;
+    gap: 12px;
+}
+
+.button-group .back-button {
+    flex: 1 1 0;
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    min-height: 52px;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.button-group .main-button {
+    flex: 1 1 0;
+    margin-top: 0;
+    min-height: 52px;
+    padding: 16px;
+}
+
+#register-step-3 .button-group .back-button {
+    flex: 0 0 86px;
+    min-height: 58px;
+    padding: 14px 12px;
+}
+
+#btn-save {
+    flex: 1 1 auto;
+    font-size: 17px;
+    font-weight: 800;
+    min-height: 62px;
+    padding: 18px 16px;
+}
+

@@ -1,0 +1,115 @@
+/* Production summary screen */
+#screen-summary {
+    --black: #111111;
+    --button-color: #6dbb35;
+    --button-text: #ffffff;
+    --calm-accent-bg: #e3f7a7;
+    --card-border: rgba(17, 17, 17, 0.08);
+    --card-soft: #f8faf1;
+    --carb-bg: #dff1f7;
+    --fat-bg: #ffe8cc;
+    --soft-accent-bg: #d6f78a;
+    background: #f7faef;
+    color: #171717;
+    padding: 20px 18px;
+    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-bottom: calc(124px + env(safe-area-inset-bottom));
+}
+
+#screen-summary .summary-content {
+    margin: 0 auto;
+    max-width: 430px;
+    width: 100%;
+}
+
+#screen-summary .profile-button {
+    appearance: none;
+    align-items: center;
+    background: #ffffff;
+    border: 0;
+    border-radius: 999px;
+    color: var(--text-color);
+    cursor: pointer;
+    display: grid;
+    flex: 0 0 auto;
+    height: 40px;
+    padding: 0;
+    place-items: center;
+    width: 40px;
+}
+
+#screen-summary .profile-button svg {
+    display: block;
+    height: 24px;
+    width: 24px;
+}
+
+#screen-summary .summary-progress-card.is-loading {
+    opacity: 0.7;
+}
+
+#screen-summary .summary-progress-card.is-error {
+    background: #ffe8cc;
+}
+
+#screen-summary .summary-progress-bar span {
+    transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary {
+    --black: #10150e;
+    --button-color: #8fd35a;
+    --button-text: #10150e;
+    --calm-accent-bg: #24351d;
+    --card-border: rgba(167, 214, 109, 0.16);
+    --card-soft: #182018;
+    --carb-bg: #121812;
+    --fat-bg: #121812;
+    --soft-accent-bg: #182018;
+    background: #0b100c;
+    color: #f6f3e8;
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .profile-button,
+:root[data-app-effective-theme="dark"] #screen-summary .summary-streak-card,
+:root[data-app-effective-theme="dark"] #screen-summary .summary-ai-card,
+:root[data-app-effective-theme="dark"] #screen-summary .summary-mini-nutrition,
+:root[data-app-effective-theme="dark"] #screen-summary .summary-mini-ai {
+    background: #121812;
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .summary-progress-card {
+    background: var(--calm-accent-bg);
+    color: var(--text-color);
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .summary-progress-bar {
+    background: var(--surface-border);
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .summary-progress-bar span {
+    background: var(--button-color);
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .summary-progress-card small {
+    color: var(--hint-color);
+}
+
+:root[data-app-effective-theme="dark"] #screen-summary .summary-ai-icon {
+    background: var(--button-color);
+    color: var(--button-text);
+}
+
+@media (max-width: 360px) {
+    #screen-summary {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #screen-summary .summary-progress-card,
+    #screen-summary .summary-mini-card,
+    #screen-summary .summary-streak-card,
+    #screen-summary .summary-ai-card {
+        border-radius: 20px;
+    }
+}

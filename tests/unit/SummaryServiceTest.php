@@ -53,6 +53,7 @@ class SummaryServiceTest extends TestCase
                         'carbs' => 12.0,
                         'weight' => 250,
                         'time' => '09:30',
+                        'thumbnail_url' => '/api/meals/12/thumbnail',
                     ],
                 ],
             ],
@@ -66,6 +67,7 @@ class SummaryServiceTest extends TestCase
         $this->assertSame(900, $day['weight']);
         $this->assertSame('Омлет', $day['meals'][0]['description']);
         $this->assertSame('09:30', $day['meals'][0]['time']);
+        $this->assertSame('/api/meals/12/thumbnail', $day['meals'][0]['thumbnail_url']);
     }
 
     public function testEmptyMonthReturnsNoDays(): void

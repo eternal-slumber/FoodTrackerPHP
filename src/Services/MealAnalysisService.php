@@ -46,6 +46,11 @@ class MealAnalysisService
         return $this->meals->saveManualMeal($tgId, $mealName, $products, $imagePath);
     }
 
+    public function saveManualMealsAsCards(int $tgId, string $mealName, array $products, ?string $imagePath = null): array
+    {
+        return $this->meals->saveManualMealsAsCards($tgId, $mealName, $products, $imagePath);
+    }
+
     public function getMealImage(int $mealId, int $tgId): array
     {
         return $this->meals->getMealImage($mealId, $tgId);

@@ -36,7 +36,11 @@ PROMPT;
         $textResponse = $this->client->complete([[
             'role' => 'user',
             'content' => $prompt,
-        ]], 45, 'recommendMeal');
+        ]], 45, 'recommendMeal', [
+            'model_purpose' => 'text',
+            'max_tokens' => 500,
+            'temperature' => 0.2,
+        ]);
 
         if ($textResponse === null) {
             return $this->emptyRecommendation($context);

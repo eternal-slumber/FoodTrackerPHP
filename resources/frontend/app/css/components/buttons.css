@@ -1,0 +1,56 @@
+/* Кнопки */
+.main-button, .scan-button {
+    background-color: var(--button-color);
+    color: var(--button-text);
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 20px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.main-button:active, .scan-button:active {
+    opacity: 0.8;
+}
+
+.main-button:disabled,
+.scan-button:disabled {
+    background-color: #c7c7cc;
+    box-shadow: none;
+    color: rgba(255, 255, 255, 0.92);
+    cursor: default;
+    opacity: 1;
+}
+
+.main-button:disabled:active,
+.scan-button:disabled:active {
+    opacity: 1;
+}
+
+.scan-button {
+    background-color: var(--button-color);
+    margin-top: 0;
+}
+
+.delete-button {
+    background-color: var(--danger-color);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    margin-top: 30px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.delete-button:active {
+    opacity: 0.8;
+}
+

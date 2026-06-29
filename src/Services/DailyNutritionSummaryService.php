@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Enums\Goal;
 use App\Repositories\UserRepository;
+use DateTimeImmutable;
 
 class DailyNutritionSummaryService
 {
@@ -14,8 +15,11 @@ class DailyNutritionSummaryService
         private readonly MacroGoalCalculationService $macroGoalCalculator
     ) {}
 
-    public function getForTelegramUser(int $telegramId, int $timezoneOffsetMinutes = 0): ?array
-    {
+    public function getForTelegramUser(
+        int $telegramId,
+        int $timezoneOffsetMinutes = 0,
+        ?DateTimeImmutable $nowUtc = null
+    ): ?array {
         if ($timezoneOffsetMinutes < -840 || $timezoneOffsetMinutes > 840) {
             throw new \InvalidArgumentException('Invalid timezone offset');
         }
@@ -29,7 +33,7 @@ class DailyNutritionSummaryService
             throw new \RuntimeException('User id is missing');
         }
 
-        $todayNutrition = $this->users->getTodayNutrition($user->id, $timezoneOffsetMinutes);
+        $todayNutrition = $this->users->getTodayNutrition($user->id, $timezoneOffsetMinutes, $nowUtc);
         $dailyGoal = $user->dailyGoal ?? 0;
         $macroGoals = $this->macroGoalCalculator->calculate(
             $dailyGoal,

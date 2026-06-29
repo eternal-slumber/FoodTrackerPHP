@@ -6,6 +6,7 @@ namespace App\Telegram;
 
 use App\Config\TelegramBotConfig;
 use App\Services\DailyNutritionSummaryService;
+use App\Services\AiQuotaService;
 use App\Services\MealRecommendationService;
 use App\Services\RateLimiterService;
 
@@ -17,7 +18,8 @@ class TelegramBotService
         private readonly TelegramBotMessageFactory $messages,
         private readonly DailyNutritionSummaryService $dailySummary,
         private readonly MealRecommendationService $mealRecommendation,
-        private readonly RateLimiterService $rateLimiter
+        private readonly RateLimiterService $rateLimiter,
+        private readonly AiQuotaService $aiQuota
     ) {}
 
     public function isWebhookAuthorized(string $receivedSecret): bool
@@ -141,7 +143,7 @@ class TelegramBotService
 
     private function sendMealRecommendation(int|string $chatId, int $telegramId, ?int $messageId = null): void
     {
-        if (!$this->rateLimiter->consume('tg:' . $telegramId, 'ai_daily', 20, 86400)) {
+        if (!$this->aiQuota->consumeGeneral($telegramId)) {
             $this->sendOrEditMessage(
                 $chatId,
                 $messageId,

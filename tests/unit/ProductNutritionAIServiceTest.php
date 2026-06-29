@@ -36,18 +36,26 @@ class ProductNutritionAIServiceTest extends TestCase
         $this->assertStringContainsString('2 яйца', $client->lastPrompt);
         $this->assertStringContainsString('способ обработки: варка', $client->lastPrompt);
         $this->assertStringContainsString('варёные яйца', $client->lastPrompt);
+        $this->assertSame('product_nutrition', $client->lastOptions['json_schema']['name']);
+        $this->assertArrayNotHasKey('max_tokens', $client->lastOptions);
     }
 }
 
 class FakeProductNutritionChatClient implements AIChatClientInterface
 {
     public string $lastPrompt = '';
+    public array $lastOptions = [];
 
     public function __construct(private readonly ?string $response) {}
 
-    public function complete(array $messages, int $timeoutSeconds, string $operation): ?string
-    {
+    public function complete(
+        array $messages,
+        int $timeoutSeconds,
+        string $operation,
+        array $options = []
+    ): ?string {
         $this->lastPrompt = (string)($messages[0]['content'] ?? '');
+        $this->lastOptions = $options;
 
         return $this->response;
     }

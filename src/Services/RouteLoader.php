@@ -22,8 +22,6 @@ class RouteLoader
     {
         foreach ($this->controllerClasses as $controllerClass) {
             $reflection = new ReflectionClass($controllerClass);
-            $controller = $this->container->get($controllerClass);
-
             foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
                 $attributes = $method->getAttributes(RouteAttribute::class);
 
@@ -33,7 +31,7 @@ class RouteLoader
                     $slimRoute = $this->app->map(
                         [$route->method],
                         $route->path,
-                        [$controller, $method->getName()]
+                        [$controllerClass, $method->getName()]
                     );
 
                     if ($route->name !== null) {

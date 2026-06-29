@@ -1,0 +1,13 @@
+.git
+.DS_Store
+.env
+.env.*
+!.env.example
+vendor/
+storage/
+docker/storage/
+.kilo/
+.agents/
+.phpunit.result.cache
+*.log
+

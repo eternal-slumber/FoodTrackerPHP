@@ -1,0 +1,372 @@
+/* Экран регистрации */
+#screen-register {
+    justify-content: flex-start;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    padding-top: calc(max(var(--tg-safe-area-top), var(--tg-content-safe-area-top)) + clamp(52px, 7vh, 68px));
+}
+
+.register-content {
+    max-width: 400px;
+    width: 100%;
+    margin: 0 auto auto;
+}
+
+.register-stepper {
+    align-items: end;
+    display: grid;
+    gap: 5px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0 0 18px;
+    min-height: 58px;
+    padding-top: 12px;
+}
+
+.register-stepper-item {
+    align-items: center;
+    background: var(--secondary-bg);
+    border: 1px solid transparent;
+    border-radius: 9px;
+    color: var(--hint-color);
+    display: flex;
+    justify-content: center;
+    min-height: 32px;
+    padding: 6px 4px;
+    position: relative;
+    text-align: center;
+    transition:
+        background 0.24s ease,
+        border-color 0.24s ease,
+        box-shadow 0.24s ease,
+        color 0.24s ease,
+        min-height 0.24s ease,
+        transform 0.24s ease;
+}
+
+.register-stepper-item span {
+    align-items: center;
+    background: var(--bg-color);
+    border: 2px solid var(--secondary-bg);
+    border-radius: 50%;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    display: inline-flex;
+    font-size: 11px;
+    font-weight: 800;
+    height: 20px;
+    justify-content: center;
+    left: 50%;
+    position: absolute;
+    top: -10px;
+    transform: translateX(-50%);
+    transition:
+        background 0.24s ease,
+        border-color 0.24s ease,
+        color 0.24s ease,
+        transform 0.24s ease;
+    width: 20px;
+}
+
+.register-stepper-item strong {
+    display: block;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.15;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.register-stepper-item.active {
+    background: var(--button-color);
+    border-color: var(--button-color);
+    box-shadow: 0 10px 20px color-mix(in srgb, var(--button-color) 26%, transparent);
+    color: var(--button-text);
+    min-height: 44px;
+    transform: scale(1.02);
+    z-index: 2;
+}
+
+.register-stepper-item.active span {
+    background: var(--button-color);
+    border-color: var(--bg-color);
+    color: var(--button-text);
+    transform: translateX(-50%) scale(1.06);
+}
+
+.register-stepper-item.completed {
+    background: color-mix(in srgb, var(--button-color) 10%, var(--secondary-bg));
+    border-color: color-mix(in srgb, var(--button-color) 32%, transparent);
+    color: var(--button-color);
+}
+
+.register-stepper-item.completed span {
+    background: var(--button-color);
+    border-color: var(--bg-color);
+    color: var(--button-text);
+}
+
+.register-steps {
+    overflow: hidden;
+    position: relative;
+}
+
+.register-content header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.register-content header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+}
+
+.register-content header p {
+    font-size: 14px;
+    color: var(--hint-color);
+    margin: 0;
+}
+
+.form {
+    width: 100%;
+}
+
+.form-group {
+    margin-bottom: 16px;
+    text-align: left;
+}
+
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: var(--text-color);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: 1px solid var(--hint-color);
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--button-color);
+}
+
+#register-step-1 .form {
+    display: grid;
+    gap: 12px;
+}
+
+#register-step-1 .form-group {
+    background: var(--secondary-bg);
+    border: 1px solid color-mix(in srgb, var(--hint-color) 18%, transparent);
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    margin-bottom: 0;
+    padding: 10px 12px;
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+#register-step-1 .form-group:focus-within {
+    background: color-mix(in srgb, var(--button-color) 7%, var(--secondary-bg));
+    border-color: var(--button-color);
+    box-shadow:
+        0 10px 22px color-mix(in srgb, var(--button-color) 12%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.34);
+    transform: translateY(-1px);
+}
+
+#register-step-1 .form-group label {
+    color: var(--hint-color);
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+#register-step-1 .form-group input,
+#register-step-1 .form-group select {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    min-height: 30px;
+    padding: 0;
+}
+
+#register-step-1 .form-group select option {
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.register-gender-control {
+    --gender-glass: #bbbbbc;
+    --gender-light: #fff;
+    --gender-dark: #000;
+    --gender-reflex-dark: 1;
+    --gender-reflex-light: 1;
+    --gender-gap: 4px;
+    background: var(--secondary-bg);
+    border: 1px solid color-mix(in srgb, var(--hint-color) 16%, transparent);
+    border-radius: 999px;
+    display: grid;
+    gap: var(--gender-gap);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 6px;
+    padding: 4px;
+    position: relative;
+    transition:
+        background-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        border-color 400ms cubic-bezier(1, 0, 0.4, 1),
+        box-shadow 400ms cubic-bezier(1, 0, 0.4, 1);
+}
+
+.register-gender-indicator {
+    background: var(--button-color);
+    border-radius: 999px;
+    bottom: 4px;
+    box-shadow: 0 8px 18px color-mix(in srgb, var(--button-color) 22%, transparent);
+    left: 4px;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 4px;
+    transform: translateX(calc(var(--active-gender-index, 0) * (100% + var(--gender-gap))));
+    transition: transform 260ms cubic-bezier(.22, 1, .36, 1);
+    width: calc((100% - 12px) / 2);
+    z-index: 0;
+}
+
+.register-gender-control[data-active-gender] .register-gender-indicator {
+    opacity: 1;
+}
+
+.register-gender-control button {
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: color-mix(in srgb, var(--text-color) 78%, var(--hint-color));
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 800;
+    min-height: 42px;
+    padding: 0 10px;
+    position: relative;
+    transition: color 0.2s ease, opacity 0.2s ease;
+    z-index: 1;
+}
+
+.register-gender-control button.active {
+    color: var(--button-text);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.14);
+}
+
+#register-step-1 .form-group input:focus,
+#register-step-1 .form-group select:focus {
+    border-color: transparent;
+    outline: none;
+}
+
+#register-step-1 .form-group input::placeholder {
+    color: color-mix(in srgb, var(--hint-color) 58%, transparent);
+    font-weight: 500;
+}
+
+.register-button-shell {
+    border-radius: 100vmax;
+    margin-top: 8px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.register-button-shell .main-button {
+    display: block;
+    margin-top: 0;
+}
+
+#screen-register .main-button,
+#screen-register .back-button {
+    border: none;
+    border-radius: 100vmax;
+    clip-path: inset(0 round 100vmax);
+    isolation: isolate;
+    overflow: hidden;
+    position: relative;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#screen-register .main-button:not(:disabled) {
+    background-color: color-mix(in srgb, var(--button-color) 86%, transparent);
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.24),
+        inset 0 -10px 18px color-mix(in srgb, var(--button-color) 18%, transparent),
+        inset 0 0 18px color-mix(in srgb, #ffffff 10%, transparent);
+}
+
+#screen-register .back-button {
+    background-color: color-mix(in srgb, var(--secondary-bg) 82%, transparent);
+    box-shadow:
+        0 10px 22px color-mix(in srgb, var(--text-color) 8%, transparent),
+        0 0 18px color-mix(in srgb, var(--button-color) 7%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+#screen-register .main-button::before,
+#screen-register .main-button::after,
+#screen-register .back-button::before,
+#screen-register .back-button::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+#screen-register .main-button::before,
+#screen-register .back-button::before {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 48%);
+    z-index: -1;
+}
+
+#screen-register .main-button::after,
+#screen-register .back-button::after {
+    animation: welcomeCtaShine 3.2s ease-in-out infinite;
+    background: linear-gradient(105deg, transparent 0%, transparent 36%, rgba(255, 255, 255, 0.4) 48%, transparent 60%, transparent 100%);
+    background-position: 120% center;
+    background-size: 220% 100%;
+    box-shadow:
+        inset 2px 2px 1px 0 rgba(255, 255, 255, 0.42),
+        inset -1px -1px 1px 1px rgba(255, 255, 255, 0.3),
+        inset 0 0 0 1px color-mix(in srgb, var(--button-text) 9%, transparent);
+    z-index: 0;
+}
+
+#screen-register .main-button:disabled::before,
+#screen-register .main-button:disabled::after {
+    display: none;
+}
+
+.register-button-label {
+    position: relative;
+    z-index: 1;
+}
+
+#screen-register .main-button:active,
+#screen-register .back-button:active {
+    opacity: 1;
+    transform: translateY(1px) scale(0.99);
+}
+

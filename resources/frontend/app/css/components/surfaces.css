@@ -1,0 +1,121 @@
+/* ========== Surface hierarchy for forms and modals ========== */
+.register-content,
+.sheet-content,
+.meal-detail-panel {
+    background: var(--surface-modal);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 18px 42px -28px var(--surface-shadow);
+}
+
+.register-content {
+    border-radius: 24px;
+    padding: 16px;
+}
+
+.sheet-content,
+.meal-detail-panel {
+    border-bottom: 0;
+    box-shadow: 0 -18px 44px -28px var(--surface-shadow);
+}
+
+.register-content header,
+.profile-edit-header,
+.sheet-header {
+    background: var(--surface-header);
+    border: 1px solid var(--surface-border);
+    border-radius: 18px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    padding: 14px;
+}
+
+.meal-detail-panel,
+.sheet-content,
+.register-content,
+.register-content header,
+.profile-edit-header,
+.sheet-header,
+.profile-form-card {
+    overflow: hidden;
+    position: relative;
+}
+
+.sheet-content,
+.meal-detail-panel {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.meal-detail-panel::before,
+.sheet-content::before,
+.register-content::before,
+.register-content header::before,
+.profile-edit-header::before,
+.sheet-header::before,
+.profile-form-card::before {
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.20), transparent 42%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.08), transparent 58%);
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    z-index: 0;
+}
+
+.meal-detail-panel > *,
+.sheet-content > *,
+.register-content > *,
+.register-content header > *,
+.profile-edit-header > *,
+.sheet-header > *,
+.profile-form-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.profile-form-card {
+    background: var(--surface-card);
+    border: 1px solid var(--surface-border);
+    box-shadow: 0 12px 28px -24px var(--surface-shadow);
+}
+
+.meal-detail-close,
+#register-step-1 .form-group,
+.profile-form-card .form-group,
+.meal-detail-macros div,
+.meal-detail-empty,
+.meal-detail-product {
+    background: var(--surface-input);
+    border: 1px solid var(--surface-border);
+}
+
+.form-group input,
+.form-group select {
+    background: var(--surface-input);
+    border-color: var(--surface-strong-border);
+}
+
+#register-step-1 .form-group input,
+#register-step-1 .form-group select,
+.profile-form-card .form-group input,
+.profile-form-card .form-group select {
+    background: transparent;
+    border-color: transparent;
+}
+
+.product-name,
+.product-weight,
+.processing-select,
+.kbju-field,
+.product-calories {
+    background: var(--bg-color);
+    border-color: var(--hint-color);
+}
+
+@supports not (color: color-mix(in srgb, red 10%, transparent)) {
+    .product-card .product-delete {
+        background: rgba(255, 59, 48, 0.14);
+    }
+}

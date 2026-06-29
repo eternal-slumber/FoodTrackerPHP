@@ -10,7 +10,9 @@ class AIProviderConfig
         public readonly string $provider,
         public readonly string $baseUrl,
         public readonly string $apiKey,
-        public readonly string $model
+        public readonly string $model,
+        public readonly string $textModel,
+        public readonly string $visionModel
     ) {}
 
     public static function fromEnv(array $env): self
@@ -38,11 +40,21 @@ class AIProviderConfig
                 : 'nvidia/nemotron-nano-12b-v2-vl:free';
         }
 
+        $textModel = trim((string)($env['AI_TEXT_MODEL'] ?? '')) ?: $model;
+        $visionModel = trim((string)($env['AI_VISION_MODEL'] ?? '')) ?: $model;
+
         return new self(
             provider: $provider,
             baseUrl: rtrim($baseUrl, '/'),
             apiKey: $apiKey,
-            model: $model
+            model: $model,
+            textModel: $textModel,
+            visionModel: $visionModel
         );
+    }
+
+    public function modelForPurpose(string $purpose): string
+    {
+        return $purpose === 'vision' ? $this->visionModel : $this->textModel;
     }
 }

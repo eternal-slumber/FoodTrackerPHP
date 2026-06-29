@@ -59,8 +59,12 @@ class FakeRecommendationChatClient implements AIChatClientInterface
 {
     public function __construct(private readonly ?string $response) {}
 
-    public function complete(array $messages, int $timeoutSeconds, string $operation): ?string
-    {
+    public function complete(
+        array $messages,
+        int $timeoutSeconds,
+        string $operation,
+        array $options = []
+    ): ?string {
         return $this->response;
     }
 }

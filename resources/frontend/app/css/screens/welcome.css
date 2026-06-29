@@ -1,0 +1,415 @@
+/* Экран приветствия */
+#screen-welcome {
+    --welcome-accent: #6dbb35;
+    --welcome-accent-soft: #d6f78a;
+    --welcome-calm: #e3f7a7;
+    --welcome-page: #f7faef;
+    --welcome-card: #ffffff;
+    --welcome-text: #171717;
+    --welcome-hint: #777a70;
+    background: var(--welcome-page);
+    color: var(--welcome-text);
+    min-height: var(--tg-viewport-height, 100dvh);
+    overflow: hidden;
+    padding: calc(18px + var(--tg-safe-area-top)) 20px max(24px, env(safe-area-inset-bottom));
+    position: relative;
+}
+
+#screen-welcome::before,
+#screen-welcome::after {
+    border-radius: 999px;
+    content: '';
+    pointer-events: none;
+    position: absolute;
+}
+
+#screen-welcome::before {
+    background: var(--welcome-calm);
+    height: 280px;
+    left: 50%;
+    top: calc(var(--tg-safe-area-top) - 150px);
+    transform: translateX(-50%);
+    width: 280px;
+}
+
+#screen-welcome::after {
+    background: color-mix(in srgb, var(--welcome-accent-soft) 38%, transparent);
+    bottom: -110px;
+    height: 230px;
+    right: -100px;
+    width: 230px;
+}
+
+.welcome-content {
+    align-items: center;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    margin: auto;
+    max-width: 400px;
+    min-height: calc(var(--tg-viewport-height, 100dvh) - var(--tg-safe-area-top) - env(safe-area-inset-bottom) - 42px);
+    position: relative;
+    text-align: center;
+    width: 100%;
+    z-index: 1;
+}
+
+.welcome-logo {
+    animation: welcomeLogoArrive 1.15s .08s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--welcome-card);
+    border: 1px solid rgba(17, 17, 17, .08);
+    border-radius: 30px;
+    height: 126px;
+    margin-bottom: 28px;
+    overflow: hidden;
+    padding: 9px;
+    width: 126px;
+}
+
+.welcome-logo img {
+    display: block;
+    height: 100%;
+    object-fit: contain;
+    width: 100%;
+}
+
+.welcome-copy {
+    animation: welcomeCopyReveal .72s 1.02s cubic-bezier(.16, 1, .3, 1) both;
+    max-width: 340px;
+}
+
+.welcome-kicker {
+    background: var(--welcome-accent-soft);
+    border-radius: 999px;
+    color: #315d18;
+    display: inline-flex;
+    font-size: 11px;
+    font-weight: 760;
+    letter-spacing: .04em;
+    line-height: 1;
+    margin-bottom: 13px;
+    padding: 8px 11px;
+    text-transform: uppercase;
+}
+
+.welcome-content h1 {
+    color: var(--welcome-text);
+    font-size: clamp(32px, 9vw, 42px);
+    font-weight: 780;
+    letter-spacing: -.045em;
+    line-height: .98;
+    margin: 0;
+}
+
+.welcome-description {
+    color: var(--welcome-hint);
+    font-size: 15px;
+    line-height: 1.45;
+    margin: 16px auto 0;
+    max-width: 320px;
+}
+
+.welcome-facts {
+    display: grid;
+    gap: 7px;
+    list-style: none;
+    margin: 22px 0 0;
+    padding: 0;
+    width: min(100%, 340px);
+}
+
+.welcome-facts li {
+    align-items: center;
+    animation: welcomeFactReveal .56s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--welcome-card);
+    border: 1px solid rgba(17, 17, 17, .07);
+    border-radius: 15px;
+    color: var(--welcome-text);
+    display: flex;
+    font-size: 13px;
+    font-weight: 680;
+    gap: 10px;
+    min-height: 44px;
+    padding: 7px 10px;
+    text-align: left;
+}
+
+.welcome-facts li:nth-child(1) {
+    animation-delay: 1.28s;
+}
+
+.welcome-facts li:nth-child(2) {
+    animation-delay: 1.39s;
+}
+
+.welcome-facts li:nth-child(3) {
+    animation-delay: 1.5s;
+}
+
+.welcome-fact-icon {
+    align-items: center;
+    background: var(--welcome-calm);
+    border-radius: 10px;
+    color: var(--welcome-accent);
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 30px;
+    justify-content: center;
+    width: 30px;
+}
+
+.welcome-fact-icon svg {
+    height: 18px;
+    width: 18px;
+}
+
+#screen-welcome .welcome-cta {
+    align-items: center;
+    animation: welcomeCtaReveal .64s 1.78s cubic-bezier(.16, 1, .3, 1) both;
+    background: var(--welcome-accent);
+    border: 0;
+    border-radius: 18px;
+    box-shadow: none;
+    color: #ffffff;
+    display: flex;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 760;
+    gap: 12px;
+    justify-content: space-between;
+    margin-top: 24px;
+    min-height: 56px;
+    padding: 0 18px 0 21px;
+    text-shadow: none;
+    transition: background-color .2s ease, transform .2s ease;
+    width: min(100%, 340px);
+}
+
+#screen-welcome .welcome-cta::before,
+#screen-welcome .welcome-cta::after {
+    display: none;
+}
+
+.welcome-cta-arrow {
+    align-items: center;
+    background: rgba(255, 255, 255, .2);
+    border-radius: 11px;
+    display: inline-flex;
+    font-size: 20px;
+    height: 36px;
+    justify-content: center;
+    line-height: 1;
+    width: 36px;
+}
+
+#screen-welcome .welcome-cta:active {
+    transform: scale(.985);
+}
+
+#screen-welcome.register-swipe-out,
+#screen-register.register-swipe-in {
+    inset: 0;
+    position: fixed;
+    width: 100%;
+    z-index: 30;
+}
+
+#screen-register.register-swipe-in {
+    z-index: 31;
+}
+
+#screen-welcome.register-swipe-out {
+    animation: registerSwipeOut .52s cubic-bezier(.32, .72, 0, 1) forwards;
+}
+
+#screen-register.register-swipe-in {
+    animation: registerSwipeIn .58s cubic-bezier(.32, .72, 0, 1) forwards;
+}
+
+#screen-register.register-swipe-in .register-content {
+    animation: registerFormReveal .64s .12s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+:root[data-app-effective-theme="dark"] #screen-welcome{
+    --welcome-accent: #8fd35a;
+    --welcome-accent-soft: #24351d;
+    --welcome-calm: #182018;
+    --welcome-page: #0b100c;
+    --welcome-card: #10150e;
+    --welcome-text: #f6f3e8;
+    --welcome-hint: #b5b8aa;
+}
+
+:root[data-app-effective-theme="dark"] .welcome-logo{
+    border-color: rgba(167, 214, 109, .16);
+}
+
+:root[data-app-effective-theme="dark"] .welcome-facts li{
+    border-color: rgba(167, 214, 109, .12);
+}
+
+:root[data-app-effective-theme="dark"] .welcome-logo img{
+    filter: invert(1);
+}
+
+:root[data-app-effective-theme="dark"] .welcome-kicker{
+    color: #b9e69a;
+}
+
+:root[data-app-effective-theme="dark"] #screen-welcome .welcome-cta{
+    color: #10150e;
+}
+
+:root[data-app-effective-theme="dark"] .welcome-cta-arrow{
+    background: rgba(16, 21, 14, .14);
+}
+
+@keyframes welcomeLogoArrive {
+    0% {
+        opacity: 0;
+        transform: translateY(-38vh) scale(.76);
+    }
+
+    24% {
+        opacity: 1;
+    }
+
+    72% {
+        transform: translateY(8px) scale(1.025);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes welcomeCopyReveal {
+    from {
+        filter: blur(7px);
+        opacity: 0;
+        transform: translateY(-28px) scale(.96);
+    }
+
+    to {
+        filter: blur(0);
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes welcomeCtaReveal {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes welcomeFactReveal {
+    from {
+        opacity: 0;
+        transform: translateY(-10px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes registerSwipeOut {
+    from {
+        filter: blur(0);
+        opacity: 1;
+        transform: translateX(0) scale(1);
+    }
+
+    to {
+        filter: blur(3px);
+        opacity: 0;
+        transform: translateX(-32%) scale(.96);
+    }
+}
+
+@keyframes registerSwipeIn {
+    from {
+        opacity: .4;
+        transform: translateX(100%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes registerFormReveal {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@media (max-height: 620px) {
+    .welcome-logo {
+        border-radius: 24px;
+        height: 104px;
+        margin-bottom: 20px;
+        width: 104px;
+    }
+
+    .welcome-content h1 {
+        font-size: 31px;
+    }
+
+    .welcome-description {
+        font-size: 14px;
+        margin-top: 12px;
+    }
+
+    .welcome-facts {
+        gap: 5px;
+        margin-top: 16px;
+    }
+
+    .welcome-facts li {
+        min-height: 39px;
+        padding: 5px 8px;
+    }
+
+    .welcome-fact-icon {
+        height: 27px;
+        width: 27px;
+    }
+
+    #screen-welcome .welcome-cta {
+        margin-top: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .welcome-logo,
+    .welcome-copy,
+    .welcome-facts li,
+    #screen-welcome .welcome-cta,
+    #screen-welcome.register-swipe-out,
+    #screen-register.register-swipe-in,
+    #screen-register.register-swipe-in .register-content,
+    .register-step.is-step-entering-forward,
+    .register-step.is-step-leaving-forward,
+    .register-step.is-step-entering-back,
+    .register-step.is-step-leaving-back {
+        animation: none;
+    }
+}

@@ -1,0 +1,241 @@
+@media (min-width: 1440px) {
+    .admin-stat-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 1199px) {
+    .admin-shell {
+        grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-shell {
+        grid-template-columns: 76px minmax(0, 1fr);
+    }
+
+    .admin-main {
+        padding: 24px;
+    }
+
+    .admin-stat-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .admin-visits-layout,
+    .admin-ai-layout,
+    .admin-meals-layout {
+        grid-template-columns: minmax(220px, 4fr) minmax(0, 8fr);
+    }
+}
+
+@media (max-width: 979px) {
+    .admin-shell,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-shell {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-sidebar,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-sidebar {
+        border-bottom: 1px solid var(--admin-border);
+        border-right: 0;
+        display: grid;
+        gap: 14px;
+        grid-template-columns: 1fr;
+        height: auto;
+        min-height: 0;
+        padding: 16px;
+        position: static;
+    }
+
+    .admin-brand,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-brand {
+        flex-direction: row;
+        justify-content: flex-start;
+    }
+
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-brand-text,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-nav-label,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-account-meta {
+        display: block;
+    }
+
+    .admin-sidebar-toggle {
+        display: none;
+    }
+
+    .admin-nav {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 2px;
+    }
+
+    .admin-nav-link,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-nav-link {
+        flex: 0 0 auto;
+        justify-content: flex-start;
+        padding: 0 14px;
+        width: auto;
+    }
+
+    .admin-nav-short,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-nav-short {
+        display: none;
+    }
+
+    .admin-sidebar-footer,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-sidebar-footer {
+        align-items: center;
+        border-top: 1px solid var(--admin-border);
+        display: flex;
+        gap: 12px;
+        justify-content: space-between;
+        padding-top: 12px;
+    }
+
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-logout-button-muted {
+        font-size: 14px;
+        min-height: 40px;
+        padding: 0 14px;
+    }
+
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-logout-button-muted::before {
+        content: none;
+    }
+
+    .admin-dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-system-card,
+    .admin-events-card,
+    .admin-ai-card,
+    .admin-errors-card {
+        grid-column: auto;
+    }
+
+    .admin-visits-layout,
+    .admin-ai-layout,
+    .admin-meals-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 719px) {
+    .admin-main {
+        gap: 16px;
+        padding: 16px;
+    }
+
+    .admin-topbar,
+    .admin-card {
+        border-radius: 8px;
+        padding: 14px;
+    }
+
+    .admin-page-heading h1 {
+        font-size: 22px;
+    }
+
+    .admin-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .admin-stat-card {
+        min-height: 132px;
+        padding: 14px;
+    }
+
+    .admin-stat-card strong {
+        font-size: 30px;
+    }
+
+    .admin-card-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-chart-controls {
+        justify-content: flex-start;
+    }
+
+    .admin-chart-shell {
+        height: 300px;
+    }
+
+    .admin-status-list div {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-placeholder-row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-placeholder-head {
+        display: none;
+    }
+
+    .admin-activity-scroll {
+        max-height: 360px;
+    }
+}
+
+@media (max-width: 479px) {
+    .admin-main {
+        padding: 12px;
+    }
+
+    .admin-brand-logo {
+        height: 32px;
+        width: 32px;
+    }
+
+    .admin-brand strong {
+        font-size: 15px;
+    }
+
+    .admin-brand span,
+    .admin-sidebar-footer span {
+        font-size: 12px;
+    }
+
+    .admin-sidebar-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .admin-stat-grid,
+    .admin-mini-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-ai-summary,
+    .admin-error-summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .admin-chart-shell {
+        height: 260px;
+    }
+
+    .admin-segmented-control,
+    .admin-week-nav {
+        width: 100%;
+    }
+
+    .admin-chart-toggle {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0 8px;
+    }
+}
+
+@media (hover: none) {
+    .admin-stat-card:hover {
+        transform: none;
+    }
+}

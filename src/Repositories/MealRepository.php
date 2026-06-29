@@ -66,6 +66,78 @@ class MealRepository
         );
     }
 
+    /** @return list<array<string, int|float|string>> */
+    public function findForLocalDay(
+        int $userId,
+        int $timezoneOffsetMinutes = 0,
+        ?DateTimeImmutable $nowUtc = null
+    ): array {
+        if ($timezoneOffsetMinutes < -840 || $timezoneOffsetMinutes > 840) {
+            throw new \InvalidArgumentException('Invalid timezone offset');
+        }
+
+        [$startUtc, $endUtc] = $this->localDayUtcRange($timezoneOffsetMinutes, $nowUtc);
+        $stmt = $this->db->prepare(
+            'SELECT id, food_description, calories, proteins, fats, carbs, created_at
+             FROM meals
+             WHERE user_id = :user_id AND created_at >= :start_utc AND created_at < :end_utc
+             ORDER BY created_at ASC'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'start_utc' => $startUtc->format('Y-m-d H:i:s'),
+            'end_utc' => $endUtc->format('Y-m-d H:i:s'),
+        ]);
+
+        $localModifier = sprintf('%+d minutes', -$timezoneOffsetMinutes);
+
+        return array_map(function (array $row) use ($localModifier): array {
+            $createdAt = DateTimeImmutable::createFromFormat(
+                'Y-m-d H:i:s',
+                (string)$row['created_at'],
+                new DateTimeZone('UTC')
+            );
+
+            return [
+                'id' => (int)$row['id'],
+                'name' => substr(trim((string)$row['food_description']), 0, 120),
+                'time' => $createdAt instanceof DateTimeImmutable
+                    ? $createdAt->modify($localModifier)->format('H:i')
+                    : '',
+                'calories' => (int)$row['calories'],
+                'proteins' => round((float)$row['proteins'], 1),
+                'fats' => round((float)$row['fats'], 1),
+                'carbs' => round((float)$row['carbs'], 1),
+            ];
+        }, $stmt->fetchAll());
+    }
+
+    /** @return list<string> Local dates in YYYY-MM-DD format, newest first. */
+    public function findActiveMealDates(int $userId, int $timezoneOffsetMinutes = 0): array
+    {
+        if ($timezoneOffsetMinutes < -840 || $timezoneOffsetMinutes > 840) {
+            throw new \InvalidArgumentException('Invalid timezone offset');
+        }
+
+        // JavaScript getTimezoneOffset() is UTC - local time, hence DATE_SUB.
+        $localDateExpression = sprintf(
+            'DATE(DATE_SUB(created_at, INTERVAL %d MINUTE))',
+            $timezoneOffsetMinutes
+        );
+        $stmt = $this->db->prepare(
+            "SELECT DISTINCT {$localDateExpression} AS active_date
+             FROM meals
+             WHERE user_id = :user_id
+             ORDER BY active_date DESC"
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return array_map(
+            static fn(array $row): string => (string)$row['active_date'],
+            $stmt->fetchAll()
+        );
+    }
+
     public function getDailyCaloriesForMonth(int $userId, string $month, int $timezoneOffsetMinutes): array
     {
         $startLocal = DateTimeImmutable::createFromFormat(
@@ -84,7 +156,7 @@ class MealRepository
         $endUtc = $startLocal->modify('first day of next month')->modify($offsetModifier);
 
         $stmt = $this->db->prepare(
-            'SELECT id, food_description, calories, proteins, fats, carbs, total_weight, created_at
+            'SELECT id, food_description, calories, proteins, fats, carbs, total_weight, image_path, created_at
              FROM meals
              WHERE user_id = :user_id
                AND created_at >= :start_utc
@@ -144,6 +216,9 @@ class MealRepository
                 'carbs' => $carbs,
                 'weight' => $weight,
                 'time' => $localCreatedAt->format('H:i'),
+                'thumbnail_url' => !empty($row['image_path'])
+                    ? '/api/meals/' . (int)$row['id'] . '/thumbnail'
+                    : null,
             ];
         }
 
@@ -209,5 +284,32 @@ class MealRepository
         return $date instanceof DateTimeImmutable
             ? $date->format('Y-m-d\TH:i:s\Z')
             : $timestamp;
+    }
+
+    /** @return array{DateTimeImmutable, DateTimeImmutable} */
+    private function localDayUtcRange(
+        int $timezoneOffsetMinutes,
+        ?DateTimeImmutable $nowUtc = null
+    ): array {
+        $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
+        $localDate = $nowUtc
+            ->modify(sprintf('%+d minutes', -$timezoneOffsetMinutes))
+            ->format('Y-m-d');
+        $startLocal = DateTimeImmutable::createFromFormat(
+            '!Y-m-d H:i:s',
+            $localDate . ' 00:00:00',
+            new DateTimeZone('UTC')
+        );
+
+        if (!$startLocal instanceof DateTimeImmutable) {
+            throw new \RuntimeException('Failed to build local day range');
+        }
+
+        $utcModifier = sprintf('%+d minutes', $timezoneOffsetMinutes);
+
+        return [
+            $startLocal->modify($utcModifier),
+            $startLocal->modify('+1 day')->modify($utcModifier),
+        ];
     }
 }

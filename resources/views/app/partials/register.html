@@ -1,0 +1,149 @@
+        <!-- Экран регистрации -->
+        <div id="screen-register" class="screen hidden">
+            <div class="register-content">
+                <div class="register-stepper" aria-label="Шаг регистрации">
+                    <div class="register-stepper-item active" data-register-step-indicator="1" aria-current="step">
+                        <span class="register-step-marker" aria-hidden="true"><i class="register-step-number">1</i><i class="register-step-check">✓</i></span>
+                        <strong>Данные</strong>
+                    </div>
+                    <div class="register-stepper-item" data-register-step-indicator="2">
+                        <span class="register-step-marker" aria-hidden="true"><i class="register-step-number">2</i><i class="register-step-check">✓</i></span>
+                        <strong>Активность</strong>
+                    </div>
+                    <div class="register-stepper-item" data-register-step-indicator="3">
+                        <span class="register-step-marker" aria-hidden="true"><i class="register-step-number">3</i><i class="register-step-check">✓</i></span>
+                        <strong>Цель</strong>
+                    </div>
+                </div>
+
+                <div class="register-steps">
+                    <!-- Шаг 1: Базовые данные -->
+                    <div id="register-step-1" class="register-step">
+                    <header>
+                        <h1>Добро пожаловать</h1>
+                        <p>Расскажите о себе</p>
+                    </header>
+                    <div class="form">
+                        <div class="form-group">
+                            <label for="age">Возраст</label>
+                            <input type="number" id="age" placeholder="25" min="10" max="100" aria-describedby="register-age-error">
+                            <p id="register-age-error" class="register-field-error hidden" aria-live="polite"></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="height">Рост (см)</label>
+                            <input type="number" id="height" placeholder="175" min="100" max="220" aria-describedby="register-height-error">
+                            <p id="register-height-error" class="register-field-error hidden" aria-live="polite"></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="weight">Вес (кг)</label>
+                            <input type="number" id="weight" placeholder="70" min="30" max="250" step="0.1" aria-describedby="register-weight-error">
+                            <p id="register-weight-error" class="register-field-error hidden" aria-live="polite"></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">Пол</label>
+                            <input type="hidden" id="gender" value="" aria-describedby="register-gender-error">
+                            <div class="register-gender-control" role="group" aria-label="Пол" aria-describedby="register-gender-error" style="--active-gender-index: 0">
+                                <span class="register-gender-indicator" aria-hidden="true"></span>
+                                <button type="button" data-register-gender="male" aria-pressed="false">Мужчина</button>
+                                <button type="button" data-register-gender="female" aria-pressed="false">Женщина</button>
+                            </div>
+                            <p id="register-gender-error" class="register-field-error hidden" aria-live="polite"></p>
+                        </div>
+                        <div class="register-button-shell">
+                            <button id="btn-next-1" class="main-button" type="button" disabled><span class="register-button-label">Далее</span></button>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Шаг 2: Уровень активности -->
+                    <div id="register-step-2" class="register-step hidden">
+                    <header>
+                        <h1>Ваша активность</h1>
+                        <p>Насколько вы активны в течение дня?</p>
+                    </header>
+                    <div class="form">
+                        <div id="register-activity-options" class="option-group" role="radiogroup" aria-label="Уровень активности" aria-describedby="register-activity-error">
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="minimal">
+                                <div class="option-content">
+                                    <span class="option-title">Минимальная</span>
+                                    <span class="option-desc">Сидячий день, редкие прогулки, почти без тренировок</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="low">
+                                <div class="option-content">
+                                    <span class="option-title">Низкая</span>
+                                    <span class="option-desc">Прогулки или легкие тренировки 1-3 раза в неделю</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="medium" checked>
+                                <div class="option-content">
+                                    <span class="option-title">Умеренная</span>
+                                    <span class="option-desc">Регулярные тренировки 3-5 раз в неделю или много ходьбы</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="high">
+                                <div class="option-content">
+                                    <span class="option-title">Высокая</span>
+                                    <span class="option-desc">Тренировки почти каждый день и активный распорядок</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="activity_level" value="extra">
+                                <div class="option-content">
+                                    <span class="option-title">Очень высокая</span>
+                                    <span class="option-desc">Физическая работа, спорт высокой нагрузки или две тренировки в день</span>
+                                </div>
+                            </label>
+                        </div>
+                        <p id="register-activity-error" class="register-step-error hidden" aria-live="polite"></p>
+                        <div class="button-group">
+                            <button id="btn-back-2" class="back-button" type="button"><span class="register-button-label">Назад</span></button>
+                            <button id="btn-next-2" class="main-button" type="button"><span class="register-button-label">Далее</span></button>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Шаг 3: Цель -->
+                    <div id="register-step-3" class="register-step hidden">
+                    <header>
+                        <h1>Ваша цель</h1>
+                        <p>Что вы хотите достичь?</p>
+                    </header>
+                    <div class="form">
+                        <div id="register-goal-options" class="option-group" role="radiogroup" aria-label="Цель" aria-describedby="register-goal-error">
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="deficit">
+                                <div class="option-content">
+                                    <span class="option-title">Похудение</span>
+                                    <span class="option-desc">Умеренный дефицит калорий для плавного снижения веса</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="maintenance" checked>
+                                <div class="option-content">
+                                    <span class="option-title">Поддержание</span>
+                                    <span class="option-desc">Баланс калорий для стабильного веса и привычного режима</span>
+                                </div>
+                            </label>
+                            <label class="option-card">
+                                <input type="radio" name="goal" value="surplus">
+                                <div class="option-content">
+                                    <span class="option-title">Набор массы</span>
+                                    <span class="option-desc">Небольшой профицит калорий для роста массы и восстановления</span>
+                                </div>
+                            </label>
+                        </div>
+                        <p id="register-goal-error" class="register-step-error hidden" aria-live="polite"></p>
+                        <div class="button-group">
+                            <button id="btn-back-3" class="back-button" type="button"><span class="register-button-label">Назад</span></button>
+                            <button id="btn-save" class="main-button" type="button"><span class="register-button-label">Рассчитать</span></button>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>

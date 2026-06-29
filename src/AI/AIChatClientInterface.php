@@ -6,5 +6,13 @@ namespace App\AI;
 
 interface AIChatClientInterface
 {
-    public function complete(array $messages, int $timeoutSeconds, string $operation): ?string;
+    /**
+     * @param array{model_purpose?: string, max_tokens?: int, temperature?: float, json_schema?: array} $options
+     */
+    public function complete(
+        array $messages,
+        int $timeoutSeconds,
+        string $operation,
+        array $options = []
+    ): ?string;
 }

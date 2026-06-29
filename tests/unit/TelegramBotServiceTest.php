@@ -6,6 +6,7 @@ namespace Tests\Unit;
 
 use App\Config\TelegramBotConfig;
 use App\Services\DailyNutritionSummaryService;
+use App\Services\AiQuotaService;
 use App\Services\MealRecommendationService;
 use App\Services\RateLimiterService;
 use App\Telegram\TelegramBotClientInterface;
@@ -213,13 +214,16 @@ class TelegramBotServiceTest extends TestCase
         ?string $recommendation = null
     ): TelegramBotService
     {
+        $rateLimiter = new FakeTelegramRateLimiterService();
+
         return new TelegramBotService(
             new TelegramBotConfig('token', 'secret', 'https://example.com', -180),
             $client,
             new TelegramBotMessageFactory(),
             new FakeTelegramDailySummaryService($summary),
             new FakeTelegramMealRecommendationService($recommendation),
-            new FakeTelegramRateLimiterService()
+            $rateLimiter,
+            new AiQuotaService($rateLimiter)
         );
     }
 }
@@ -263,8 +267,11 @@ class FakeTelegramDailySummaryService extends DailyNutritionSummaryService
 {
     public function __construct(private readonly ?array $summary) {}
 
-    public function getForTelegramUser(int $telegramId, int $timezoneOffsetMinutes = 0): ?array
-    {
+    public function getForTelegramUser(
+        int $telegramId,
+        int $timezoneOffsetMinutes = 0,
+        ?\DateTimeImmutable $nowUtc = null
+    ): ?array {
         return $this->summary;
     }
 }

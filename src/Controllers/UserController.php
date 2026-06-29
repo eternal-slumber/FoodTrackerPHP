@@ -6,16 +6,24 @@ namespace App\Controllers;
 
 use App\Auth\CurrentUser;
 use App\Attributes\RouteAttribute;
+use App\Config\TelegramAuthConfig;
+use App\Enums\Goal;
 use App\Http\ResponseResponder;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Services\DailyNutritionSummaryService;
+use App\Services\DailyNutritionInsightService;
+use App\Services\AiQuotaService;
+use App\Services\MacroGoalCalculationService;
+use App\Services\NutritionStreakService;
 use App\Services\RateLimiterService;
 use App\Services\SummaryService;
+use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
 use App\Validators\UserValidator;
 use App\Exceptions\ValidationException;
+use App\Exceptions\AppException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -24,10 +32,59 @@ class UserController
     public function __construct(
         private readonly UserRepository $users,
         private readonly RateLimiterService $rateLimiter,
+        private readonly AiQuotaService $aiQuota,
         private readonly SummaryService $summaryService,
         private readonly DailyNutritionSummaryService $dailyNutritionSummary,
-        private readonly UploadedFileStorage $storage
+        private readonly MacroGoalCalculationService $macroGoalCalculator,
+        private readonly DailyNutritionInsightService $dailyNutritionInsight,
+        private readonly NutritionStreakService $nutritionStreak,
+        private readonly UploadedFileStorage $storage,
+        private readonly TelemetryService $telemetry,
+        private readonly TelegramAuthConfig $telegramAuthConfig
     ) {}
+
+    private function currentUser(Request $request): CurrentUser
+    {
+        $currentUser = $request->getAttribute(TelegramAuthMiddleware::CURRENT_USER_ATTRIBUTE);
+
+        if (!$currentUser instanceof CurrentUser) {
+            throw new \RuntimeException('Authenticated Telegram user is missing');
+        }
+
+        return $currentUser;
+    }
+
+    #[RouteAttribute('/api/events/app-opened', 'POST')]
+    public function appOpened(Request $request, Response $response): Response
+    {
+        try {
+            $currentUser = $this->currentUser($request);
+            $user = $this->users->findByTelegramId($currentUser->telegramId);
+            $eventData = null;
+            if ($user === null && $this->isDevCurrentUser($currentUser)) {
+                $eventData = [
+                    'dev' => true,
+                    'dev_telegram_id' => $currentUser->telegramId,
+                ];
+            }
+
+            $this->telemetry->recordUserEvent(
+                $user?->id !== null ? (int)$user->id : null,
+                'app_opened',
+                $eventData,
+                $request
+            );
+
+            return ResponseResponder::json($response, ['status' => 'success']);
+        } catch (\Exception $e) {
+            error_log('App opened event error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'user_events', $e->getMessage(), [
+                'action' => 'app_opened',
+            ], $e);
+
+            return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Internal server error'], 500);
+        }
+    }
 
     #[RouteAttribute('/api/register', 'POST')]
     public function register(Request $request, Response $response): Response
@@ -47,6 +104,7 @@ class UserController
             }
 
             $validated = UserValidator::validateRegistration($data);
+            $existingUser = $this->users->findByTelegramId($currentUser->telegramId);
 
             $user = new User(
                 tgId: $validated['tg_id'],
@@ -59,9 +117,26 @@ class UserController
             );
 
             if ($this->users->save($user)) {
+                if ($existingUser === null) {
+                    $registeredUser = $this->users->findByTelegramId($currentUser->telegramId);
+                    $this->telemetry->recordUserEvent(
+                        $registeredUser?->id !== null ? (int)$registeredUser->id : null,
+                        'user_registered',
+                        ['source' => 'mini_app'],
+                        $request
+                    );
+                }
+
+                $macroGoals = $this->macroGoalCalculator->calculate(
+                    (int)$user->dailyGoal,
+                    $user->weight,
+                    Goal::fromValue($user->goal)
+                );
+
                 return ResponseResponder::json($response, [
                     'status' => 'success',
                     'daily_goal' => $user->dailyGoal,
+                    'macro_goals' => $macroGoals,
                     'activity_level' => $user->activityLevel,
                     'goal' => $user->goal
                 ]);
@@ -73,6 +148,10 @@ class UserController
             return ResponseResponder::json($response, ['status' => 'error', 'message' => $e->getMessage(), 'errors' => $errors], 400);
         } catch (\Exception $e) {
             error_log('Register error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'users', $e->getMessage(), [
+                'action' => 'register',
+            ], $e);
+
             return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Internal server error'], 500);
         }
     }
@@ -151,6 +230,10 @@ class UserController
             return ResponseResponder::json($response, ['status' => 'error', 'message' => $e->getMessage(), 'errors' => $errors], 400);
         } catch (\Exception $e) {
             error_log('Update profile error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'users', $e->getMessage(), [
+                'action' => 'update_profile',
+            ], $e);
+
             return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Internal server error'], 500);
         }
     }
@@ -178,12 +261,96 @@ class UserController
                 return ResponseResponder::json($response, ['status' => 'error', 'message' => 'User not found'], 404);
             }
 
+            $summary['streak'] = $this->nutritionStreak->getForUser(
+                (int)$user->id,
+                $timezoneOffset
+            );
+
             return ResponseResponder::json($response, [
                 'status' => 'success',
                 'data' => $summary
             ]);
         } catch (ValidationException $e) {
             return ResponseResponder::json($response, $e->toArray(), 400);
+        }
+    }
+
+    #[RouteAttribute('/api/daily-insight', 'GET')]
+    public function dailyInsight(Request $request, Response $response): Response
+    {
+        try {
+            $currentUser = $this->currentUser($request);
+            $timezoneOffset = $this->timezoneOffsetFromRequest($request);
+
+            return ResponseResponder::json($response, [
+                'status' => 'success',
+                'data' => $this->dailyNutritionInsight->getForTelegramUser(
+                    $currentUser->telegramId,
+                    $timezoneOffset
+                ),
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 400);
+        } catch (\Throwable $e) {
+            error_log('Daily nutrition insight error: ' . $e->getMessage());
+
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => 'Не удалось загрузить AI-рекомендацию',
+            ], 500);
+        }
+    }
+
+    #[RouteAttribute('/api/daily-insight/refresh', 'POST')]
+    public function refreshDailyInsight(Request $request, Response $response): Response
+    {
+        try {
+            $currentUser = $this->currentUser($request);
+            $timezoneOffset = $this->timezoneOffsetFromRequest($request);
+            if (!$this->aiQuota->consumeInsightBurst($currentUser->telegramId)) {
+                return ResponseResponder::json($response, [
+                    'status' => 'error',
+                    'message' => 'AI-рекомендация уже обновляется',
+                ], 429);
+            }
+
+            if (!$this->aiQuota->consumeInsight($currentUser->telegramId)) {
+                return ResponseResponder::json($response, [
+                    'status' => 'error',
+                    'message' => 'Лимит обновлений AI-рекомендации временно исчерпан',
+                ], 429);
+            }
+
+            return ResponseResponder::json($response, [
+                'status' => 'success',
+                'data' => $this->dailyNutritionInsight->refreshForTelegramUser(
+                    $currentUser->telegramId,
+                    $timezoneOffset
+                ),
+            ]);
+        } catch (AppException $e) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], $e->getCode() ?: 502);
+        } catch (\InvalidArgumentException $e) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ], 400);
+        } catch (\Throwable $e) {
+            error_log('Refresh daily nutrition insight error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'ai', $e->getMessage(), [
+                'action' => 'daily_nutrition_insight',
+            ], $e);
+
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => 'Не удалось обновить AI-рекомендацию',
+            ], 500);
         }
     }
 
@@ -212,6 +379,10 @@ class UserController
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (\Exception $e) {
             error_log('Summary error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'users', $e->getMessage(), [
+                'action' => 'summary',
+            ], $e);
+
             return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Internal server error'], 500);
         }
     }
@@ -241,18 +412,31 @@ class UserController
             return ResponseResponder::json($response, $e->toArray(), 400);
         } catch (\PDOException $e) {
             error_log('Delete profile database error: ' . $e->getMessage());
+            $this->telemetry->recordSystemError('error', 'users', $e->getMessage(), [
+                'action' => 'delete_profile',
+            ], $e);
+
             return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Ошибка базы данных'], 500);
         }
     }
 
-    private function currentUser(Request $request): CurrentUser
+    private function isDevCurrentUser(CurrentUser $currentUser): bool
     {
-        $currentUser = $request->getAttribute(TelegramAuthMiddleware::CURRENT_USER_ATTRIBUTE);
+        return $this->telegramAuthConfig->appEnv === 'local'
+            && $this->telegramAuthConfig->devAuthEnabled
+            && $this->telegramAuthConfig->devUserId === $currentUser->telegramId;
+    }
 
-        if (!$currentUser instanceof CurrentUser) {
-            throw new \RuntimeException('Authenticated Telegram user is missing');
+    private function timezoneOffsetFromRequest(Request $request): int
+    {
+        $params = $request->getQueryParams();
+        $timezoneOffset = isset($params['tz_offset']) ? (int)$params['tz_offset'] : 0;
+
+        if ($timezoneOffset < -840 || $timezoneOffset > 840) {
+            throw new \InvalidArgumentException('Invalid timezone offset');
         }
 
-        return $currentUser;
+        return $timezoneOffset;
     }
+
 }

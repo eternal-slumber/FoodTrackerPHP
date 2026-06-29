@@ -1,0 +1,149 @@
+<section class="admin-page admin-overview admin-is-active" aria-label="Обзор">
+    <div class="admin-stat-grid" aria-label="Основная статистика">
+        <a class="admin-stat-card admin-stat-card-accent admin-stat-card-actionable" href="{{ADMIN_VISITS_PATH}}" aria-label="Открыть посещения пользователей">
+            <span class="admin-stat-link" aria-hidden="true">&gt;</span>
+            <h2 class="admin-stat-title">Пользователей зашло сегодня</h2>
+            <strong>{{USERS_ENTERED_TODAY}}</strong>
+            <small>Уникальные app.opened за день</small>
+        </a>
+        <a class="admin-stat-card admin-stat-card-actionable" href="{{ADMIN_MEALS_PATH}}" aria-label="Открыть активность приёмов">
+            <span class="admin-stat-link" aria-hidden="true">&gt;</span>
+            <h2 class="admin-stat-title">Приёмов создано сегодня</h2>
+            <strong>{{MEALS_CREATED_TODAY}}</strong>
+            <small>Новые записи питания</small>
+        </a>
+        <a class="admin-stat-card admin-stat-card-actionable" href="{{ADMIN_AI_PATH}}" aria-label="Открыть активность ИИ">
+            <span class="admin-stat-link" aria-hidden="true">&gt;</span>
+            <h2 class="admin-stat-title">AI-запросов сегодня</h2>
+            <strong>{{AI_REQUESTS_TODAY}}</strong>
+            <small>Анализ фото и автозаполнение</small>
+        </a>
+        <article class="admin-stat-card admin-stat-card-warning">
+            <h2 class="admin-stat-title">Ошибок сегодня</h2>
+            <strong>{{ERRORS_TODAY}}</strong>
+            <small>error и critical</small>
+        </article>
+        <article class="admin-stat-card">
+            <h2 class="admin-stat-title">Активных пользователей всего</h2>
+            <strong>{{ACTIVE_USERS_TOTAL}}</strong>
+            <small>Всего профилей в системе</small>
+        </article>
+    </div>
+
+    <div class="admin-dashboard-grid">
+        <section class="admin-card admin-system-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">System</span>
+                    <h2>Состояние системы</h2>
+                </div>
+                <span class="admin-badge {{DATABASE_STATUS_CLASS}}">{{DATABASE_STATUS_TEXT}}</span>
+            </div>
+            <div class="admin-status-list">
+                <div>
+                    <span class="admin-system-label">
+                        <strong>База данных</strong>
+                        <small>{{DATABASE_STATUS_NOTE}}</small>
+                    </span>
+                    <strong class="admin-badge {{DATABASE_STATUS_CLASS}}">{{DATABASE_STATUS_TEXT}}</strong>
+                </div>
+                <div>
+                    <span class="admin-system-label">
+                        <strong>Основное приложение</strong>
+                        <small>Главная страница и базовые API доступны для пользователей</small>
+                    </span>
+                    <strong class="admin-badge {{APP_STATUS_CLASS}}">{{APP_STATUS_TEXT}}</strong>
+                </div>
+                <div>
+                    <span class="admin-system-label">
+                        <strong>AI/OpenRouter</strong>
+                        <small>Детальная проверка провайдера пока не выполнялась</small>
+                    </span>
+                    <strong class="admin-badge admin-badge-warning">не проверялось</strong>
+                </div>
+                <div>
+                    <span class="admin-system-label">
+                        <strong>Telegram API</strong>
+                        <small>Статус внешнего Telegram API пока не проверяется</small>
+                    </span>
+                    <strong class="admin-badge admin-badge-warning">не проверялось</strong>
+                </div>
+                <div>
+                    <span class="admin-system-label">
+                        <strong>Ошибки сегодня</strong>
+                        <small>Количество error и critical событий за текущий день</small>
+                    </span>
+                    <strong>{{ERRORS_TODAY}}</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card admin-ai-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">AI today</span>
+                    <h2>AI сегодня</h2>
+                </div>
+                <button class="admin-ghost-button" type="button" data-dashboard-refresh>Обновить</button>
+            </div>
+            <div class="admin-loading-line admin-hidden" data-dashboard-loading>Обновляем состояние...</div>
+            <div class="admin-ai-summary">
+                <strong>{{AI_REQUESTS_TODAY}}</strong>
+                <span>запросов всего</span>
+            </div>
+            <div class="admin-mini-grid">
+                <div><span>Успешно</span><strong>-</strong></div>
+                <div><span>Ошибок</span><strong>{{ERRORS_TODAY}}</strong></div>
+                <div><span>Среднее время</span><strong>-</strong></div>
+                <div><span>Fallback</span><strong>-</strong></div>
+            </div>
+            <div class="admin-empty-state" data-empty-ai>
+                <strong>AI-запросов сегодня пока нет</strong>
+                <p>Детализация появится после первых записей в журнале AI.</p>
+            </div>
+        </section>
+
+        <section class="admin-card admin-events-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Events</span>
+                    <h2>Последние события</h2>
+                </div>
+            </div>
+            <div class="admin-event-list">
+                <div class="admin-event-item">
+                    <span class="admin-event-dot"></span>
+                    <div><strong>app.opened</strong><span>Сегодня: {{USERS_ENTERED_TODAY}} пользователей</span></div>
+                    <em>OK</em>
+                </div>
+                <div class="admin-event-item">
+                    <span class="admin-event-dot"></span>
+                    <div><strong>meal.created</strong><span>Сегодня: {{MEALS_CREATED_TODAY}} записей</span></div>
+                    <em>OK</em>
+                </div>
+                <div class="admin-event-item admin-event-muted">
+                    <span class="admin-event-dot"></span>
+                    <div><strong>ai.request.completed</strong><span>Сегодня: {{AI_REQUESTS_TODAY}} запросов</span></div>
+                    <em>live</em>
+                </div>
+            </div>
+        </section>
+
+        <section class="admin-card admin-errors-card">
+            <div class="admin-card-heading">
+                <div>
+                    <span class="admin-kicker">Errors</span>
+                    <h2>Последние ошибки</h2>
+                </div>
+            </div>
+            <div class="admin-error-summary">
+                <strong>{{ERRORS_TODAY}}</strong>
+                <span>ошибок и critical-событий сегодня</span>
+            </div>
+            <div class="admin-empty-state">
+                <strong>Ошибок за сегодня нет</strong>
+                <p>Если появятся error/critical записи, они будут отображаться здесь краткой лентой.</p>
+            </div>
+        </section>
+    </div>
+</section>

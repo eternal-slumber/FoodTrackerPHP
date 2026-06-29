@@ -1,0 +1,727 @@
+/* ========== Unified meal entry refinements ========== */
+
+.meal-action {
+    border-radius: 100vmax;
+    margin: 8px 0 18px;
+    overflow: hidden;
+}
+
+.add-food-button {
+    display: flex;
+    align-items: center;
+    border-radius: 100vmax;
+    clip-path: inset(0 round 100vmax);
+    gap: 12px;
+    isolation: isolate;
+    overflow: hidden;
+    position: relative;
+    text-align: left;
+    padding: 14px 16px;
+    margin-top: 0;
+    transition: background-color 0.2s ease, opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-food-button::before,
+.add-food-button::after {
+    border-radius: inherit;
+    content: '';
+    inset: 0;
+    pointer-events: none;
+    position: absolute;
+}
+
+.add-food-button::before {
+    z-index: -1;
+}
+
+.add-food-button::after {
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        inset 0 -8px 14px color-mix(in srgb, var(--button-color) 12%, transparent);
+    z-index: 0;
+}
+
+.add-food-button > * {
+    position: relative;
+    z-index: 1;
+}
+
+.add-food-button strong,
+.add-food-button small {
+    display: block;
+}
+
+.add-food-button small {
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 12px;
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.action-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.18);
+    font-size: 24px;
+    line-height: 1;
+    flex: 0 0 auto;
+}
+
+.sheet-header p {
+    margin: 6px 0 0;
+    color: var(--hint-color);
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.entry-methods {
+    display: grid;
+    gap: 10px;
+}
+
+.entry-method {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: 1px solid transparent;
+    background: var(--secondary-bg);
+    color: var(--text-color);
+    border-radius: 14px;
+    padding: 14px;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.entry-method:active {
+    border-color: var(--button-color);
+}
+
+.entry-method strong,
+.entry-method small {
+    display: block;
+}
+
+.entry-method small {
+    color: var(--hint-color);
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.method-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: var(--bg-color);
+    color: var(--button-color);
+    flex: 0 0 auto;
+    font-size: 20px;
+}
+
+.method-icon svg {
+    display: block;
+    height: 24px;
+    width: 24px;
+}
+
+.draft-photo-preview {
+    overflow: hidden;
+    border-radius: 14px;
+    background: var(--secondary-bg);
+    aspect-ratio: 4 / 3;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.draft-photo-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: filter 0.18s ease, opacity 0.18s ease, transform 0.18s ease;
+}
+
+.draft-photo-preview.is-processing img {
+    filter: blur(2px);
+    opacity: 0.62;
+    transform: scale(1.02);
+}
+
+.photo-processing-overlay {
+    align-items: center;
+    background: color-mix(in srgb, var(--bg-color) 34%, transparent);
+    display: none;
+    inset: 0;
+    justify-content: center;
+    position: absolute;
+    z-index: 2;
+}
+
+.draft-photo-preview.is-processing .photo-processing-overlay {
+    display: flex;
+}
+
+.photo-actions {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr;
+    min-height: 114px;
+    position: relative;
+}
+
+.photo-actions .main-button,
+.photo-actions .secondary-button {
+    margin-top: 0;
+    width: 100%;
+}
+
+.photo-actions #btn-analyze-photo,
+.photo-actions #btn-change-photo {
+    transition:
+        border-radius 0.22s ease,
+        opacity 0.18s ease,
+        transform 0.22s ease;
+}
+
+.photo-actions #btn-analyze-photo {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 50px;
+}
+
+.photo-analyze-loader {
+    align-items: center;
+    background: color-mix(in srgb, var(--button-color) 78%, #101828 22%);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    box-shadow:
+        0 18px 34px rgba(0, 0, 0, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    display: inline-flex;
+    height: 92px;
+    justify-content: center;
+    overflow: visible;
+    position: relative;
+    width: 92px;
+}
+
+.photo-analyze-text {
+    display: inline-block;
+}
+
+.photo-actions #btn-analyze-photo.is-loading .photo-analyze-text {
+    animation: shine 1.5s infinite linear;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.52), #ffffff, rgba(255, 255, 255, 0.52));
+    background-clip: text;
+    background-size: 200%;
+    color: transparent;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.photo-analyze-loader-inner {
+    height: 72px;
+    position: relative;
+    width: 72px;
+}
+
+.photo-analyze-loader-line-wrap {
+    animation: photoAnalyzeSpin 2000ms cubic-bezier(0.175, 0.885, 0.32, 1.275) infinite;
+    box-sizing: border-box;
+    height: 72px;
+    left: 0;
+    overflow: visible;
+    position: absolute;
+    top: 0;
+    transform-origin: 50% 50%;
+    width: 72px;
+}
+
+.photo-analyze-loader-line {
+    border: 3px solid transparent;
+    border-radius: 100%;
+    box-sizing: border-box;
+    left: 0;
+    margin: 0 auto;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.photo-analyze-loader-line-wrap:nth-child(1) {
+    animation-delay: -50ms;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(2) {
+    animation-delay: -100ms;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(3) {
+    animation-delay: -150ms;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(4) {
+    animation-delay: -200ms;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(5) {
+    animation-delay: -250ms;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(1) .photo-analyze-loader-line {
+    border-left-color: rgba(255, 255, 255, 0.95);
+    border-top-color: rgba(255, 255, 255, 0.95);
+    height: 64px;
+    width: 64px;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(2) .photo-analyze-loader-line {
+    border-left-color: rgba(255, 255, 255, 0.78);
+    border-top-color: rgba(255, 255, 255, 0.78);
+    height: 54px;
+    width: 54px;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(3) .photo-analyze-loader-line {
+    border-left-color: rgba(255, 255, 255, 0.6);
+    border-top-color: rgba(255, 255, 255, 0.6);
+    height: 44px;
+    width: 44px;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(4) .photo-analyze-loader-line {
+    border-left-color: rgba(255, 255, 255, 0.44);
+    border-top-color: rgba(255, 255, 255, 0.44);
+    height: 34px;
+    width: 34px;
+}
+
+.photo-analyze-loader-line-wrap:nth-child(5) .photo-analyze-loader-line {
+    border-left-color: rgba(255, 255, 255, 0.32);
+    border-top-color: rgba(255, 255, 255, 0.32);
+    height: 24px;
+    width: 24px;
+}
+
+@keyframes photoAnalyzeSpin {
+    0%,
+    15% {
+        transform: rotate(0);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.photo-actions #btn-change-photo {
+    transition: opacity 0.18s ease, transform 0.22s ease;
+}
+
+.photo-actions.is-analyzing #btn-analyze-photo {
+    border-radius: 20px;
+    min-height: 68px;
+    transform: translateY(33px);
+}
+
+.photo-actions.is-analyzing #btn-change-photo {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-33px) scale(0.98);
+}
+
+.editor-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: left;
+}
+
+.draft-total {
+    min-width: 76px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    background: var(--secondary-bg);
+    text-align: center;
+}
+
+.draft-total strong,
+.draft-total span {
+    display: block;
+}
+
+.draft-total strong {
+    color: var(--button-color);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.draft-total span {
+    color: var(--hint-color);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.editor-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 8px 0 10px;
+}
+
+.editor-toolbar-hint {
+    color: var(--hint-color);
+    font-size: 12px;
+    line-height: 1.35;
+    margin: 4px 0 0;
+}
+
+.editor-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin: -2px 0 10px;
+}
+
+.icon-text-button {
+    border: none;
+    background: transparent;
+    color: var(--button-color);
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 0;
+    cursor: pointer;
+}
+
+.icon-text-button:disabled {
+    color: var(--hint-color);
+    cursor: default;
+    opacity: 0.8;
+}
+
+.product-add-block {
+    margin: 10px 0 14px;
+}
+
+.add-product-button {
+    align-items: center;
+    background: var(--secondary-bg);
+    border: 1px dashed rgba(36, 129, 204, 0.45);
+    border-radius: 12px;
+    color: var(--button-color);
+    cursor: pointer;
+    display: flex;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 46px;
+    padding: 12px;
+    width: 100%;
+}
+
+.add-product-button:disabled {
+    border-color: var(--border-color);
+    color: var(--hint-color);
+    cursor: default;
+    opacity: 0.85;
+}
+
+.product-card {
+    border-radius: 14px;
+    padding: 12px;
+    margin-bottom: 10px;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.product-card-loading {
+    border: 1px dashed rgba(36, 129, 204, 0.45);
+    background:
+        linear-gradient(90deg, rgba(36, 129, 204, 0.08), transparent 45%, rgba(36, 129, 204, 0.08)),
+        var(--secondary-bg);
+}
+
+.shimmer-text {
+    background: linear-gradient(90deg, var(--hint-color), var(--button-color), var(--hint-color));
+    background-clip: text;
+    background-size: 200%;
+    color: transparent;
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+    -webkit-background-clip: text;
+    animation: shine 1.5s infinite linear;
+}
+
+@keyframes shine {
+    from {
+        background-position: 200% center;
+    }
+
+    to {
+        background-position: -200% center;
+    }
+}
+
+.product-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.product-card .product-delete {
+    position: static;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--danger-color) 16%, transparent);
+    color: var(--danger-color);
+    flex: 0 0 auto;
+}
+
+.scan-loading-badge {
+    align-items: center;
+    background: rgba(36, 129, 204, 0.12);
+    border-radius: 999px;
+    color: var(--button-color);
+    display: inline-flex;
+    font-size: 11px;
+    font-weight: 800;
+    height: 24px;
+    justify-content: center;
+    letter-spacing: 0.02em;
+    padding: 0 9px;
+}
+
+.scan-loading-content {
+    align-items: center;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 32px 1fr;
+    min-height: 58px;
+}
+
+.scan-loading-content strong,
+.scan-loading-content p {
+    display: block;
+}
+
+.scan-loading-content strong {
+    font-size: 15px;
+    line-height: 1.2;
+}
+
+.scan-loading-content p {
+    color: var(--hint-color);
+    font-size: 12px;
+    line-height: 1.35;
+    margin: 4px 0 0;
+}
+
+.scan-loading-spinner {
+    border: 3px solid rgba(36, 129, 204, 0.16);
+    border-radius: 50%;
+    border-top-color: var(--button-color);
+    height: 28px;
+    width: 28px;
+    animation: scanLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes scanLoadingSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.nutrition-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 10px;
+}
+
+.kbju-autofill {
+    display: grid;
+    gap: 5px;
+    margin: 2px 0 12px;
+}
+
+.kbju-autofill-button {
+    align-items: center;
+    align-self: start;
+    background: color-mix(in srgb, var(--button-color) 10%, var(--surface-input));
+    border: 1px solid color-mix(in srgb, var(--button-color) 35%, var(--surface-border));
+    border-radius: 999px;
+    box-shadow: 0 8px 18px -14px color-mix(in srgb, var(--button-color) 45%, transparent);
+    color: var(--button-color);
+    cursor: pointer;
+    display: inline-flex;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    gap: 7px;
+    min-height: 38px;
+    padding: 0 14px;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        opacity 0.18s ease,
+        transform 0.18s ease;
+}
+
+.kbju-autofill-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.kbju-autofill-button:disabled {
+    cursor: default;
+    opacity: 0.52;
+    transform: none;
+}
+
+.product-card-kbju-loading .kbju-autofill-button {
+    opacity: 0.76;
+}
+
+.product-card-kbju-loading {
+    border: 1px solid color-mix(in srgb, var(--button-color) 38%, var(--surface-border));
+    box-shadow:
+        0 12px 32px -24px color-mix(in srgb, var(--button-color) 42%, transparent),
+        inset 0 0 0 1px color-mix(in srgb, var(--button-color) 16%, transparent);
+    cursor: progress;
+    isolation: isolate;
+    outline: 1px solid color-mix(in srgb, var(--button-color) 18%, transparent);
+    outline-offset: -2px;
+}
+
+.product-card-kbju-loading > * {
+    filter: blur(3.5px);
+    opacity: 0.42;
+}
+
+.product-card-kbju-loading::before,
+.product-card-kbju-loading::after {
+    position: absolute;
+}
+
+.product-card-kbju-loading::before {
+    background: color-mix(in srgb, var(--bg-color) 70%, transparent);
+    border-radius: inherit;
+    content: '';
+    inset: 2px;
+    pointer-events: auto;
+    z-index: 6;
+}
+
+.product-card-kbju-loading::after {
+    align-items: center;
+    background: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--button-color) 58%, var(--text-color)),
+        var(--text-color),
+        color-mix(in srgb, var(--button-color) 72%, #ffffff),
+        color-mix(in srgb, var(--button-color) 58%, var(--text-color))
+    );
+    background-clip: text;
+    background-size: 220% auto;
+    color: transparent;
+    content: 'AI заполняет КБЖУ';
+    display: inline-flex;
+    font-size: 23px;
+    font-weight: 900;
+    justify-content: center;
+    left: 50%;
+    line-height: 1.15;
+    max-width: calc(100% - 32px);
+    pointer-events: none;
+    text-align: center;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    z-index: 7;
+    -webkit-background-clip: text;
+    animation: shine 1.45s infinite linear;
+}
+
+.kbju-autofill-icon {
+    flex: 0 0 auto;
+    height: 17px;
+    width: 17px;
+}
+
+.kbju-autofill-helper {
+    color: var(--hint-color);
+    font-size: 11px;
+    line-height: 1.35;
+    margin: 0;
+}
+
+.product-calories {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--hint-color);
+    border-radius: 12px;
+    background: var(--bg-color);
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.nutrition-row .kbju-toggle {
+    align-items: center;
+    align-self: end;
+    background: color-mix(in srgb, var(--button-color) 10%, var(--bg-color));
+    border: 1px solid color-mix(in srgb, var(--button-color) 36%, var(--surface-border));
+    color: var(--button-color);
+    display: inline-flex;
+    gap: 5px;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+    margin: 0;
+    box-shadow: 0 8px 18px -16px color-mix(in srgb, var(--button-color) 45%, transparent);
+    cursor: pointer;
+    font-weight: 800;
+    white-space: nowrap;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.nutrition-row .kbju-toggle:active {
+    transform: scale(0.98);
+}
+
+.product-card.kbju-open .kbju-toggle {
+    background: color-mix(in srgb, var(--button-color) 18%, var(--bg-color));
+    border-color: var(--button-color);
+    color: var(--button-color);
+}
+
+.kbju-panel {
+    grid-template-columns: repeat(3, 1fr);
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+

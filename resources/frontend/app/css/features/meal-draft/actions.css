@@ -1,0 +1,73 @@
+.draft-meal-picker {
+    align-items: center;
+    background: var(--button-color);
+    border-radius: 18px;
+    color: var(--button-text);
+    display: flex;
+    height: 52px;
+    justify-content: center;
+    position: relative;
+    width: 52px;
+}
+
+.draft-meal-picker label {
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    width: 1px;
+}
+
+.draft-meal-picker select {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    border: 0;
+    border-radius: 18px;
+    color: transparent;
+    cursor: pointer;
+    inset: 0;
+    opacity: 0;
+    position: absolute;
+    width: 100%;
+    z-index: 2;
+}
+
+.draft-other-meal-chevron {
+    border-bottom: 2px solid currentColor;
+    border-right: 2px solid currentColor;
+    height: 7px;
+    pointer-events: none;
+    transform: translateY(-2px) rotate(45deg);
+    width: 7px;
+}
+
+.draft-cancel-button,
+.draft-save-button {
+    border-radius: 18px;
+    font-size: 14px;
+    font-weight: 740;
+    line-height: 1;
+    min-height: 52px;
+    padding: 14px;
+}
+
+.draft-cancel-button {
+    background: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+.draft-save-button {
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--strong-accent);
+    border: 0;
+    color: var(--button-text);
+    width: 100%;
+}
+
+.draft-save-button:disabled {
+    background: var(--card-soft);
+    color: var(--hint-color);
+}
+

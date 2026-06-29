@@ -1,0 +1,39 @@
+        <!-- Экран редактирования цели -->
+        <div id="screen-goal-edit" class="screen hidden">
+            <div class="profile-edit-content">
+                <header class="profile-edit-header">
+                    <button id="btn-goal-edit-back" class="profile-edit-back" type="button" aria-label="Назад">‹</button>
+                    <div>
+                        <h1>Норма и цель</h1>
+                        <p>Выберите направление питания</p>
+                    </div>
+                </header>
+
+                <form id="settings-goal-form" class="profile-edit-form">
+                    <section class="profile-form-card profile-goal-edit-card">
+                        <div class="profile-section-heading">
+                            <h2>Тип цели</h2>
+                            <p>После сохранения приложение пересчитает дневную норму</p>
+                        </div>
+                        <div class="profile-goal-options">
+                            <label>
+                                <input type="radio" name="settings_goal" value="deficit">
+                                <span><strong>Похудение</strong><small>Умеренный дефицит калорий</small></span>
+                                <i aria-hidden="true"></i>
+                            </label>
+                            <label>
+                                <input type="radio" name="settings_goal" value="maintenance">
+                                <span><strong>Поддержание</strong><small>Стабильный вес и привычный режим</small></span>
+                                <i aria-hidden="true"></i>
+                            </label>
+                            <label>
+                                <input type="radio" name="settings_goal" value="surplus">
+                                <span><strong>Набор массы</strong><small>Небольшой профицит калорий</small></span>
+                                <i aria-hidden="true"></i>
+                            </label>
+                        </div>
+                    </section>
+                    <button id="btn-save-goal" class="profile-edit-save" type="submit">Сохранить цель</button>
+                </form>
+            </div>
+        </div>

@@ -1,0 +1,137 @@
+        <!-- Экран профиля -->
+        <div id="screen-settings" class="screen hidden">
+            <div class="profile-content">
+                <header class="profile-page-header">
+                    <h1>Профиль</h1>
+                </header>
+
+                <section class="profile-user-card" aria-label="Пользователь и параметры">
+                    <div class="profile-card-head">
+                        <div class="profile-user-title">
+                            <span id="profile-avatar" class="profile-avatar" aria-hidden="true">П</span>
+                            <div>
+                                <h2 id="profile-user-name">Пользователь</h2>
+                                <p id="profile-user-meta">Параметры не указаны</p>
+                            </div>
+                        </div>
+                        <button id="btn-edit-profile" class="profile-card-action" type="button">Редактировать</button>
+                    </div>
+                    <dl class="profile-data-list profile-user-data">
+                        <div><dt>Рост</dt><dd id="settings-height">-</dd></div>
+                        <div><dt>Вес</dt><dd id="settings-weight">-</dd></div>
+                        <div><dt>Активность</dt><dd id="settings-activity">-</dd></div>
+                    </dl>
+                    <span id="settings-age" class="hidden">-</span>
+                    <span id="settings-gender" class="hidden">-</span>
+                </section>
+
+                <section class="profile-card profile-goal-card" aria-label="Норма и цель">
+                    <div class="profile-goal-header">
+                        <h2>Норма и цель</h2>
+                        <button id="btn-edit-goal" class="profile-card-action profile-goal-action" type="button">Изменить</button>
+                    </div>
+                    <div class="profile-goal-stack">
+                        <span>Норма</span>
+                        <strong id="settings-goal">-</strong>
+                        <span>Цель</span>
+                        <p id="settings-target">-</p>
+                    </div>
+                    <div class="profile-goal-bottom">
+                        <small id="profile-macro-goals">Б — · Ж — · У —</small>
+                    </div>
+                </section>
+
+                <section id="profile-ai-usage-card" class="profile-card profile-ai-card" data-state="idle" aria-label="AI-лимиты" aria-live="polite">
+                    <div class="profile-ai-summary-card">
+                        <div class="profile-section-head">
+                            <h2>AI-помощник</h2>
+                            <span id="profile-ai-usage-badge">лимиты</span>
+                        </div>
+                        <p id="profile-ai-usage-description">Загружаем актуальные лимиты...</p>
+                        <ul class="profile-ai-limit-list" aria-label="Осталось AI-запросов">
+                            <li><span>Сканирование и автозаполнение</span><strong id="profile-ai-general-remaining">—</strong></li>
+                            <li><span>AI-рекомендации</span><strong id="profile-ai-insights-remaining">—</strong></li>
+                        </ul>
+                        <button id="btn-retry-ai-usage" class="profile-ai-retry hidden" type="button">Повторить</button>
+                    </div>
+                </section>
+
+                <section class="profile-card profile-trainer-card" aria-label="Доступ для тренера">
+                    <div class="profile-section-head">
+                        <h2>Доступ для тренера</h2>
+                        <span>Скоро</span>
+                    </div>
+                    <p>Поделитесь дневником питания с тренером. Он сможет смотреть приемы, калории и динамику.</p>
+                    <button class="profile-wide-action" type="button" disabled aria-disabled="true">Создать ссылку · Скоро</button>
+                </section>
+
+                <section class="profile-card profile-settings-card" aria-label="Настройки">
+                    <button id="profile-settings-toggle" class="profile-settings-toggle" type="button" aria-expanded="false" aria-controls="profile-settings-panel">
+                        <span>
+                            <strong>Настройки</strong>
+                            <small>Тема, единицы, язык, уведомления, тренер и аккаунт</small>
+                        </span>
+                        <svg class="profile-settings-chevron" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M6 9.5 12 15l6-5.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                    </button>
+                    <div id="profile-settings-panel" class="profile-settings-panel">
+                        <section class="profile-settings-section">
+                            <h3>Приложение</h3>
+                            <label class="profile-setting-row">
+                                <span>Тема</span>
+                                <select id="profile-theme-select" class="profile-select profile-theme-select" aria-label="Тема">
+                                    <option value="system">Авто</option>
+                                    <option value="light">Светлая</option>
+                                    <option value="dark">Темная</option>
+                                </select>
+                            </label>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Единицы <small class="profile-setting-soon">Скоро</small></span>
+                                <select class="profile-select" aria-label="Единицы измерения" disabled aria-disabled="true">
+                                    <option>граммы</option>
+                                    <option>порции</option>
+                                </select>
+                            </label>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Язык <small class="profile-setting-soon">Скоро</small></span>
+                                <select class="profile-select" aria-label="Язык" disabled aria-disabled="true">
+                                    <option>русский</option>
+                                    <option>english</option>
+                                </select>
+                            </label>
+                        </section>
+                        <section class="profile-settings-section">
+                            <h3>Уведомления</h3>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Напоминания о приемах <small class="profile-setting-soon">Скоро</small></span>
+                                <input class="profile-switch-input" type="checkbox" aria-label="Напоминания о приемах" disabled>
+                                <span class="profile-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Итог дня <small class="profile-setting-soon">Скоро</small></span>
+                                <input class="profile-switch-input" type="checkbox" aria-label="Итог дня" disabled>
+                                <span class="profile-switch" aria-hidden="true"></span>
+                            </label>
+                        </section>
+                        <section class="profile-settings-section">
+                            <h3>AI</h3>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Автозаполнение после фото <small class="profile-setting-soon">Скоро</small></span>
+                                <input class="profile-switch-input" type="checkbox" aria-label="Автозаполнение после фото" disabled>
+                                <span class="profile-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="profile-setting-row is-disabled">
+                                <span>Показывать рекомендации <small class="profile-setting-soon">Скоро</small></span>
+                                <input class="profile-switch-input" type="checkbox" aria-label="Показывать рекомендации" disabled>
+                                <span class="profile-switch" aria-hidden="true"></span>
+                            </label>
+                        </section>
+                        <section class="profile-settings-section profile-account-section">
+                            <h3>Аккаунт</h3>
+                            <button id="btn-delete-profile" type="button">Удалить аккаунт</button>
+                        </section>
+                    </div>
+                </section>
+            </div>
+        </div>

@@ -1,0 +1,49 @@
+        <!-- Экран приветствия -->
+        <div id="screen-welcome" class="screen hidden">
+            <div class="welcome-content">
+                <div class="welcome-logo" aria-hidden="true">
+                    <img src="/assets/app/pics/monochrome_logo.webp" alt="">
+                </div>
+
+                <div class="welcome-copy">
+                    <span class="welcome-kicker">Умный дневник питания</span>
+                    <h1>FoodTracker AI</h1>
+                    <p class="welcome-description">
+                        Фотографируй еду, получай КБЖУ и следи за дневным балансом в одном месте.
+                    </p>
+                </div>
+
+                <ul class="welcome-facts" aria-label="Возможности приложения">
+                    <li>
+                        <span class="welcome-fact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M4 8.5A2.5 2.5 0 0 1 6.5 6H8l1.2-1.7h5.6L16 6h1.5A2.5 2.5 0 0 1 20 8.5v8A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-8Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/>
+                                <circle cx="12" cy="12.5" r="3.2" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                        </span>
+                        <span>Сфотографируй еду</span>
+                    </li>
+                    <li>
+                        <span class="welcome-fact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="m12 3 1.2 4.1a5 5 0 0 0 3.5 3.5L21 12l-4.3 1.4a5 5 0 0 0-3.5 3.5L12 21l-1.2-4.1a5 5 0 0 0-3.5-3.5L3 12l4.3-1.4a5 5 0 0 0 3.5-3.5L12 3Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/>
+                            </svg>
+                        </span>
+                        <span>AI определит состав</span>
+                    </li>
+                    <li>
+                        <span class="welcome-fact-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" focusable="false">
+                                <path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                            </svg>
+                        </span>
+                        <span>Получи калории и БЖУ</span>
+                    </li>
+                </ul>
+
+                <button id="btn-start" class="main-button welcome-cta" type="button">
+                    <span class="welcome-cta-label">Начать</span>
+                    <span class="welcome-cta-arrow" aria-hidden="true">→</span>
+                </button>
+            </div>
+        </div>

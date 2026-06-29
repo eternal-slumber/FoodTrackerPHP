@@ -1,0 +1,95 @@
+/* Production profile screen */
+#screen-settings {
+    --black: #111111;
+    --button-color: #6dbb35;
+    --button-text: #ffffff;
+    --calm-accent-bg: #e3f7a7;
+    --card-soft: #f8faf1;
+    --soft-accent-bg: #d6f78a;
+    background: #f7faef;
+    color: #171717;
+    padding: 20px 18px;
+    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-bottom: calc(124px + env(safe-area-inset-bottom));
+}
+
+#screen-settings .profile-content {
+    margin: 0 auto;
+    max-width: 430px;
+    width: 100%;
+}
+
+#screen-settings .profile-user-card,
+#screen-settings .profile-card {
+    background: #ffffff;
+}
+
+#screen-settings .profile-goal-card {
+    background: #ffffff;
+}
+
+#screen-settings .profile-ai-card {
+    background: var(--soft-accent-bg);
+}
+
+#screen-settings .profile-settings-panel {
+    max-height: 0;
+}
+
+#screen-settings .profile-settings-card.is-open .profile-settings-panel {
+    max-height: none;
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings {
+    --black: #10150e;
+    --button-color: #8fd35a;
+    --button-text: #10150e;
+    --calm-accent-bg: #24351d;
+    --card-soft: #182018;
+    --soft-accent-bg: #24351d;
+    background: #0b100c;
+    color: #f6f3e8;
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-user-card,
+:root[data-app-effective-theme="dark"] #screen-settings .profile-card,
+:root[data-app-effective-theme="dark"] #screen-settings .profile-goal-card {
+    background: #121812;
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-avatar {
+    background: var(--button-color);
+    color: var(--button-text);
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-ai-card {
+    background: var(--calm-accent-bg);
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-card-action,
+:root[data-app-effective-theme="dark"] #screen-settings .profile-ai-limit-list li,
+:root[data-app-effective-theme="dark"] #screen-settings .profile-ai-summary-card,
+:root[data-app-effective-theme="dark"] #screen-settings .profile-select {
+    background: #182018;
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-goal-action {
+    background: color-mix(in srgb, var(--text-color) 8%, transparent);
+    color: var(--text-color);
+}
+
+:root[data-app-effective-theme="dark"] #screen-settings .profile-switch::after {
+    background: #121812;
+}
+
+@media (max-width: 360px) {
+    #screen-settings {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    #screen-settings .profile-user-card,
+    #screen-settings .profile-card {
+        border-radius: 20px;
+    }
+}
