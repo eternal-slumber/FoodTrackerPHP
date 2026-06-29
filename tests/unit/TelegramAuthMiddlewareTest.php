@@ -51,6 +51,25 @@ class TelegramAuthMiddlewareTest extends TestCase
         $this->assertSame('100001', (string)$response->getBody());
     }
 
+    public function testMisconfiguredBotTokenRejectsInitDataWithoutServerError(): void
+    {
+        $middleware = new TelegramAuthMiddleware(
+            new TelegramAuthService(''),
+            new ResponseFactory(),
+            'production',
+            false,
+            100001,
+            'dev_user'
+        );
+
+        $request = (new ServerRequestFactory())
+            ->createServerRequest('GET', '/api/user-status')
+            ->withHeader('X-Telegram-Init-Data', 'auth_date=1&hash=bad');
+        $response = $middleware->process($request, $this->handler());
+
+        $this->assertSame(401, $response->getStatusCode());
+    }
+
     private function handler(): RequestHandlerInterface
     {
         return new class implements RequestHandlerInterface {

@@ -149,6 +149,8 @@ class UserValidatorTest extends TestCase
 
     public function testValidateRegistrationWithInvalidActivityLevel(): void
     {
+        $this->expectException(ValidationException::class);
+
         $data = [
             'tg_id' => '123456789',
             'age' => '30',
@@ -158,13 +160,13 @@ class UserValidatorTest extends TestCase
             'activity_level' => 'invalid_value'
         ];
 
-        $result = UserValidator::validateRegistration($data);
-        
-        $this->assertEquals(ActivityLevel::MEDIUM->value, $result['activity_level']);
+        UserValidator::validateRegistration($data);
     }
 
     public function testValidateRegistrationWithInvalidGoal(): void
     {
+        $this->expectException(ValidationException::class);
+
         $data = [
             'tg_id' => '123456789',
             'age' => '30',
@@ -174,9 +176,7 @@ class UserValidatorTest extends TestCase
             'goal' => 'invalid_value'
         ];
 
-        $result = UserValidator::validateRegistration($data);
-        
-        $this->assertEquals(Goal::MAINTENANCE->value, $result['goal']);
+        UserValidator::validateRegistration($data);
     }
 
     public function testGenderFromValue(): void
@@ -200,6 +200,20 @@ class UserValidatorTest extends TestCase
         $this->assertEquals(175, $metrics->height);
         $this->assertEquals(70, $metrics->weight);
         $this->assertEquals(Gender::MALE, $metrics->gender);
+    }
+
+    public function testBodyMetricsAcceptsDocumentedBoundaryValues(): void
+    {
+        $metrics = new BodyMetrics(
+            age: BodyMetrics::MIN_AGE,
+            height: BodyMetrics::MIN_HEIGHT,
+            weight: BodyMetrics::MIN_WEIGHT,
+            gender: Gender::FEMALE
+        );
+
+        $this->assertSame(BodyMetrics::MIN_AGE, $metrics->age);
+        $this->assertSame(BodyMetrics::MIN_HEIGHT, $metrics->height);
+        $this->assertSame((float)BodyMetrics::MIN_WEIGHT, $metrics->weight);
     }
 
     public function testBodyMetricsThrowsOnInvalidAge(): void

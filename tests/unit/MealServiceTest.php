@@ -79,6 +79,45 @@ class MealServiceTest extends TestCase
         }
     }
 
+    public function testSaveManualMealsAsCardsPersistsEachProductAsSeparateMeal(): void
+    {
+        $mealRepository = new FakeMealServiceMealRepository();
+        $productRepository = new FakeMealServiceProductRepository();
+        $service = $this->createService(
+            $mealRepository,
+            $productRepository,
+            new class('/tmp/') extends UploadedFileStorage {
+                public function sanitizeDraftImagePath(?string $imagePath, int $tgId): ?string
+                {
+                    return $imagePath;
+                }
+            }
+        );
+
+        $result = $service->saveManualMealsAsCards(100001, 'Ужин: Курица, рис', [
+            [
+                'name' => 'Курица',
+                'weight' => 200,
+                'kbju' => ['calories' => 100, 'proteins' => 20, 'fats' => 5, 'carbs' => 0],
+            ],
+            [
+                'name' => 'Рис',
+                'weight' => 150,
+                'draft_image_path' => 'user_100001/rice.jpg',
+                'kbju' => ['calories' => 120, 'proteins' => 3, 'fats' => 1, 'carbs' => 25],
+            ],
+        ], 'user_100001/main.jpg');
+
+        $this->assertSame(['begin', 'save', 'save', 'commit'], $mealRepository->events);
+        $this->assertCount(2, $mealRepository->savedMeals);
+        $this->assertSame('Ужин: Курица', $mealRepository->savedMeals[0]->description);
+        $this->assertSame('Ужин: Рис', $mealRepository->savedMeals[1]->description);
+        $this->assertSame('user_100001/main.jpg', $mealRepository->savedMeals[0]->imagePath);
+        $this->assertSame('user_100001/rice.jpg', $mealRepository->savedMeals[1]->imagePath);
+        $this->assertCount(2, $productRepository->savedProductBatches);
+        $this->assertCount(2, $result['meals']);
+    }
+
     public function testGetMealDetailsReturnsProducts(): void
     {
         $mealRepository = new FakeMealServiceMealRepository();
@@ -114,6 +153,37 @@ class MealServiceTest extends TestCase
         $this->assertSame('/api/meals/55/image', $details['image_url']);
         $this->assertSame('Курица', $details['products'][0]['name']);
         $this->assertSame('grill', $details['products'][0]['processing']);
+    }
+
+    public function testRejectsOperationsOnMealOwnedByAnotherUser(): void
+    {
+        $mealRepository = new FakeMealServiceMealRepository();
+        $mealRepository->meal = new Meal(
+            userId: 8,
+            description: 'Чужой приём',
+            calories: 250,
+            imagePath: 'user_100002/private.jpg',
+            id: 55
+        );
+        $service = $this->createService(
+            $mealRepository,
+            new FakeMealServiceProductRepository()
+        );
+        $operations = [
+            'details' => fn() => $service->getMealDetails(55, 100001),
+            'image' => fn() => $service->getMealImage(55, 100001),
+            'thumbnail' => fn() => $service->getMealThumbnail(55, 100001),
+            'delete' => fn() => $service->deleteMeal(55, 100001),
+        ];
+
+        foreach ($operations as $operation => $run) {
+            try {
+                $run();
+                $this->fail(sprintf('The %s operation allowed access to another user meal', $operation));
+            } catch (\RuntimeException $exception) {
+                $this->assertSame('Access denied', $exception->getMessage(), $operation);
+            }
+        }
     }
 
     public function testGetMealThumbnailFallsBackToOriginalWhenThumbnailIsMissing(): void
@@ -204,6 +274,7 @@ class FakeMealServiceMealRepository extends MealRepository
 {
     public array $events = [];
     public ?Meal $meal = null;
+    public array $savedMeals = [];
 
     public function __construct() {}
 
@@ -227,6 +298,7 @@ class FakeMealServiceMealRepository extends MealRepository
         $this->events[] = 'save';
         $meal->id = 55;
         $this->meal = $meal;
+        $this->savedMeals[] = clone $meal;
 
         return true;
     }
@@ -241,6 +313,7 @@ class FakeMealServiceProductRepository extends MealProductRepository
 {
     public ?int $savedMealId = null;
     public array $savedProducts = [];
+    public array $savedProductBatches = [];
 
     public function __construct(
         private readonly bool $shouldFailOnSave = false,
@@ -255,6 +328,7 @@ class FakeMealServiceProductRepository extends MealProductRepository
 
         $this->savedMealId = $mealId;
         $this->savedProducts = $products;
+        $this->savedProductBatches[] = $products;
     }
 
     public function findByMealId(int $mealId): array
