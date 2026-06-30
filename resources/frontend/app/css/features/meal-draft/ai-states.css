@@ -11,7 +11,7 @@
 
 #bottom-sheet .meal-photo-preview.is-processing .photo-processing-overlay {
     align-items: center;
-    background: rgba(10, 16, 9, .34);
+    background: transparent;
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -22,57 +22,47 @@
     font-size: 14px;
     font-weight: 750;
     letter-spacing: .01em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
 }
 
 #bottom-sheet .ai-photo-scan-animation {
-    background: rgba(255, 255, 255, .16);
-    border: 1px solid rgba(255, 255, 255, .24);
-    border-radius: 999px;
     display: block;
-    height: 72px;
+    height: 82px;
     margin: 18px 0 8px;
     position: relative;
-    width: 126px;
+    width: 116px;
 }
 
-#bottom-sheet .ai-photo-scan-animation::before,
-#bottom-sheet .ai-photo-scan-animation::after {
-    background: rgba(255, 255, 255, .16);
-    border: 1px solid rgba(255, 255, 255, .18);
-    border-bottom: 0;
-    border-radius: 999px 999px 0 0;
-    content: '';
+#bottom-sheet .ai-photo-scan-orbit {
+    animation: aiPhotoMagnifierOrbit 2s linear infinite;
+    display: block;
+    height: 44px;
+    left: 36px;
     position: absolute;
-}
-
-#bottom-sheet .ai-photo-scan-animation::before {
-    height: 45px;
-    left: 19px;
-    top: -24px;
-    width: 54px;
-}
-
-#bottom-sheet .ai-photo-scan-animation::after {
-    height: 35px;
-    right: 17px;
-    top: -15px;
-    width: 43px;
-}
-
-#bottom-sheet .ai-photo-scan-magnifier {
-    animation: aiPhotoMagnifierSweep 1.8s ease-in-out infinite;
-    color: #ffffff;
-    height: 54px;
-    left: 34px;
-    position: absolute;
-    top: 10px;
-    width: 54px;
+    top: 19px;
+    transform-origin: 50% 50%;
+    visibility: visible;
+    width: 44px;
     z-index: 2;
 }
 
-#bottom-sheet .ai-photo-scan-star {
-    animation: aiPhotoStarPulse 1.6s ease-in-out infinite;
+#bottom-sheet .ai-photo-scan-magnifier {
+    animation: aiPhotoMagnifierCounterRotate 2s linear infinite;
     color: #ffffff;
+    display: block;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .65));
+    height: 100%;
+    opacity: 1;
+    overflow: visible;
+    transform: translateX(11px) rotate(-12deg);
+    transform-origin: 50% 50%;
+    width: 100%;
+}
+
+#bottom-sheet .ai-photo-scan-star {
+    animation: aiPhotoStarPulse 1.35s ease-in-out infinite;
+    color: #ffffff;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
     height: 17px;
     opacity: 0;
     position: absolute;
@@ -81,20 +71,20 @@
 }
 
 #bottom-sheet .ai-photo-scan-star.star-one {
-    left: 11px;
-    top: 12px;
+    left: 4px;
+    top: 15px;
 }
 
 #bottom-sheet .ai-photo-scan-star.star-two {
-    animation-delay: .52s;
-    right: 10px;
-    top: 9px;
+    animation-delay: -.45s;
+    right: 4px;
+    top: 10px;
 }
 
 #bottom-sheet .ai-photo-scan-star.star-three {
-    animation-delay: 1.04s;
-    bottom: 8px;
-    left: 22px;
+    animation-delay: -.9s;
+    bottom: 2px;
+    left: 20px;
 }
 
 #bottom-sheet .meal-draft-card .draft-main-product-form.main-product-scan-loading > * {
@@ -158,9 +148,14 @@
     background: color-mix(in srgb, #0b100c 91%, transparent);
 }
 
-@keyframes aiPhotoMagnifierSweep {
-    0%, 100% { transform: translate(-11px, 4px) rotate(-8deg); }
-    50% { transform: translate(12px, -5px) rotate(8deg); }
+@keyframes aiPhotoMagnifierOrbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes aiPhotoMagnifierCounterRotate {
+    from { transform: translateX(11px) rotate(-12deg); }
+    to { transform: translateX(11px) rotate(-372deg); }
 }
 
 @keyframes aiPhotoStarPulse {
@@ -169,10 +164,15 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    #bottom-sheet .ai-photo-scan-orbit,
     #bottom-sheet .ai-photo-scan-magnifier,
     #bottom-sheet .ai-photo-scan-star,
     #bottom-sheet .draft-main-product-loading-spinner {
         animation: none;
+    }
+
+    #bottom-sheet .ai-photo-scan-star {
+        opacity: .75;
     }
 
     #bottom-sheet .draft-save-button.is-analyzing::after {

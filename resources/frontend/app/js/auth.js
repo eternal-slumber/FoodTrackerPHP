@@ -278,6 +278,7 @@ if (hasTelegramSession(realTg)) {
     renderTelegramAuthHardFail();
     throw new Error('Telegram WebApp initData is required');
 }
+document.documentElement.classList.toggle('is-telegram-webapp', tg === realTg);
 applyAppTheme(getStoredAppTheme(), { updateViewport: false });
 applyTelegramViewportSettings();
 tg.expand();

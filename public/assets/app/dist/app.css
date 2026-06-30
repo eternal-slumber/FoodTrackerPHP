@@ -16,6 +16,7 @@
     --surface-strong-border: rgba(33, 37, 41, 0.16);
     --surface-shadow: rgba(18, 25, 38, 0.14);
     --danger-color: #ff3b30;
+    --app-screen-top-offset: 68px;
     --tg-safe-area-top: 0px;
     --tg-content-safe-area-top: 0px;
 }
@@ -1689,14 +1690,6 @@ body.app-body.register-transitioning {
 }
 
 /* Source: app/css/screens/home.css */
-/* Основной экран */
-#screen-main,
-#screen-summary,
-#screen-settings,
-#screen-profile-edit {
-    padding-top: calc(96px + env(safe-area-inset-top));
-}
-
 .main-content {
     max-width: 400px;
     width: 100%;
@@ -1741,7 +1734,7 @@ body.app-body.register-transitioning {
     background: var(--home-page);
     color: var(--home-text);
     padding: 20px 18px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     padding-bottom: calc(124px + env(safe-area-inset-bottom));
 }
 
@@ -2229,9 +2222,20 @@ body.app-body.register-transitioning {
 }
 
 #screen-main .ai-recommendation-arrow {
+    align-items: center;
     color: var(--home-text);
-    font-size: 26px;
-    line-height: 1;
+    display: flex;
+    flex: 0 0 auto;
+    height: 24px;
+    justify-content: center;
+    width: 24px;
+}
+
+#screen-main .ai-recommendation-arrow svg {
+    display: block;
+    height: 18px;
+    transform: rotate(-90deg);
+    width: 18px;
 }
 
 #screen-main .meals-section {
@@ -2247,6 +2251,7 @@ body.app-body.register-transitioning {
 }
 
 #screen-main .meal-accordion {
+    --meal-accordion-easing: cubic-bezier(.22, 1, .36, 1);
     display: grid;
     gap: 6px;
 }
@@ -2313,6 +2318,7 @@ body.app-body.register-transitioning {
 }
 
 #screen-main .meal-title {
+    align-content: center;
     display: grid;
     gap: 3px;
     min-width: 0;
@@ -2322,15 +2328,21 @@ body.app-body.register-transitioning {
     color: var(--home-text);
     font-size: 12px;
     font-weight: 650;
+    line-height: 1.15;
 }
 
 #screen-main .meal-title small,
 #screen-main .meal-calories {
     color: var(--home-hint);
     font-size: 10px;
+    line-height: 1.15;
 }
 
 #screen-main .meal-calories {
+    align-items: baseline;
+    display: flex;
+    gap: 2px;
+    justify-content: flex-end;
     white-space: nowrap;
 }
 
@@ -2349,7 +2361,7 @@ body.app-body.register-transitioning {
 
 #screen-main .meal-chevron svg {
     height: 16px;
-    transition: transform .18s ease;
+    transition: transform .36s var(--meal-accordion-easing);
     width: 16px;
 }
 
@@ -2387,13 +2399,16 @@ body.app-body.register-transitioning {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    padding: 0 8px 10px;
+    padding: 0 8px;
+    transform-origin: top center;
     transform: translateY(-6px);
-    transition: max-height .32s cubic-bezier(.16, 1, .3, 1), opacity .18s ease, transform .24s cubic-bezier(.16, 1, .3, 1);
+    transition: max-height .46s var(--meal-accordion-easing), opacity .28s ease, transform .4s var(--meal-accordion-easing);
+    will-change: max-height, opacity, transform;
 }
 
 #screen-main .meal-item.is-expanded .meal-panel {
     opacity: 1;
+    padding-bottom: 10px;
     transform: translateY(0);
 }
 
@@ -2503,14 +2518,16 @@ body.app-body.register-transitioning {
     max-height: 0;
     opacity: 0;
     overflow: hidden;
-    padding: 0 8px 10px;
+    padding: 0 8px;
+    transform-origin: top center;
     transform: translateY(-6px);
-    transition: max-height .3s cubic-bezier(.16, 1, .3, 1), opacity .18s ease, transform .24s cubic-bezier(.16, 1, .3, 1);
+    transition: max-height .46s var(--meal-accordion-easing), opacity .28s ease, transform .4s var(--meal-accordion-easing);
+    will-change: max-height, opacity, transform;
 }
 
 #screen-main .meal-item.is-expanded .meal-panel-empty {
-    max-height: 72px;
     opacity: 1;
+    padding-bottom: 10px;
     transform: translateY(0);
 }
 
@@ -3174,7 +3191,7 @@ body.app-body.register-transitioning {
     background: #f7faef;
     color: #171717;
     padding: 20px 18px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     padding-bottom: calc(124px + env(safe-area-inset-bottom));
 }
 
@@ -3818,9 +3835,16 @@ body.sheet-open {
 }
 
 .history-calendar-grid {
+    --history-layout-easing: cubic-bezier(.22, 1, .36, 1);
     gap: 8px 6px;
     transform-origin: top center;
     transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.history-calendar-grid.is-layout-transitioning {
+    overflow: hidden;
+    transition: height 480ms var(--history-layout-easing), opacity 240ms ease, transform 420ms var(--history-layout-easing);
+    will-change: height;
 }
 
 .history-calendar-grid.is-week-mode {
@@ -4119,7 +4143,7 @@ body.sheet-open {
     transform: rotate(0deg);
     transform-box: fill-box;
     transform-origin: 50% 50%;
-    transition: transform 180ms ease;
+    transition: transform 360ms cubic-bezier(.22, 1, .36, 1);
     width: 16px;
 }
 
@@ -4134,13 +4158,13 @@ body.sheet-open {
     overflow: hidden;
     transform: translateY(-6px);
     transition:
-        max-height 340ms cubic-bezier(0.16, 1, 0.3, 1),
-        opacity 180ms ease,
-        transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+        max-height 480ms cubic-bezier(.22, 1, .36, 1),
+        opacity 280ms ease,
+        transform 420ms cubic-bezier(.22, 1, .36, 1);
+    will-change: max-height, opacity, transform;
 }
 
 .history-day-detail.is-expanded .history-day-expanded {
-    max-height: 760px;
     opacity: 1;
     transform: translateY(0);
 }
@@ -4378,6 +4402,12 @@ body.sheet-open {
     animation: historyPointerDraw 0.18s ease-out 0.28s forwards;
 }
 
+.history-empty-day.is-pointer-drawn .history-add-pointer-line,
+.history-empty-day.is-pointer-drawn .history-add-pointer-head {
+    animation: none;
+    stroke-dashoffset: 0;
+}
+
 .history-day-detail.is-empty .history-add-pointer {
     animation: historyPointerFloat 1.8s ease-in-out 1.5s infinite;
 }
@@ -4409,7 +4439,7 @@ body.sheet-open {
     background: #f7faef;
     color: var(--text-color);
     padding: 20px 18px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 
@@ -6020,7 +6050,7 @@ body.sheet-open {
     background: #f7faef;
     color: #171717;
     padding: 20px 18px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     padding-bottom: calc(124px + env(safe-area-inset-bottom));
 }
 
@@ -6293,7 +6323,7 @@ body.sheet-open {
     background: var(--editor-page);
     color: var(--editor-text);
     padding: 20px 18px 36px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
 }
 
 #screen-profile-edit .profile-edit-content,
@@ -6574,7 +6604,7 @@ body.sheet-open {
     #screen-goal-edit {
         padding-left: 12px;
         padding-right: 12px;
-        padding-top: calc(82px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+        padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     }
 
     .profile-fields-grid {
@@ -9264,6 +9294,14 @@ body.sheet-open {
     pointer-events: none;
 }
 
+:root.is-telegram-webapp #bottom-sheet .meal-draft-topbar {
+    display: none;
+}
+
+:root.is-telegram-webapp #bottom-sheet .meal-main-product-hero {
+    min-height: 320px;
+}
+
 #bottom-sheet .meal-draft-topbar button {
     pointer-events: auto;
 }
@@ -9857,7 +9895,7 @@ body.sheet-open {
 
 #bottom-sheet .meal-photo-preview.is-processing .photo-processing-overlay {
     align-items: center;
-    background: rgba(10, 16, 9, .34);
+    background: transparent;
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -9868,57 +9906,47 @@ body.sheet-open {
     font-size: 14px;
     font-weight: 750;
     letter-spacing: .01em;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
 }
 
 #bottom-sheet .ai-photo-scan-animation {
-    background: rgba(255, 255, 255, .16);
-    border: 1px solid rgba(255, 255, 255, .24);
-    border-radius: 999px;
     display: block;
-    height: 72px;
+    height: 82px;
     margin: 18px 0 8px;
     position: relative;
-    width: 126px;
+    width: 116px;
 }
 
-#bottom-sheet .ai-photo-scan-animation::before,
-#bottom-sheet .ai-photo-scan-animation::after {
-    background: rgba(255, 255, 255, .16);
-    border: 1px solid rgba(255, 255, 255, .18);
-    border-bottom: 0;
-    border-radius: 999px 999px 0 0;
-    content: '';
+#bottom-sheet .ai-photo-scan-orbit {
+    animation: aiPhotoMagnifierOrbit 2s linear infinite;
+    display: block;
+    height: 44px;
+    left: 36px;
     position: absolute;
-}
-
-#bottom-sheet .ai-photo-scan-animation::before {
-    height: 45px;
-    left: 19px;
-    top: -24px;
-    width: 54px;
-}
-
-#bottom-sheet .ai-photo-scan-animation::after {
-    height: 35px;
-    right: 17px;
-    top: -15px;
-    width: 43px;
-}
-
-#bottom-sheet .ai-photo-scan-magnifier {
-    animation: aiPhotoMagnifierSweep 1.8s ease-in-out infinite;
-    color: #ffffff;
-    height: 54px;
-    left: 34px;
-    position: absolute;
-    top: 10px;
-    width: 54px;
+    top: 19px;
+    transform-origin: 50% 50%;
+    visibility: visible;
+    width: 44px;
     z-index: 2;
 }
 
-#bottom-sheet .ai-photo-scan-star {
-    animation: aiPhotoStarPulse 1.6s ease-in-out infinite;
+#bottom-sheet .ai-photo-scan-magnifier {
+    animation: aiPhotoMagnifierCounterRotate 2s linear infinite;
     color: #ffffff;
+    display: block;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .65));
+    height: 100%;
+    opacity: 1;
+    overflow: visible;
+    transform: translateX(11px) rotate(-12deg);
+    transform-origin: 50% 50%;
+    width: 100%;
+}
+
+#bottom-sheet .ai-photo-scan-star {
+    animation: aiPhotoStarPulse 1.35s ease-in-out infinite;
+    color: #ffffff;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
     height: 17px;
     opacity: 0;
     position: absolute;
@@ -9927,20 +9955,20 @@ body.sheet-open {
 }
 
 #bottom-sheet .ai-photo-scan-star.star-one {
-    left: 11px;
-    top: 12px;
+    left: 4px;
+    top: 15px;
 }
 
 #bottom-sheet .ai-photo-scan-star.star-two {
-    animation-delay: .52s;
-    right: 10px;
-    top: 9px;
+    animation-delay: -.45s;
+    right: 4px;
+    top: 10px;
 }
 
 #bottom-sheet .ai-photo-scan-star.star-three {
-    animation-delay: 1.04s;
-    bottom: 8px;
-    left: 22px;
+    animation-delay: -.9s;
+    bottom: 2px;
+    left: 20px;
 }
 
 #bottom-sheet .meal-draft-card .draft-main-product-form.main-product-scan-loading > * {
@@ -10004,9 +10032,14 @@ body.sheet-open {
     background: color-mix(in srgb, #0b100c 91%, transparent);
 }
 
-@keyframes aiPhotoMagnifierSweep {
-    0%, 100% { transform: translate(-11px, 4px) rotate(-8deg); }
-    50% { transform: translate(12px, -5px) rotate(8deg); }
+@keyframes aiPhotoMagnifierOrbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes aiPhotoMagnifierCounterRotate {
+    from { transform: translateX(11px) rotate(-12deg); }
+    to { transform: translateX(11px) rotate(-372deg); }
 }
 
 @keyframes aiPhotoStarPulse {
@@ -10015,10 +10048,15 @@ body.sheet-open {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    #bottom-sheet .ai-photo-scan-orbit,
     #bottom-sheet .ai-photo-scan-magnifier,
     #bottom-sheet .ai-photo-scan-star,
     #bottom-sheet .draft-main-product-loading-spinner {
         animation: none;
+    }
+
+    #bottom-sheet .ai-photo-scan-star {
+        opacity: .75;
     }
 
     #bottom-sheet .draft-save-button.is-analyzing::after {

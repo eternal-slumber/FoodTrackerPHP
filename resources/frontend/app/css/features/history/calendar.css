@@ -84,9 +84,16 @@ body.sheet-open {
 }
 
 .history-calendar-grid {
+    --history-layout-easing: cubic-bezier(.22, 1, .36, 1);
     gap: 8px 6px;
     transform-origin: top center;
     transition: opacity 180ms ease, transform 220ms ease;
+}
+
+.history-calendar-grid.is-layout-transitioning {
+    overflow: hidden;
+    transition: height 480ms var(--history-layout-easing), opacity 240ms ease, transform 420ms var(--history-layout-easing);
+    will-change: height;
 }
 
 .history-calendar-grid.is-week-mode {
@@ -385,7 +392,7 @@ body.sheet-open {
     transform: rotate(0deg);
     transform-box: fill-box;
     transform-origin: 50% 50%;
-    transition: transform 180ms ease;
+    transition: transform 360ms cubic-bezier(.22, 1, .36, 1);
     width: 16px;
 }
 
@@ -400,13 +407,13 @@ body.sheet-open {
     overflow: hidden;
     transform: translateY(-6px);
     transition:
-        max-height 340ms cubic-bezier(0.16, 1, 0.3, 1),
-        opacity 180ms ease,
-        transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+        max-height 480ms cubic-bezier(.22, 1, .36, 1),
+        opacity 280ms ease,
+        transform 420ms cubic-bezier(.22, 1, .36, 1);
+    will-change: max-height, opacity, transform;
 }
 
 .history-day-detail.is-expanded .history-day-expanded {
-    max-height: 760px;
     opacity: 1;
     transform: translateY(0);
 }
@@ -644,6 +651,12 @@ body.sheet-open {
     animation: historyPointerDraw 0.18s ease-out 0.28s forwards;
 }
 
+.history-empty-day.is-pointer-drawn .history-add-pointer-line,
+.history-empty-day.is-pointer-drawn .history-add-pointer-head {
+    animation: none;
+    stroke-dashoffset: 0;
+}
+
 .history-day-detail.is-empty .history-add-pointer {
     animation: historyPointerFloat 1.8s ease-in-out 1.5s infinite;
 }
@@ -664,4 +677,3 @@ body.sheet-open {
         transform: translate(-12px, 6px) rotate(-45deg);
     }
 }
-

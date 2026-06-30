@@ -7,6 +7,7 @@ let historyCalendarSelectedDate = '';
 let historyCalendarDayExpanded = false;
 let historyCalendarLoadId = 0;
 let historyCalendarInitialized = false;
+let historyCalendarHasRendered = false;
 let historyCalendarImageRenderId = 0;
 
 async function loadHistoryCalendar(month = historyCalendarCurrentMonth) {
@@ -22,7 +23,10 @@ async function loadHistoryCalendar(month = historyCalendarCurrentMonth) {
             return;
         }
 
-        historyCalendarRender(result.data);
+        const shouldAnimate = !historyCalendarHasRendered || month !== historyCalendarCurrentMonth;
+
+        historyCalendarRender(result.data, shouldAnimate);
+        historyCalendarHasRendered = true;
     } catch (error) {
         if (loadId !== historyCalendarLoadId) {
             return;
@@ -140,4 +144,3 @@ function historyCalendarDayHasRecords(day) {
         || Number(day.carbs || 0) > 0
         || (Array.isArray(day.meals) && day.meals.length > 0);
 }
-

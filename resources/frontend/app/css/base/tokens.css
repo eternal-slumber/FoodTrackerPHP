@@ -15,6 +15,7 @@
     --surface-strong-border: rgba(33, 37, 41, 0.16);
     --surface-shadow: rgba(18, 25, 38, 0.14);
     --danger-color: #ff3b30;
+    --app-screen-top-offset: 68px;
     --tg-safe-area-top: 0px;
     --tg-content-safe-area-top: 0px;
 }

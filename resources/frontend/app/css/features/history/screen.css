@@ -7,7 +7,7 @@
     background: #f7faef;
     color: var(--text-color);
     padding: 20px 18px;
-    padding-top: calc(96px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
+    padding-top: calc(var(--app-screen-top-offset) + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
     padding-bottom: calc(112px + env(safe-area-inset-bottom));
 }
 

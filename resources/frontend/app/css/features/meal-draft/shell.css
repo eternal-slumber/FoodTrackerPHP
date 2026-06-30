@@ -52,6 +52,14 @@
     pointer-events: none;
 }
 
+:root.is-telegram-webapp #bottom-sheet .meal-draft-topbar {
+    display: none;
+}
+
+:root.is-telegram-webapp #bottom-sheet .meal-main-product-hero {
+    min-height: 320px;
+}
+
 #bottom-sheet .meal-draft-topbar button {
     pointer-events: auto;
 }
@@ -336,4 +344,3 @@
     background: #4a2522;
     color: #f3a19a;
 }
-

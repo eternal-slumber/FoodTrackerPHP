@@ -1,15 +1,17 @@
 // History calendar interactions and initialization
 
 function historyCalendarSelectDay(date) {
+    const shouldAnimateLayout = historyCalendarDayExpanded;
+
     historyCalendarSelectedDate = date;
     historyCalendarDayExpanded = false;
-    historyCalendarRenderGrid();
+    historyCalendarRenderGrid(false, shouldAnimateLayout);
     historyCalendarRenderDayDetail(historyCalendarGetDay(date));
 }
 
 function historyCalendarToggleDayExpanded() {
     historyCalendarDayExpanded = !historyCalendarDayExpanded;
-    historyCalendarRenderGrid();
+    historyCalendarRenderGrid(false, true);
     historyCalendarRenderDayDetail(historyCalendarGetDay(historyCalendarSelectedDate));
 }
 

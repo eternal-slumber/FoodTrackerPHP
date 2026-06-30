@@ -324,6 +324,7 @@ if (hasTelegramSession(realTg)) {
     renderTelegramAuthHardFail();
     throw new Error('Telegram WebApp initData is required');
 }
+document.documentElement.classList.toggle('is-telegram-webapp', tg === realTg);
 applyAppTheme(getStoredAppTheme(), { updateViewport: false });
 applyTelegramViewportSettings();
 tg.expand();
@@ -4583,6 +4584,7 @@ let historyCalendarSelectedDate = '';
 let historyCalendarDayExpanded = false;
 let historyCalendarLoadId = 0;
 let historyCalendarInitialized = false;
+let historyCalendarHasRendered = false;
 let historyCalendarImageRenderId = 0;
 
 async function loadHistoryCalendar(month = historyCalendarCurrentMonth) {
@@ -4598,7 +4600,10 @@ async function loadHistoryCalendar(month = historyCalendarCurrentMonth) {
             return;
         }
 
-        historyCalendarRender(result.data);
+        const shouldAnimate = !historyCalendarHasRendered || month !== historyCalendarCurrentMonth;
+
+        historyCalendarRender(result.data, shouldAnimate);
+        historyCalendarHasRendered = true;
     } catch (error) {
         if (loadId !== historyCalendarLoadId) {
             return;
@@ -4744,7 +4749,7 @@ function historyCalendarRenderRingSvg() {
     `;
 }
 
-function historyCalendarRender(data) {
+function historyCalendarRender(data, shouldAnimate = false) {
     const monthDates = historyCalendarBuildMonthDates(data.month);
 
     historyCalendarCurrentMonth = data.month;
@@ -4753,8 +4758,8 @@ function historyCalendarRender(data) {
     historyCalendarSelectedDate = historyCalendarResolveSelectedDate(data.month, monthDates);
 
     document.getElementById('history-month-label').textContent = historyCalendarFormatMonth(data.month);
-    historyCalendarRenderGrid();
-    historyCalendarRenderDayDetail(historyCalendarGetDay(historyCalendarSelectedDate));
+    historyCalendarRenderGrid(shouldAnimate);
+    historyCalendarRenderDayDetail(historyCalendarGetDay(historyCalendarSelectedDate), shouldAnimate);
 }
 
 function historyCalendarResolveSelectedDate(month, dates) {
@@ -4773,7 +4778,7 @@ function historyCalendarResolveSelectedDate(month, dates) {
     return availableDates[0]?.date || '';
 }
 
-function historyCalendarRenderGrid() {
+function historyCalendarRenderGrid(shouldAnimate = false, shouldAnimateLayout = false) {
     const grid = document.getElementById('history-calendar-grid');
     const dates = historyCalendarDayExpanded
         ? historyCalendarBuildWeekDates(historyCalendarSelectedDate)
@@ -4783,8 +4788,12 @@ function historyCalendarRenderGrid() {
         return;
     }
 
+    const previousHeight = shouldAnimateLayout ? grid.getBoundingClientRect().height : 0;
+
     grid.classList.remove('is-calendar-entering');
-    void grid.offsetWidth;
+    if (shouldAnimate) {
+        void grid.offsetWidth;
+    }
     grid.classList.toggle('is-week-mode', historyCalendarDayExpanded);
     grid.innerHTML = dates.map(dateInfo => {
         if (!dateInfo.date) {
@@ -4793,8 +4802,45 @@ function historyCalendarRenderGrid() {
 
         return historyCalendarRenderDay(dateInfo, historyCalendarGetDay(dateInfo.date));
     }).join('');
-    grid.classList.add('is-calendar-entering');
-    historyCalendarAnimateRings(grid);
+
+    if (shouldAnimateLayout) {
+        historyCalendarAnimateGridHeight(grid, previousHeight);
+    }
+
+    if (shouldAnimate) {
+        grid.classList.add('is-calendar-entering');
+        historyCalendarAnimateRings(grid);
+        return;
+    }
+
+    historyCalendarShowRings(grid);
+}
+
+function historyCalendarAnimateGridHeight(grid, previousHeight) {
+    const resizeId = Number(grid.dataset.resizeId || 0) + 1;
+    const nextHeight = grid.scrollHeight;
+
+    grid.dataset.resizeId = String(resizeId);
+    grid.classList.add('is-layout-transitioning');
+    grid.style.height = `${previousHeight}px`;
+    void grid.offsetHeight;
+
+    requestAnimationFrame(() => {
+        if (grid.dataset.resizeId !== String(resizeId)) {
+            return;
+        }
+
+        grid.style.height = `${nextHeight}px`;
+    });
+
+    grid.addEventListener('transitionend', event => {
+        if (event.propertyName !== 'height' || grid.dataset.resizeId !== String(resizeId)) {
+            return;
+        }
+
+        grid.classList.remove('is-layout-transitioning');
+        grid.style.removeProperty('height');
+    }, { once: true });
 }
 
 function historyCalendarRenderDay(dateInfo, day) {
@@ -4857,6 +4903,22 @@ function historyCalendarAnimateRings(container) {
     });
 }
 
+function historyCalendarShowRings(container) {
+    const rings = container.matches?.('.history-progress-ring')
+        ? [container]
+        : Array.from(container.querySelectorAll('.history-progress-ring'));
+
+    rings.forEach(ring => {
+        ring.style.removeProperty('transition-delay');
+        historyCalendarSetRingStroke(
+            ring,
+            ring.dataset.ringProgressValue,
+            ring.dataset.ringRotationValue
+        );
+        ring.classList.add('is-ring-animated');
+    });
+}
+
 function historyCalendarApplyRingVisual(ring, rawPercentage) {
     const ringVisual = historyCalendarGetRingVisual(rawPercentage);
 
@@ -4865,10 +4927,9 @@ function historyCalendarApplyRingVisual(ring, rawPercentage) {
     ring.classList.toggle('has-over', ringVisual.className.includes('has-over'));
     ring.dataset.ringProgressValue = String(ringVisual.progressValue);
     ring.dataset.ringRotationValue = String(ringVisual.rotationValue);
-    historyCalendarSetRingStroke(ring, 0, 0);
 }
 
-function historyCalendarRenderDayDetail(day) {
+function historyCalendarRenderDayDetail(day, shouldAnimate = false) {
     const detail = document.getElementById('history-day-detail');
     const ring = document.getElementById('history-day-ring');
     const expandButton = document.getElementById('history-day-expand');
@@ -4884,7 +4945,11 @@ function historyCalendarRenderDayDetail(day) {
     detail.classList.toggle('is-empty', !hasRecords);
     detail.classList.toggle('is-expanded', hasRecords && historyCalendarDayExpanded);
     historyCalendarApplyRingVisual(ring, percentage);
-    historyCalendarAnimateRings(ring);
+    if (shouldAnimate) {
+        historyCalendarAnimateRings(ring);
+    } else {
+        historyCalendarShowRings(ring);
+    }
 
     document.getElementById('history-day-date').textContent = historyCalendarFormatDate(day.date);
     document.getElementById('history-day-percent').textContent = `${Math.round(percentage)}%`;
@@ -4894,10 +4959,16 @@ function historyCalendarRenderDayDetail(day) {
     document.getElementById('history-day-fats').textContent = formatMacro(day.fats);
     document.getElementById('history-day-carbs').textContent = formatMacro(day.carbs);
     const mealsList = document.getElementById('history-day-meals-list');
-    historyCalendarRevokeImageUrls(mealsList);
-    historyCalendarImageRenderId++;
-    mealsList.innerHTML = historyCalendarRenderMeals(day.meals || []);
-    historyCalendarLoadImages(mealsList, String(historyCalendarImageRenderId));
+    const keepExistingEmptyState = !shouldAnimate
+        && !hasRecords
+        && mealsList.querySelector('.history-empty-day');
+
+    if (!keepExistingEmptyState) {
+        historyCalendarRevokeImageUrls(mealsList);
+        historyCalendarImageRenderId++;
+        mealsList.innerHTML = historyCalendarRenderMeals(day.meals || [], shouldAnimate);
+        historyCalendarLoadImages(mealsList, String(historyCalendarImageRenderId));
+    }
 
     expandButton.hidden = !hasRecords;
     expandButton.setAttribute('aria-expanded', String(hasRecords && historyCalendarDayExpanded));
@@ -4947,9 +5018,9 @@ function historyCalendarGetMealSlots() {
     ];
 }
 
-function historyCalendarRenderMeals(meals) {
+function historyCalendarRenderMeals(meals, shouldAnimateEmptyState = false) {
     if (meals.length === 0) {
-        return historyCalendarRenderEmptyDay();
+        return historyCalendarRenderEmptyDay(shouldAnimateEmptyState);
     }
 
     return historyCalendarGetMealSlots().map(slot => {
@@ -5041,9 +5112,11 @@ async function historyCalendarLoadImage(image, renderId) {
     }
 }
 
-function historyCalendarRenderEmptyDay() {
+function historyCalendarRenderEmptyDay(shouldAnimate = false) {
+    const animationClass = shouldAnimate ? '' : ' is-pointer-drawn';
+
     return `
-        <div class="history-empty-day">
+        <div class="history-empty-day${animationClass}">
             <strong>В этот день ещё ничего не добавлено</strong>
             <p>Нажми на плюс, чтобы добавить первый приём.</p>
             <svg class="history-add-pointer" viewBox="0 0 64 74" aria-hidden="true" focusable="false">
@@ -5058,15 +5131,17 @@ function historyCalendarRenderEmptyDay() {
 // History calendar interactions and initialization
 
 function historyCalendarSelectDay(date) {
+    const shouldAnimateLayout = historyCalendarDayExpanded;
+
     historyCalendarSelectedDate = date;
     historyCalendarDayExpanded = false;
-    historyCalendarRenderGrid();
+    historyCalendarRenderGrid(false, shouldAnimateLayout);
     historyCalendarRenderDayDetail(historyCalendarGetDay(date));
 }
 
 function historyCalendarToggleDayExpanded() {
     historyCalendarDayExpanded = !historyCalendarDayExpanded;
-    historyCalendarRenderGrid();
+    historyCalendarRenderGrid(false, true);
     historyCalendarRenderDayDetail(historyCalendarGetDay(historyCalendarSelectedDate));
 }
 
