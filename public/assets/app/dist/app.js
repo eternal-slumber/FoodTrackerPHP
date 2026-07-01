@@ -17,6 +17,22 @@ function getTimezoneOffsetMinutes() {
     return new Date().getTimezoneOffset();
 }
 
+function getMealSlotFromDescription(description) {
+    const prefix = String(description || '')
+        .split(':', 1)[0]
+        .trim()
+        .toLocaleLowerCase('ru-RU')
+        .replaceAll('ё', 'е');
+
+    return {
+        завтрак: 'breakfast',
+        обед: 'lunch',
+        ужин: 'dinner',
+        перекус: 'snacks',
+        перекусы: 'snacks'
+    }[prefix] || null;
+}
+
 function setElementText(id, value) {
     const element = document.getElementById(id);
 
@@ -930,7 +946,7 @@ function renderMealHistory(meals) {
     });
 
     historyList.innerHTML = slots.map(slot => {
-        const slotMeals = todayMeals.filter(meal => getHomeMealSlotForDate(meal.parsedDate) === slot.key);
+        const slotMeals = todayMeals.filter(meal => getHomeMealSlotForMeal(meal) === slot.key);
         const totalCalories = slotMeals.reduce((sum, meal) => sum + Number(meal.calories || 0), 0);
         const isCurrent = slot.key === currentSlot;
         const isExpanded = isCurrent && slotMeals.length > 0;
@@ -1008,6 +1024,11 @@ function getHomeMealSlotForDate(date) {
     if (hour >= 12 && hour < 16) return 'lunch';
     if (hour >= 16 && hour < 22) return 'dinner';
     return 'snacks';
+}
+
+function getHomeMealSlotForMeal(meal) {
+    return getMealSlotFromDescription(meal?.description)
+        || getHomeMealSlotForDate(meal?.parsedDate || new Date());
 }
 
 function formatHomeMealCount(count) {
@@ -2586,7 +2607,7 @@ function createProductCard(product, index) {
                     <div class="draft-main-portion-row">
                         <label class="draft-main-field draft-main-weight-field">
                             <span>Вес порции, г</span>
-                            <input type="number" class="product-weight" value="${escapeHtml(product.weight ?? '')}" min="1" max="5000" placeholder="0">
+                            <input type="text" inputmode="decimal" class="product-weight" value="${escapeHtml(product.weight ?? '')}" placeholder="0">
                         </label>
                         <div class="draft-main-portions">
                             <span>Порции</span>
@@ -2603,19 +2624,19 @@ function createProductCard(product, index) {
                 <div class="draft-main-kbju-grid">
                     <label class="draft-main-field">
                         <span>Ккал</span>
-                        <input type="number" class="product-calories" value="${product.calories}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-calories" value="${product.calories}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Белки</span>
-                        <input type="number" class="product-proteins kbju-field" value="${product.proteins}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-proteins kbju-field" value="${product.proteins}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Жиры</span>
-                        <input type="number" class="product-fats kbju-field" value="${product.fats}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-fats kbju-field" value="${product.fats}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Углеводы</span>
-                        <input type="number" class="product-carbs kbju-field" value="${product.carbs}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-carbs kbju-field" value="${product.carbs}" placeholder="0">
                     </label>
                 </div>
             ` : `
@@ -2643,11 +2664,11 @@ function createProductCard(product, index) {
             <div class="draft-product-base-row">
                     <div class="weight-wrap">
                         <label class="field-label">Вес, г</label>
-                        <input type="number" class="product-weight" value="${Number(product.weight) || 100}" min="1" max="5000">
+                        <input type="text" inputmode="decimal" class="product-weight" value="${Number(product.weight) || 100}">
                     </div>
                 <div>
                     <label class="field-label">Ккал / 100г</label>
-                    <input type="number" class="product-calories" value="${product.calories}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-calories" value="${product.calories}" placeholder="0">
                 </div>
                 <div class="draft-kbju-toggle-wrap">
                     <span class="field-label">БЖУ</span>
@@ -2658,15 +2679,15 @@ function createProductCard(product, index) {
             </div>
             <div class="kbju-panel hidden">
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-proteins kbju-field" value="${product.proteins}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-proteins kbju-field" value="${product.proteins}" placeholder="0">
                     <span class="kbju-label">бел</span>
                 </div>
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-fats kbju-field" value="${product.fats}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-fats kbju-field" value="${product.fats}" placeholder="0">
                     <span class="kbju-label">жир</span>
                 </div>
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-carbs kbju-field" value="${product.carbs}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-carbs kbju-field" value="${product.carbs}" placeholder="0">
                     <span class="kbju-label">угл</span>
                 </div>
             </div>
@@ -2769,6 +2790,89 @@ function collectDraftProducts() {
             }
         };
     });
+}
+
+function getDraftNumericFieldDefinition(input) {
+    if (input.classList.contains('product-weight')) {
+        return { label: 'Вес', required: true, min: 1, max: 5000 };
+    }
+
+    if (input.classList.contains('product-calories')) {
+        return { label: 'Ккал', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-proteins')) {
+        return { label: 'Белки', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-fats')) {
+        return { label: 'Жиры', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-carbs')) {
+        return { label: 'Углеводы', required: false, min: 0 };
+    }
+
+    return null;
+}
+
+function validateDraftNumericInput(input, validateRequired = false) {
+    const definition = getDraftNumericFieldDefinition(input);
+    if (!definition) {
+        return null;
+    }
+
+    const rawValue = String(input.value || '').trim();
+    const isPlainNumber = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(rawValue);
+    let message = '';
+
+    if (input.validity?.badInput || (rawValue !== '' && !isPlainNumber)) {
+        message = `Поле «${definition.label}» должно содержать только число`;
+    } else if (validateRequired && definition.required && rawValue === '') {
+        message = `Укажите числовое значение в поле «${definition.label}»`;
+    } else if (rawValue !== '') {
+        const value = Number(rawValue);
+        if (!Number.isFinite(value)) {
+            message = `Поле «${definition.label}» должно содержать корректное число`;
+        } else if (value < definition.min) {
+            message = `Поле «${definition.label}» должно быть не меньше ${definition.min}`;
+        } else if (definition.max !== undefined && value > definition.max) {
+            message = `Поле «${definition.label}» должно быть не больше ${definition.max}`;
+        }
+    }
+
+    input.classList.toggle('draft-number-invalid', message !== '');
+    input.setAttribute('aria-invalid', String(message !== ''));
+    input.setCustomValidity(message);
+
+    return message || null;
+}
+
+function validateProductCardNumericFields(card, validateRequired = true) {
+    const inputs = card.querySelectorAll('.product-weight, .product-calories, .kbju-field');
+    let firstInvalidInput = null;
+    let firstMessage = null;
+
+    inputs.forEach(input => {
+        const message = validateDraftNumericInput(input, validateRequired);
+        if (message && !firstInvalidInput) {
+            firstInvalidInput = input;
+            firstMessage = message;
+        }
+    });
+
+    return { valid: !firstInvalidInput, input: firstInvalidInput, message: firstMessage };
+}
+
+function validateDraftNumericFields() {
+    for (const card of getDraftProductCards()) {
+        const result = validateProductCardNumericFields(card, true);
+        if (!result.valid) {
+            return result;
+        }
+    }
+
+    return { valid: true, input: null, message: null };
 }
 
 function getDraftScanCount() {
@@ -3086,6 +3190,7 @@ function bindProductCardEvents() {
 
         card.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
+                validateDraftNumericInput(input, false);
                 recalculateDraftTotal();
                 updateProductCardSummary(card);
                 updateProductKbjuActionState(card);
@@ -3356,6 +3461,14 @@ async function fillProductKbjuWithAi(card) {
         return;
     }
 
+    const numericValidation = validateProductCardNumericFields(card, true);
+    if (!numericValidation.valid) {
+        tg.showAlert(numericValidation.message);
+        numericValidation.input?.focus();
+        haptic('error');
+        return;
+    }
+
     if (!productCardCanAutofillKbju(card)) {
         tg.showAlert('Сначала укажите название и вес');
         haptic('error');
@@ -3449,7 +3562,18 @@ async function saveMealDraft() {
         return;
     }
 
+    const numericValidation = validateDraftNumericFields();
+    if (!numericValidation.valid) {
+        tg.showAlert(numericValidation.message);
+        numericValidation.input?.focus();
+        haptic('error');
+        return;
+    }
+
     const products = collectDraftProducts();
+    if (!mealNameEditedByUser) {
+        mealNameInput.value = buildGeneratedMealName(products);
+    }
     const mealName = mealNameInput.value.trim() || buildGeneratedMealName(products);
 
     if (products.some(product => !product.name || product.weight <= 0)) {
@@ -4991,8 +5115,13 @@ function historyCalendarRenderDayDetail(day, shouldAnimate = false) {
     });
 }
 
-function historyCalendarGetMealSlot(time) {
-    const hour = Number(String(time || '').split(':')[0]);
+function historyCalendarGetMealSlot(meal) {
+    const explicitSlot = getMealSlotFromDescription(meal?.description);
+    if (explicitSlot) {
+        return explicitSlot;
+    }
+
+    const hour = Number(String(meal?.time || '').split(':')[0]);
 
     if (hour >= 5 && hour < 12) {
         return 'breakfast';
@@ -5024,7 +5153,7 @@ function historyCalendarRenderMeals(meals, shouldAnimateEmptyState = false) {
     }
 
     return historyCalendarGetMealSlots().map(slot => {
-        const slotMeals = meals.filter(meal => historyCalendarGetMealSlot(meal.time) === slot.key);
+        const slotMeals = meals.filter(meal => historyCalendarGetMealSlot(meal) === slot.key);
 
         if (slotMeals.length === 0) {
             return `

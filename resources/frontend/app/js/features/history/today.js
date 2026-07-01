@@ -21,7 +21,7 @@ function renderMealHistory(meals) {
     });
 
     historyList.innerHTML = slots.map(slot => {
-        const slotMeals = todayMeals.filter(meal => getHomeMealSlotForDate(meal.parsedDate) === slot.key);
+        const slotMeals = todayMeals.filter(meal => getHomeMealSlotForMeal(meal) === slot.key);
         const totalCalories = slotMeals.reduce((sum, meal) => sum + Number(meal.calories || 0), 0);
         const isCurrent = slot.key === currentSlot;
         const isExpanded = isCurrent && slotMeals.length > 0;
@@ -101,6 +101,11 @@ function getHomeMealSlotForDate(date) {
     return 'snacks';
 }
 
+function getHomeMealSlotForMeal(meal) {
+    return getMealSlotFromDescription(meal?.description)
+        || getHomeMealSlotForDate(meal?.parsedDate || new Date());
+}
+
 function formatHomeMealCount(count) {
     const lastDigit = count % 10;
     const lastTwoDigits = count % 100;
@@ -156,4 +161,3 @@ function groupMealsByDate(meals) {
 
     return Array.from(groups.values());
 }
-

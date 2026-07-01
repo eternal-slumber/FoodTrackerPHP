@@ -266,8 +266,13 @@ function historyCalendarRenderDayDetail(day, shouldAnimate = false) {
     });
 }
 
-function historyCalendarGetMealSlot(time) {
-    const hour = Number(String(time || '').split(':')[0]);
+function historyCalendarGetMealSlot(meal) {
+    const explicitSlot = getMealSlotFromDescription(meal?.description);
+    if (explicitSlot) {
+        return explicitSlot;
+    }
+
+    const hour = Number(String(meal?.time || '').split(':')[0]);
 
     if (hour >= 5 && hour < 12) {
         return 'breakfast';
@@ -299,7 +304,7 @@ function historyCalendarRenderMeals(meals, shouldAnimateEmptyState = false) {
     }
 
     return historyCalendarGetMealSlots().map(slot => {
-        const slotMeals = meals.filter(meal => historyCalendarGetMealSlot(meal.time) === slot.key);
+        const slotMeals = meals.filter(meal => historyCalendarGetMealSlot(meal) === slot.key);
 
         if (slotMeals.length === 0) {
             return `

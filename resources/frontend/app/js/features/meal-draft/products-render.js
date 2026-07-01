@@ -169,7 +169,7 @@ function createProductCard(product, index) {
                     <div class="draft-main-portion-row">
                         <label class="draft-main-field draft-main-weight-field">
                             <span>Вес порции, г</span>
-                            <input type="number" class="product-weight" value="${escapeHtml(product.weight ?? '')}" min="1" max="5000" placeholder="0">
+                            <input type="text" inputmode="decimal" class="product-weight" value="${escapeHtml(product.weight ?? '')}" placeholder="0">
                         </label>
                         <div class="draft-main-portions">
                             <span>Порции</span>
@@ -186,19 +186,19 @@ function createProductCard(product, index) {
                 <div class="draft-main-kbju-grid">
                     <label class="draft-main-field">
                         <span>Ккал</span>
-                        <input type="number" class="product-calories" value="${product.calories}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-calories" value="${product.calories}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Белки</span>
-                        <input type="number" class="product-proteins kbju-field" value="${product.proteins}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-proteins kbju-field" value="${product.proteins}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Жиры</span>
-                        <input type="number" class="product-fats kbju-field" value="${product.fats}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-fats kbju-field" value="${product.fats}" placeholder="0">
                     </label>
                     <label class="draft-main-field">
                         <span>Углеводы</span>
-                        <input type="number" class="product-carbs kbju-field" value="${product.carbs}" min="0" placeholder="0">
+                        <input type="text" inputmode="decimal" class="product-carbs kbju-field" value="${product.carbs}" placeholder="0">
                     </label>
                 </div>
             ` : `
@@ -226,11 +226,11 @@ function createProductCard(product, index) {
             <div class="draft-product-base-row">
                     <div class="weight-wrap">
                         <label class="field-label">Вес, г</label>
-                        <input type="number" class="product-weight" value="${Number(product.weight) || 100}" min="1" max="5000">
+                        <input type="text" inputmode="decimal" class="product-weight" value="${Number(product.weight) || 100}">
                     </div>
                 <div>
                     <label class="field-label">Ккал / 100г</label>
-                    <input type="number" class="product-calories" value="${product.calories}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-calories" value="${product.calories}" placeholder="0">
                 </div>
                 <div class="draft-kbju-toggle-wrap">
                     <span class="field-label">БЖУ</span>
@@ -241,15 +241,15 @@ function createProductCard(product, index) {
             </div>
             <div class="kbju-panel hidden">
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-proteins kbju-field" value="${product.proteins}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-proteins kbju-field" value="${product.proteins}" placeholder="0">
                     <span class="kbju-label">бел</span>
                 </div>
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-fats kbju-field" value="${product.fats}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-fats kbju-field" value="${product.fats}" placeholder="0">
                     <span class="kbju-label">жир</span>
                 </div>
                 <div class="kbju-field-wrap">
-                    <input type="number" class="product-carbs kbju-field" value="${product.carbs}" min="0" placeholder="0">
+                    <input type="text" inputmode="decimal" class="product-carbs kbju-field" value="${product.carbs}" placeholder="0">
                     <span class="kbju-label">угл</span>
                 </div>
             </div>
@@ -320,4 +320,3 @@ function renumberProductCards() {
         }
     });
 }
-

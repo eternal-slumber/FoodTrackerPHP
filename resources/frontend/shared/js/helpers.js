@@ -16,6 +16,22 @@ function getTimezoneOffsetMinutes() {
     return new Date().getTimezoneOffset();
 }
 
+function getMealSlotFromDescription(description) {
+    const prefix = String(description || '')
+        .split(':', 1)[0]
+        .trim()
+        .toLocaleLowerCase('ru-RU')
+        .replaceAll('ё', 'е');
+
+    return {
+        завтрак: 'breakfast',
+        обед: 'lunch',
+        ужин: 'dinner',
+        перекус: 'snacks',
+        перекусы: 'snacks'
+    }[prefix] || null;
+}
+
 function setElementText(id, value) {
     const element = document.getElementById(id);
 

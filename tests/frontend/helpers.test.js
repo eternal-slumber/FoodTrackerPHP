@@ -14,7 +14,7 @@ global.document = {
 const sourcePath = path.resolve(__dirname, '../../resources/frontend/shared/js/helpers.js');
 const source = fs.readFileSync(sourcePath, 'utf8');
 vm.runInThisContext(
-    `${source}\nglobalThis.__helpers = { escapeHtml, setElementText, formatActivityLabel, formatGoalLabel };`,
+    `${source}\nglobalThis.__helpers = { escapeHtml, setElementText, formatActivityLabel, formatGoalLabel, getMealSlotFromDescription };`,
     { filename: sourcePath }
 );
 
@@ -22,7 +22,8 @@ const {
     escapeHtml,
     setElementText,
     formatActivityLabel,
-    formatGoalLabel
+    formatGoalLabel,
+    getMealSlotFromDescription
 } = global.__helpers;
 
 test('escapes values inserted into generated markup', () => {
@@ -38,4 +39,10 @@ test('sets text without interpreting it as HTML', () => {
 test('formats shared profile labels', () => {
     assert.equal(formatActivityLabel('high'), 'Высокая');
     assert.equal(formatGoalLabel('deficit'), 'Похудение');
+});
+
+test('resolves an explicitly selected meal slot from the saved description', () => {
+    assert.equal(getMealSlotFromDescription('Обед: Курица и рис'), 'lunch');
+    assert.equal(getMealSlotFromDescription('Перекус: Яблоко'), 'snacks');
+    assert.equal(getMealSlotFromDescription('Курица и рис'), null);
 });

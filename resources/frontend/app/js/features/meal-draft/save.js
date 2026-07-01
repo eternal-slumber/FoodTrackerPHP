@@ -52,7 +52,18 @@ async function saveMealDraft() {
         return;
     }
 
+    const numericValidation = validateDraftNumericFields();
+    if (!numericValidation.valid) {
+        tg.showAlert(numericValidation.message);
+        numericValidation.input?.focus();
+        haptic('error');
+        return;
+    }
+
     const products = collectDraftProducts();
+    if (!mealNameEditedByUser) {
+        mealNameInput.value = buildGeneratedMealName(products);
+    }
     const mealName = mealNameInput.value.trim() || buildGeneratedMealName(products);
 
     if (products.some(product => !product.name || product.weight <= 0)) {

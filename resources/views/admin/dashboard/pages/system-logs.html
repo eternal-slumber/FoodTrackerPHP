@@ -1,0 +1,71 @@
+<section class="admin-page admin-system-logs-page admin-is-active" aria-label="Системные логи">
+    <section class="admin-card admin-system-log-filter-card">
+        <div class="admin-card-heading">
+            <div>
+                <span class="admin-kicker">Filters</span>
+                <h2>Фильтры журнала</h2>
+            </div>
+            <strong>{{SYSTEM_LOG_TOTAL}} записей</strong>
+        </div>
+
+        <form class="admin-system-log-filters" method="get" action="{{ADMIN_SYSTEM_LOGS_PATH}}">
+            <label>
+                <span>Уровень</span>
+                <select name="level">
+                    <option value="errors"{{SYSTEM_LOG_LEVEL_ERRORS_SELECTED}}>Ошибки и critical</option>
+                    <option value="critical"{{SYSTEM_LOG_LEVEL_CRITICAL_SELECTED}}>Только critical</option>
+                    <option value="error"{{SYSTEM_LOG_LEVEL_ERROR_SELECTED}}>Только ошибки</option>
+                    <option value="warning"{{SYSTEM_LOG_LEVEL_WARNING_SELECTED}}>Предупреждения</option>
+                    <option value="info"{{SYSTEM_LOG_LEVEL_INFO_SELECTED}}>Информация</option>
+                    <option value="debug"{{SYSTEM_LOG_LEVEL_DEBUG_SELECTED}}>Debug</option>
+                    <option value=""{{SYSTEM_LOG_LEVEL_ALL_SELECTED}}>Все уровни</option>
+                </select>
+            </label>
+
+            <label>
+                <span>Канал</span>
+                <select name="channel">
+                    {{SYSTEM_LOG_CHANNEL_OPTIONS}}
+                </select>
+            </label>
+
+            <label>
+                <span>Дата по Москве</span>
+                <input type="date" name="date" value="{{SYSTEM_LOG_DATE}}">
+            </label>
+
+            <div class="admin-system-log-filter-actions">
+                <button class="admin-chart-toggle admin-is-active" type="submit">Применить</button>
+                <a class="admin-chart-toggle" href="{{ADMIN_SYSTEM_LOGS_PATH}}">Сбросить</a>
+            </div>
+        </form>
+    </section>
+
+    <section class="admin-card admin-system-log-list-card">
+        <div class="admin-card-heading">
+            <div>
+                <span class="admin-kicker">Logs</span>
+                <h2>Последние записи</h2>
+            </div>
+            <div class="admin-week-nav" aria-label="Навигация по страницам">
+                <a class="admin-week-arrow {{SYSTEM_LOG_PREVIOUS_CLASS}}" href="{{SYSTEM_LOG_PREVIOUS_URL}}" aria-label="Предыдущая страница">&lt;</a>
+                <span>{{SYSTEM_LOG_PAGE_LABEL}}</span>
+                <a class="admin-week-arrow {{SYSTEM_LOG_NEXT_CLASS}}" href="{{SYSTEM_LOG_NEXT_URL}}" aria-label="Следующая страница">&gt;</a>
+            </div>
+        </div>
+
+        <div class="admin-activity-list" aria-label="Системные логи приложения">
+            <div class="admin-placeholder-row admin-placeholder-head admin-system-log-row">
+                <span>Время</span>
+                <span>Уровень</span>
+                <span>Канал</span>
+                <span>Сообщение</span>
+                <span>Исключение</span>
+                <span>Trace ID</span>
+            </div>
+            <div class="admin-activity-scroll admin-system-log-scroll">
+                {{SYSTEM_LOG_ROWS}}
+            </div>
+        </div>
+    </section>
+</section>

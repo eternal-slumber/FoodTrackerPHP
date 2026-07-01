@@ -26,4 +26,22 @@ class AdminDashboardFormatterTest extends TestCase
 
         $this->assertStringContainsString('17.06.2026 13:05', $html);
     }
+
+    public function testEscapesSystemLogMessage(): void
+    {
+        $formatter = new AdminDashboardFormatter();
+
+        $html = $formatter->renderSystemLogRows([[
+            'id' => 1,
+            'level' => 'error',
+            'channel' => 'http',
+            'message' => '<script>alert(1)</script>',
+            'exception_class' => 'RuntimeException',
+            'trace_id' => 'trace-1',
+            'created_at' => '2026-06-30 10:00:00',
+        ]]);
+
+        $this->assertStringNotContainsString('<script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+    }
 }

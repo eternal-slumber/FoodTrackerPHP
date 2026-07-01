@@ -22,6 +22,9 @@
         if (!headers.has('Content-Type') && options.body) {
             headers.set('Content-Type', 'application/json');
         }
+        if ((options.method || 'GET').toUpperCase() !== 'GET' && adminConfig.csrfToken) {
+            headers.set('X-CSRF-Token', adminConfig.csrfToken);
+        }
 
         return fetch((adminConfig.path || '') + path, {
             ...options,

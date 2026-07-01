@@ -7,10 +7,13 @@ namespace App\Admin\Controllers;
 use App\Admin\Auth\AdminSession;
 use App\Admin\Config\AdminConfig;
 use App\Admin\Repositories\AdminUserRepository;
+use App\Admin\Repositories\SystemLogRepository;
 use App\Admin\Services\AppHealthService;
 use App\Admin\Services\DashboardStatsService;
 use App\Admin\View\AdminDashboardPageRenderer;
 use App\Http\ResponseResponder;
+use DateTimeImmutable;
+use DateTimeZone;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Throwable;
@@ -21,6 +24,7 @@ class AdminDashboardController
         private readonly AdminConfig $adminConfig,
         private readonly AdminSession $adminSession,
         private readonly AdminUserRepository $adminUsers,
+        private readonly SystemLogRepository $systemLogs,
         private readonly AppHealthService $appHealth,
         private readonly DashboardStatsService $dashboardStats,
         private readonly AdminDashboardPageRenderer $pageRenderer
@@ -51,6 +55,11 @@ class AdminDashboardController
         return $this->dashboardPage($request, $response, 'ai');
     }
 
+    public function systemLogs(Request $request, Response $response): Response
+    {
+        return $this->dashboardPage($request, $response, 'errors');
+    }
+
     private function dashboardPage(Request $request, Response $response, string $activePage): Response
     {
         $adminId = $this->adminSession->currentAdminId();
@@ -61,13 +70,14 @@ class AdminDashboardController
         $weekOffset = $this->weekOffset($request);
         $dayOffset = $this->dayOffset($request);
         $selectedMealUserId = $this->selectedMealUserId($request);
+        $systemLogFilters = $this->systemLogFilters($request);
 
         try {
             $admin = $this->adminUsers->findActiveById($adminId);
         } catch (Throwable) {
             return ResponseResponder::html($response, $this->renderDashboard(
                 $this->fallbackAdmin($adminId),
-                $this->emptyDashboardData($activePage, $weekOffset, $dayOffset, $selectedMealUserId),
+                $this->emptyDashboardData($activePage, $weekOffset, $dayOffset, $selectedMealUserId, $systemLogFilters),
                 false,
                 $this->appHealth->isAvailable(),
                 $activePage
@@ -81,10 +91,22 @@ class AdminDashboardController
         }
 
         try {
-            $dashboardData = $this->loadDashboardData($activePage, $weekOffset, $dayOffset, $selectedMealUserId);
+            $dashboardData = $this->loadDashboardData(
+                $activePage,
+                $weekOffset,
+                $dayOffset,
+                $selectedMealUserId,
+                $systemLogFilters
+            );
             $databaseAvailable = true;
         } catch (Throwable) {
-            $dashboardData = $this->emptyDashboardData($activePage, $weekOffset, $dayOffset, $selectedMealUserId);
+            $dashboardData = $this->emptyDashboardData(
+                $activePage,
+                $weekOffset,
+                $dayOffset,
+                $selectedMealUserId,
+                $systemLogFilters
+            );
             $databaseAvailable = false;
         }
 
@@ -102,8 +124,13 @@ class AdminDashboardController
         string $activePage,
         int $weekOffset,
         int $dayOffset,
-        ?int $selectedMealUserId
+        ?int $selectedMealUserId,
+        array $systemLogFilters
     ): array {
+        $systemLogPage = $activePage === 'errors'
+            ? $this->loadSystemLogPage($systemLogFilters)
+            : $this->emptySystemLogPage($systemLogFilters);
+
         return [
             'stats' => $this->dashboardStats->today(),
             'user_activity_events' => $this->dashboardStats->userActivityEvents($weekOffset),
@@ -119,6 +146,7 @@ class AdminDashboardController
             'ai_requests_chart' => $this->dashboardStats->aiRequestsChart($weekOffset),
             'ai_request_type_stats' => $this->dashboardStats->aiRequestTypeStats($weekOffset),
             'week_navigation' => $this->weekNavigation($activePage, $weekOffset),
+            'system_log_page' => $systemLogPage,
         ];
     }
 
@@ -149,9 +177,11 @@ class AdminDashboardController
             $dashboardData['ai_requests_chart'],
             $dashboardData['ai_request_type_stats'],
             $dashboardData['week_navigation'],
+            $dashboardData['system_log_page'],
             $databaseAvailable,
             $appAvailable,
-            $activePage
+            $activePage,
+            $this->adminSession->csrfToken()
         );
     }
 
@@ -173,7 +203,8 @@ class AdminDashboardController
         string $activePage,
         int $weekOffset,
         int $dayOffset,
-        ?int $selectedMealUserId
+        ?int $selectedMealUserId,
+        array $systemLogFilters
     ): array {
         return [
             'stats' => [
@@ -201,7 +232,130 @@ class AdminDashboardController
                 'other' => 0,
             ],
             'week_navigation' => $this->weekNavigation($activePage, $weekOffset),
+            'system_log_page' => $this->emptySystemLogPage($systemLogFilters),
         ];
+    }
+
+    /** @return array{level:string, channel:string, date:string, page:int} */
+    private function systemLogFilters(Request $request): array
+    {
+        $query = $request->getQueryParams();
+        $level = (string)($query['level'] ?? 'errors');
+        $channel = trim((string)($query['channel'] ?? ''));
+        $date = trim((string)($query['date'] ?? ''));
+
+        if (!in_array($level, ['', 'errors', 'critical', 'error', 'warning', 'info', 'debug'], true)) {
+            $level = 'errors';
+        }
+        if (!preg_match('/^[a-zA-Z0-9_.-]{1,60}$/', $channel)) {
+            $channel = '';
+        }
+        if (!$this->isValidDate($date)) {
+            $date = '';
+        }
+
+        return [
+            'level' => $level,
+            'channel' => $channel,
+            'date' => $date,
+            'page' => max(1, (int)($query['page'] ?? 1)),
+        ];
+    }
+
+    /** @param array{level:string, channel:string, date:string, page:int} $filters */
+    private function loadSystemLogPage(array $filters): array
+    {
+        [$startUtc, $endUtc] = $this->systemLogDateRange($filters['date']);
+        $page = $this->systemLogs->search(
+            $filters['level'],
+            $filters['channel'],
+            $startUtc,
+            $endUtc,
+            $filters['page']
+        );
+
+        return $page + [
+            'channels' => $this->systemLogs->channels(),
+            'filters' => $filters,
+            'pagination' => $this->systemLogPagination($filters, $page['page'], $page['total_pages']),
+        ];
+    }
+
+    /** @param array{level:string, channel:string, date:string, page:int} $filters */
+    private function emptySystemLogPage(array $filters): array
+    {
+        return [
+            'items' => [],
+            'total' => 0,
+            'page' => 1,
+            'per_page' => 50,
+            'total_pages' => 1,
+            'channels' => [],
+            'filters' => $filters,
+            'pagination' => $this->systemLogPagination($filters, 1, 1),
+        ];
+    }
+
+    /** @return array{0:?string, 1:?string} */
+    private function systemLogDateRange(string $date): array
+    {
+        if ($date === '') {
+            return [null, null];
+        }
+
+        $moscow = new DateTimeZone('Europe/Moscow');
+        $start = DateTimeImmutable::createFromFormat('!Y-m-d', $date, $moscow);
+        if ($start === false) {
+            return [null, null];
+        }
+
+        $utc = new DateTimeZone('UTC');
+
+        return [
+            $start->setTimezone($utc)->format('Y-m-d H:i:s'),
+            $start->modify('+1 day')->setTimezone($utc)->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    private function isValidDate(string $date): bool
+    {
+        if ($date === '') {
+            return true;
+        }
+
+        $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date, new DateTimeZone('Europe/Moscow'));
+
+        return $parsed !== false && $parsed->format('Y-m-d') === $date;
+    }
+
+    /**
+     * @param array{level:string, channel:string, date:string, page:int} $filters
+     * @return array{label:string, previous_url:string, next_url:string, previous_class:string, next_class:string}
+     */
+    private function systemLogPagination(array $filters, int $page, int $totalPages): array
+    {
+        return [
+            'label' => 'Страница ' . $page . ' из ' . $totalPages,
+            'previous_url' => $this->systemLogUrl($filters, max(1, $page - 1)),
+            'next_url' => $this->systemLogUrl($filters, min($totalPages, $page + 1)),
+            'previous_class' => $page > 1 ? '' : 'admin-is-disabled',
+            'next_class' => $page < $totalPages ? '' : 'admin-is-disabled',
+        ];
+    }
+
+    /** @param array{level:string, channel:string, date:string, page:int} $filters */
+    private function systemLogUrl(array $filters, int $page): string
+    {
+        $query = array_filter([
+            'level' => $filters['level'],
+            'channel' => $filters['channel'],
+            'date' => $filters['date'],
+            'page' => $page > 1 ? $page : null,
+        ], static fn(mixed $value): bool => $value !== null && $value !== '');
+
+        $path = $this->pagePath('errors');
+
+        return $query === [] ? $path : $path . '?' . http_build_query($query);
     }
 
     private function weekOffset(Request $request): int
@@ -295,6 +449,7 @@ class AdminDashboardController
             'visits' => $this->adminConfig->path . '/dashboard/user-activity',
             'meals' => $this->adminConfig->path . '/dashboard/meal-activity',
             'ai' => $this->adminConfig->path . '/dashboard/ai-activity',
+            'errors' => $this->adminConfig->path . '/dashboard/system-logs',
             default => $this->adminConfig->path . '/dashboard',
         };
     }

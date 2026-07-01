@@ -60,6 +60,15 @@ docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app comp
 docker compose --env-file .env.db -f docker/docker-compose.yml --profile admin up -d
 ```
 
+Локально админка открывается через отдельный virtual host, а не через обычный `localhost`:
+
+```text
+http://admin.localhost:8080/<ADMIN_PATH>
+```
+
+Например, если `ADMIN_PATH=/ft-control-7d4c2a`, адрес будет
+`http://admin.localhost:8080/ft-control-7d4c2a`.
+
 Для основного приложения оставляй `ADMIN_ENABLED=false`. В admin-контейнере должны быть
 `ADMIN_ENABLED=true`, `ADMIN_ONLY=true` и отдельный непредсказуемый `ADMIN_PATH`.
 

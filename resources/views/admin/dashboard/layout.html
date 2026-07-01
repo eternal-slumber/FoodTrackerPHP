@@ -39,6 +39,10 @@
                     <span class="admin-nav-short" aria-hidden="true">И</span>
                     <span class="admin-nav-label">Активность ИИ</span>
                 </a>
+                <a class="admin-nav-link {{ERRORS_ACTIVE_CLASS}}" href="{{ADMIN_SYSTEM_LOGS_PATH}}" title="Системные логи">
+                    <span class="admin-nav-short" aria-hidden="true">Л</span>
+                    <span class="admin-nav-label">Системные логи</span>
+                </a>
             </nav>
 
             <div class="admin-sidebar-footer">
@@ -63,12 +67,12 @@
         </main>
     </div>
 
-    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}}</script>
+    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}, "csrfToken": {{ADMIN_CSRF_TOKEN_JSON}}}</script>
     <script id="admin-user-activity-chart-data" type="application/json">{{USER_ACTIVITY_CHART_JSON}}</script>
     <script id="admin-meal-hourly-chart-data" type="application/json">{{MEAL_HOURLY_CHART_JSON}}</script>
     <script id="admin-ai-requests-chart-data" type="application/json">{{AI_REQUEST_CHART_JSON}}</script>
     <script id="admin-ai-types-chart-data" type="application/json">{{AI_REQUEST_TYPES_JSON}}</script>
-    <script src="/assets/admin/js/admin.js?v=20260618-sidebar-toggle"></script>
+    <script src="/assets/admin/js/admin.js?v=20260630-csrf"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="/assets/admin/js/activity.js?v=20260620-pages"></script>
     <script src="/assets/admin/js/overview.js?v=20260620-pages"></script>

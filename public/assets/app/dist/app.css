@@ -8824,16 +8824,6 @@ body.sheet-open {
     min-width: 88px;
 }
 
-.meal-draft-page input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.meal-draft-page input[type="number"]::-webkit-inner-spin-button,
-.meal-draft-page input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
 .meal-draft-card .product-name,
 .meal-draft-card .product-weight,
 .meal-draft-card .processing-select,
@@ -9558,6 +9548,13 @@ body.sheet-open {
 #bottom-sheet .meal-draft-card select:focus-visible,
 #bottom-sheet .meal-draft-card button:focus-visible {
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--button-color) 32%, transparent);
+}
+
+#bottom-sheet .meal-draft-card input.draft-number-invalid,
+#bottom-sheet .meal-draft-card input.draft-number-invalid:focus,
+#bottom-sheet .meal-draft-card input.draft-number-invalid:focus-visible {
+    background: color-mix(in srgb, var(--danger-color) 8%, var(--card-soft));
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--danger-color) 72%, transparent);
 }
 
 #bottom-sheet .draft-main-autofill {
