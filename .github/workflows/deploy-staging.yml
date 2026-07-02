@@ -1,23 +1,22 @@
 name: Deploy Staging
 
-on: 
-   push:
-	branches:
-	   - develop
+on:
+  push:
+    branches:
+      - develop
 
 jobs:
-   deploy:
-	name: Deploy staging on VPS
-	runs-on: ubuntu-latest
+  deploy:
+    name: Deploy staging on VPS
+    runs-on: ubuntu-latest
 
-	steps:
-	   - name: Deploy staging over SSH
-	     uses: appleboy/ssh-action@v1.0.3
-	     with:
-		host: ${{ secrets.DEPLOY_HOST }}
-		username: ${{ secrets.DELOY_USER }}
-		key: ${{ secrets.DEPLOY_KEY }}
-		script: |
-		   cd /opt/foodtracker-staging
-		   ./deploy-staging.sh
-
+    steps:
+      - name: Deploy staging over SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /opt/foodtracker-staging
+            ./deploy-staging.sh
