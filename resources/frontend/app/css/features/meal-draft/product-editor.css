@@ -87,16 +87,6 @@
     min-width: 88px;
 }
 
-.meal-draft-page input[type="number"] {
-    -moz-appearance: textfield;
-}
-
-.meal-draft-page input[type="number"]::-webkit-inner-spin-button,
-.meal-draft-page input[type="number"]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-}
-
 .meal-draft-card .product-name,
 .meal-draft-card .product-weight,
 .meal-draft-card .processing-select,
@@ -427,4 +417,3 @@
     width: 100%;
     z-index: 80;
 }
-

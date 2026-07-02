@@ -51,6 +51,16 @@ class TelegramBotMessageFactory
         return 'Открой Mini App, чтобы настроить напоминания.';
     }
 
+    public function mealReminder(string $mealType): string
+    {
+        return match ($mealType) {
+            'breakfast' => "Пора добавить завтрак 🍳\n\nЗаполни дневник, чтобы FoodTracker посчитал КБЖУ за день.",
+            'lunch' => "Пора добавить обед 🥗\n\nДобавь приём пищи вручную или по фото.",
+            'dinner' => "Пора добавить ужин 🍽️\n\nЗаверши дневник дня и посмотри итог по КБЖУ.",
+            default => throw new \InvalidArgumentException('Unsupported reminder meal type'),
+        };
+    }
+
     public function summary(array $summary): string
     {
         $todayCalories = (int)$summary['today_sum'];

@@ -119,6 +119,34 @@ class MealNutritionServiceTest extends TestCase
         $this->assertSame(0.0, $products[0]['carbs']);
     }
 
+    public function testProcessProductsRejectsTextInWeightField(): void
+    {
+        $service = $this->createService();
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Поле «Вес» должно содержать число');
+
+        $service->processProducts([[
+            'name' => 'Творог',
+            'weight' => 'сто',
+            'kbju' => ['calories' => 120],
+        ]]);
+    }
+
+    public function testProcessProductsRejectsTextInKbjuField(): void
+    {
+        $service = $this->createService();
+
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Поле «Белки» должно содержать число');
+
+        $service->processProducts([[
+            'name' => 'Творог',
+            'weight' => 100,
+            'kbju' => ['calories' => 120, 'proteins' => 'много'],
+        ]]);
+    }
+
     public function testHasMissingKbjuTreatsZeroAsFilledValue(): void
     {
         $this->assertFalse(MealNutritionService::hasMissingKbju([

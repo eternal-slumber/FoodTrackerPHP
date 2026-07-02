@@ -25,8 +25,8 @@
         </form>
         <div class="admin-status" id="admin-login-status"></div>
     </main>
-    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}}</script>
-    <script src="/assets/admin/js/admin.js?v=20260618-sidebar-toggle"></script>
-    <script src="/assets/admin/js/login.js?v=20260618-auth-path"></script>
+    <script id="admin-config" type="application/json">{"path": {{ADMIN_PATH_JSON}}, "csrfToken": {{ADMIN_CSRF_TOKEN_JSON}}}</script>
+    <script src="/assets/admin/js/admin.js?v=20260630-csrf"></script>
+    <script src="/assets/admin/js/login.js?v=20260630-csrf"></script>
 </body>
 </html>

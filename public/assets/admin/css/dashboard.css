@@ -526,6 +526,74 @@
     grid-template-columns: 1.1fr 1.5fr minmax(180px, 2fr) 0.8fr minmax(160px, 1.6fr);
 }
 
+.admin-system-logs-page {
+    gap: 16px;
+}
+
+.admin-system-log-filters {
+    align-items: end;
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(3, minmax(160px, 1fr)) auto;
+}
+
+.admin-system-log-filters label {
+    display: grid;
+    gap: 7px;
+}
+
+.admin-system-log-filters label > span {
+    color: var(--admin-muted);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.admin-system-log-filters select,
+.admin-system-log-filters input {
+    background: var(--admin-surface-2);
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    color: var(--admin-text);
+    min-height: 40px;
+    outline: none;
+    padding: 0 12px;
+}
+
+.admin-system-log-filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.admin-system-log-list-card {
+    min-width: 0;
+}
+
+.admin-system-log-scroll {
+    max-height: 620px;
+}
+
+.admin-system-log-row {
+    grid-template-columns: 1.1fr 0.8fr 0.8fr minmax(260px, 3fr) 1.2fr 1.2fr;
+    min-width: 980px;
+}
+
+.admin-log-level {
+    font-weight: 800;
+}
+
+.admin-log-level-critical,
+.admin-log-level-error {
+    color: #ff7b86 !important;
+}
+
+.admin-log-level-warning {
+    color: #f6c453 !important;
+}
+
+.admin-log-level-info {
+    color: #4aa3ff !important;
+}
+
 .admin-placeholder-head span {
     color: var(--admin-text);
     font-weight: 800;

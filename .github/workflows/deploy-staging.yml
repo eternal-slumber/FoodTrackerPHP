@@ -1,20 +1,22 @@
-name: Deploy Production
+name: Deploy Staging
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - develop
 
 jobs:
   deploy:
-    name: Deploy production  to VPS
+    name: Deploy staging on VPS
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy production over SSH
+      - name: Deploy staging over SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            cd /opt/foodtracker
-            ./deploy.sh
+            cd /opt/foodtracker-staging
+            ./deploy-staging.sh

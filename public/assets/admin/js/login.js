@@ -49,7 +49,7 @@
         setStatus('Проверяем доступ...');
 
         try {
-            const response = await fetch(adminUrl('/auth'), {
+            const response = await window.adminFetch('/auth', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

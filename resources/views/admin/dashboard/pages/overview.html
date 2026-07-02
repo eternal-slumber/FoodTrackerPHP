@@ -18,11 +18,12 @@
             <strong>{{AI_REQUESTS_TODAY}}</strong>
             <small>Анализ фото и автозаполнение</small>
         </a>
-        <article class="admin-stat-card admin-stat-card-warning">
+        <a class="admin-stat-card admin-stat-card-warning admin-stat-card-actionable" href="{{ADMIN_SYSTEM_LOGS_PATH}}" aria-label="Открыть системные логи">
+            <span class="admin-stat-link" aria-hidden="true">&gt;</span>
             <h2 class="admin-stat-title">Ошибок сегодня</h2>
             <strong>{{ERRORS_TODAY}}</strong>
             <small>error и critical</small>
-        </article>
+        </a>
         <article class="admin-stat-card">
             <h2 class="admin-stat-title">Активных пользователей всего</h2>
             <strong>{{ACTIVE_USERS_TOTAL}}</strong>
@@ -140,9 +141,13 @@
                 <strong>{{ERRORS_TODAY}}</strong>
                 <span>ошибок и critical-событий сегодня</span>
             </div>
-            <div class="admin-empty-state">
+            <div class="admin-empty-state {{ERRORS_EMPTY_CLASS}}">
                 <strong>Ошибок за сегодня нет</strong>
-                <p>Если появятся error/critical записи, они будут отображаться здесь краткой лентой.</p>
+                <p>Новые error/critical записи появятся в системном журнале.</p>
+            </div>
+            <div class="admin-empty-state {{ERRORS_PRESENT_CLASS}}">
+                <strong>Есть ошибки для проверки</strong>
+                <p><a href="{{ADMIN_SYSTEM_LOGS_PATH}}?level=errors">Открыть журнал ошибок</a></p>
             </div>
         </section>
     </div>

@@ -53,7 +53,12 @@ class AdminUserRepository
         $stmt->execute(['id' => $adminUserId]);
     }
 
-    public function writeLoginAuditLog(int $adminUserId, string $ipAddress, string $userAgent): void
+    public function writeAuthAuditLog(
+        ?int $adminUserId,
+        string $action,
+        string $ipAddress,
+        string $userAgent
+    ): void
     {
         $stmt = $this->db()->prepare(
             'INSERT INTO admin_audit_logs (admin_user_id, action, entity_type, ip_address, user_agent)
@@ -61,7 +66,7 @@ class AdminUserRepository
         );
         $stmt->execute([
             'admin_user_id' => $adminUserId,
-            'action' => 'login',
+            'action' => substr($action, 0, 80),
             'entity_type' => 'admin_session',
             'ip_address' => substr($ipAddress, 0, 45),
             'user_agent' => substr($userAgent, 0, 500),

@@ -138,6 +138,48 @@ class MealRepository
         );
     }
 
+    public function existsForLocalDateWithDescriptionPrefix(
+        int $userId,
+        string $localDate,
+        string $descriptionPrefix,
+        int $timezoneOffsetMinutes
+    ): bool {
+        if ($timezoneOffsetMinutes < -840 || $timezoneOffsetMinutes > 840) {
+            throw new \InvalidArgumentException('Invalid timezone offset');
+        }
+
+        $localStart = DateTimeImmutable::createFromFormat(
+            '!Y-m-d H:i:s',
+            $localDate . ' 00:00:00',
+            new DateTimeZone('UTC')
+        );
+        if (!$localStart instanceof DateTimeImmutable) {
+            throw new \InvalidArgumentException('Invalid local date');
+        }
+
+        $offsetModifier = sprintf('%+d minutes', $timezoneOffsetMinutes);
+        $startUtc = $localStart->modify($offsetModifier);
+        $endUtc = $localStart->modify('+1 day')->modify($offsetModifier);
+        $stmt = $this->db->prepare(
+            'SELECT 1
+             FROM meals
+             WHERE user_id = :user_id
+               AND created_at >= :start_utc
+               AND created_at < :end_utc
+               AND (food_description = :prefix OR food_description LIKE :prefix_pattern)
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'start_utc' => $startUtc->format('Y-m-d H:i:s'),
+            'end_utc' => $endUtc->format('Y-m-d H:i:s'),
+            'prefix' => $descriptionPrefix,
+            'prefix_pattern' => $descriptionPrefix . ':%',
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     public function getDailyCaloriesForMonth(int $userId, string $month, int $timezoneOffsetMinutes): array
     {
         $startLocal = DateTimeImmutable::createFromFormat(

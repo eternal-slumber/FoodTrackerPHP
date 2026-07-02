@@ -8,6 +8,7 @@ function bindProductCardEvents() {
 
         card.querySelectorAll('input').forEach(input => {
             input.addEventListener('input', () => {
+                validateDraftNumericInput(input, false);
                 recalculateDraftTotal();
                 updateProductCardSummary(card);
                 updateProductKbjuActionState(card);
@@ -208,4 +209,3 @@ async function analyzeAdditionalProductPhoto(card) {
         updateDraftLimitControls();
     }
 }
-

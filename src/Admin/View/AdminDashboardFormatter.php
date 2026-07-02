@@ -11,6 +11,55 @@ use Throwable;
 class AdminDashboardFormatter
 {
     /**
+     * @param list<array{id:int, level:string, channel:string, message:string, exception_class:?string, trace_id:?string, created_at:string}> $logs
+     */
+    public function renderSystemLogRows(array $logs): string
+    {
+        if ($logs === []) {
+            return '<div class="admin-placeholder-row admin-system-log-row"><span>-</span><span>-</span><span>-</span><span>Записей по выбранным фильтрам нет</span><span>-</span><span>-</span></div>';
+        }
+
+        $rows = [];
+        foreach ($logs as $log) {
+            $level = strtolower((string)$log['level']);
+            $levelClass = in_array($level, ['critical', 'error', 'warning', 'info', 'debug'], true)
+                ? 'admin-log-level-' . $level
+                : 'admin-log-level-default';
+
+            $rows[] = sprintf(
+                '<div class="admin-placeholder-row admin-system-log-row"><span>%s</span><span class="admin-log-level %s">%s</span><span>%s</span><span>%s</span><span>%s</span><span>%s</span></div>',
+                $this->escape($this->formatMoscowTime((string)$log['created_at'])),
+                $levelClass,
+                $this->escape($this->formatSystemLogLevel($level)),
+                $this->escape((string)$log['channel']),
+                $this->escape($this->truncate((string)$log['message'], 240)),
+                $this->escape($this->shortClassName($log['exception_class'])),
+                $this->escape($log['trace_id'] !== null ? (string)$log['trace_id'] : '-')
+            );
+        }
+
+        return implode('', $rows);
+    }
+
+    /** @param list<string> $channels */
+    public function renderSystemLogChannelOptions(array $channels, string $selectedChannel): string
+    {
+        $options = ['<option value="">Все каналы</option>'];
+
+        foreach ($channels as $channel) {
+            $selected = $channel === $selectedChannel ? ' selected' : '';
+            $options[] = sprintf(
+                '<option value="%s"%s>%s</option>',
+                $this->escape($channel),
+                $selected,
+                $this->escape($channel)
+            );
+        }
+
+        return implode('', $options);
+    }
+
+    /**
      * @param list<array{id:int, user_id:?int, tg_id:?string, event_name:string, event_data:?string, ip_address:?string, user_agent:?string, created_at:string}> $events
      */
     public function renderUserActivityRows(array $events): string
@@ -135,6 +184,34 @@ class AdminDashboardFormatter
         return $date
             ->setTimezone(new DateTimeZone('Europe/Moscow'))
             ->format('d.m.Y H:i');
+    }
+
+    private function formatSystemLogLevel(string $level): string
+    {
+        return match ($level) {
+            'critical' => 'Critical',
+            'error' => 'Ошибка',
+            'warning' => 'Предупреждение',
+            'info' => 'Информация',
+            'debug' => 'Debug',
+            default => $level,
+        };
+    }
+
+    private function shortClassName(?string $className): string
+    {
+        if ($className === null || $className === '') {
+            return '-';
+        }
+
+        $parts = explode('\\', $className);
+
+        return (string)end($parts);
+    }
+
+    private function truncate(string $value, int $length): string
+    {
+        return strlen($value) > $length ? substr($value, 0, $length) . '...' : $value;
     }
 
     private function formatActivityEventName(string $eventName): string

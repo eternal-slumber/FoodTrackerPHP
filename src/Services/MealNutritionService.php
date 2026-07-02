@@ -70,6 +70,7 @@ class MealNutritionService
                 continue;
             }
 
+            $this->validateNumericFields($product);
             $weight = max(1, min(5000, (int)($product['weight'] ?? 100)));
             $processing = (string)($product['processing'] ?? '');
             $kbju100g = $this->resolveKbju100g($name, $product);
@@ -142,6 +143,39 @@ class MealNutritionService
             },
             []
         );
+    }
+
+    private function validateNumericFields(array $product): void
+    {
+        $weight = $product['weight'] ?? null;
+        if ($weight !== null && $weight !== '' && !$this->isNumericInput($weight)) {
+            throw new ValidationException('Поле «Вес» должно содержать число');
+        }
+
+        $kbju = $product['kbju'] ?? [];
+        if (!is_array($kbju)) {
+            throw new ValidationException('Поля КБЖУ должны содержать числа');
+        }
+
+        $labels = [
+            'calories' => 'Ккал',
+            'proteins' => 'Белки',
+            'fats' => 'Жиры',
+            'carbs' => 'Углеводы',
+        ];
+
+        foreach ($labels as $key => $label) {
+            $value = $kbju[$key] ?? null;
+            if ($value !== null && $value !== '' && !$this->isNumericInput($value)) {
+                throw new ValidationException(sprintf('Поле «%s» должно содержать число', $label));
+            }
+        }
+    }
+
+    private function isNumericInput(mixed $value): bool
+    {
+        return (is_int($value) || is_float($value) || is_string($value))
+            && is_numeric($value);
     }
 
     private function portionValueToPer100g(float|int $value, int $weight, bool $integer = false): float|int

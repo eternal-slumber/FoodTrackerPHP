@@ -66,6 +66,14 @@ async function fillProductKbjuWithAi(card) {
         return;
     }
 
+    const numericValidation = validateProductCardNumericFields(card, true);
+    if (!numericValidation.valid) {
+        tg.showAlert(numericValidation.message);
+        numericValidation.input?.focus();
+        haptic('error');
+        return;
+    }
+
     if (!productCardCanAutofillKbju(card)) {
         tg.showAlert('Сначала укажите название и вес');
         haptic('error');

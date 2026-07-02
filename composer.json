@@ -9,6 +9,7 @@
         "db:bootstrap": "php scripts/bootstrap_database.php",
         "migrate": "php scripts/migrate.php",
         "cleanup:uploads": "php scripts/cleanup_uploads.php",
+        "notifications:dispatch": "php scripts/dispatch_notifications.php",
         "build:frontend": "php scripts/build_frontend.php",
         "test:frontend": "node --test tests/frontend/*.test.js"
     },

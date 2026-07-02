@@ -45,9 +45,11 @@ class AdminDashboardPageRenderer
         array $aiRequestsChart,
         array $aiRequestTypeStats,
         array $weekNavigation,
+        array $systemLogPage,
         bool $databaseAvailable,
         bool $appAvailable,
-        string $activePage
+        string $activePage,
+        string $csrfToken
     ): string {
         $activePage = $this->normalizeActivePage($activePage);
         $replacements = $this->buildCommonReplacements(
@@ -66,9 +68,11 @@ class AdminDashboardPageRenderer
             $aiRequestsChart,
             $aiRequestTypeStats,
             $weekNavigation,
+            $systemLogPage,
             $databaseAvailable,
             $appAvailable,
-            $activePage
+            $activePage,
+            $csrfToken
         );
 
         $pageContent = $this->viewRenderer->render($this->templateForPage($activePage), $replacements);
@@ -108,17 +112,21 @@ class AdminDashboardPageRenderer
         array $aiRequestsChart,
         array $aiRequestTypeStats,
         array $weekNavigation,
+        array $systemLogPage,
         bool $databaseAvailable,
         bool $appAvailable,
-        string $activePage
+        string $activePage,
+        string $csrfToken
     ): array {
         return [
             'ADMIN_PATH' => $this->escape($this->adminConfig->path),
             'ADMIN_PATH_JSON' => json_encode($this->adminConfig->path, JSON_THROW_ON_ERROR),
+            'ADMIN_CSRF_TOKEN_JSON' => json_encode($csrfToken, JSON_THROW_ON_ERROR),
             'ADMIN_DASHBOARD_PATH' => $this->escape($this->adminConfig->path . '/dashboard'),
             'ADMIN_VISITS_PATH' => $this->escape($this->adminConfig->path . '/dashboard/user-activity'),
             'ADMIN_MEALS_PATH' => $this->escape($this->adminConfig->path . '/dashboard/meal-activity'),
             'ADMIN_AI_PATH' => $this->escape($this->adminConfig->path . '/dashboard/ai-activity'),
+            'ADMIN_SYSTEM_LOGS_PATH' => $this->escape($this->adminConfig->path . '/dashboard/system-logs'),
             'PAGE_TITLE' => $this->escape($this->pageTitle($activePage)),
             'PAGE_DESCRIPTION' => $this->escape($this->pageDescription($activePage)),
             'DOCUMENT_TITLE' => $this->escape($this->documentTitle($activePage)),
@@ -126,6 +134,7 @@ class AdminDashboardPageRenderer
             'VISITS_ACTIVE_CLASS' => $activePage === 'visits' ? 'admin-is-active' : '',
             'MEALS_ACTIVE_CLASS' => $activePage === 'meals' ? 'admin-is-active' : '',
             'AI_ACTIVE_CLASS' => $activePage === 'ai' ? 'admin-is-active' : '',
+            'ERRORS_ACTIVE_CLASS' => $activePage === 'errors' ? 'admin-is-active' : '',
             'ADMIN_LOGIN' => $this->escape((string)($admin['admin_login'] ?? '')),
             'ROLE' => $this->escape($admin['role']),
             'USERS_ENTERED_TODAY' => (string)$stats['users_entered_today'],
@@ -167,12 +176,33 @@ class AdminDashboardPageRenderer
                 : 'MySQL недоступна, поэтому метрики временно не обновляются',
             'APP_STATUS_CLASS' => $appAvailable ? 'admin-badge-ok' : 'admin-badge-danger',
             'APP_STATUS_TEXT' => $appAvailable ? 'OK' : 'недоступно',
+            'SYSTEM_LOG_ROWS' => $this->formatter->renderSystemLogRows($systemLogPage['items']),
+            'SYSTEM_LOG_TOTAL' => (string)$systemLogPage['total'],
+            'SYSTEM_LOG_CHANNEL_OPTIONS' => $this->formatter->renderSystemLogChannelOptions(
+                $systemLogPage['channels'],
+                $systemLogPage['filters']['channel']
+            ),
+            'SYSTEM_LOG_DATE' => $this->escape($systemLogPage['filters']['date']),
+            'SYSTEM_LOG_LEVEL_ERRORS_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'errors'),
+            'SYSTEM_LOG_LEVEL_CRITICAL_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'critical'),
+            'SYSTEM_LOG_LEVEL_ERROR_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'error'),
+            'SYSTEM_LOG_LEVEL_WARNING_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'warning'),
+            'SYSTEM_LOG_LEVEL_INFO_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'info'),
+            'SYSTEM_LOG_LEVEL_DEBUG_SELECTED' => $this->selected($systemLogPage['filters']['level'], 'debug'),
+            'SYSTEM_LOG_LEVEL_ALL_SELECTED' => $this->selected($systemLogPage['filters']['level'], ''),
+            'SYSTEM_LOG_PAGE_LABEL' => $this->escape($systemLogPage['pagination']['label']),
+            'SYSTEM_LOG_PREVIOUS_URL' => $this->escape($systemLogPage['pagination']['previous_url']),
+            'SYSTEM_LOG_NEXT_URL' => $this->escape($systemLogPage['pagination']['next_url']),
+            'SYSTEM_LOG_PREVIOUS_CLASS' => $systemLogPage['pagination']['previous_class'],
+            'SYSTEM_LOG_NEXT_CLASS' => $systemLogPage['pagination']['next_class'],
+            'ERRORS_EMPTY_CLASS' => $stats['errors_today'] === 0 ? '' : 'admin-hidden',
+            'ERRORS_PRESENT_CLASS' => $stats['errors_today'] > 0 ? '' : 'admin-hidden',
         ];
     }
 
     private function normalizeActivePage(string $activePage): string
     {
-        return in_array($activePage, ['overview', 'visits', 'meals', 'ai'], true) ? $activePage : 'overview';
+        return in_array($activePage, ['overview', 'visits', 'meals', 'ai', 'errors'], true) ? $activePage : 'overview';
     }
 
     private function templateForPage(string $activePage): string
@@ -181,6 +211,7 @@ class AdminDashboardPageRenderer
             'visits' => 'admin/dashboard/pages/user-activity.html',
             'meals' => 'admin/dashboard/pages/meal-activity.html',
             'ai' => 'admin/dashboard/pages/ai-activity.html',
+            'errors' => 'admin/dashboard/pages/system-logs.html',
             default => 'admin/dashboard/pages/overview.html',
         };
     }
@@ -191,6 +222,7 @@ class AdminDashboardPageRenderer
             'visits' => 'Активность пользователей',
             'meals' => 'Активность приёмов',
             'ai' => 'Активность ИИ',
+            'errors' => 'Системные логи',
             default => 'Обзор сервиса',
         };
     }
@@ -201,6 +233,7 @@ class AdminDashboardPageRenderer
             'visits' => 'События входа пользователей в Mini App.',
             'meals' => 'Созданные приёмы пищи и базовая сводка по ним.',
             'ai' => 'AI-запросы, состояние обработки и базовая сводка.',
+            'errors' => 'Ошибки и служебные события приложения без раскрытия чувствительного контекста.',
             default => 'Состояние FoodTracker и активность за сегодня.',
         };
     }
@@ -211,6 +244,7 @@ class AdminDashboardPageRenderer
             'visits' => 'FoodTracker · Активность пользователей',
             'meals' => 'FoodTracker · Активность приёмов',
             'ai' => 'FoodTracker · Активность ИИ',
+            'errors' => 'FoodTracker · Системные логи',
             default => 'FoodTracker · Обзор',
         };
     }
@@ -218,5 +252,10 @@ class AdminDashboardPageRenderer
     private function escape(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function selected(string $actual, string $expected): string
+    {
+        return $actual === $expected ? ' selected' : '';
     }
 }

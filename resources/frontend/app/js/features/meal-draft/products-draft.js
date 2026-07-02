@@ -30,6 +30,89 @@ function collectDraftProducts() {
     });
 }
 
+function getDraftNumericFieldDefinition(input) {
+    if (input.classList.contains('product-weight')) {
+        return { label: 'Вес', required: true, min: 1, max: 5000 };
+    }
+
+    if (input.classList.contains('product-calories')) {
+        return { label: 'Ккал', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-proteins')) {
+        return { label: 'Белки', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-fats')) {
+        return { label: 'Жиры', required: false, min: 0 };
+    }
+
+    if (input.classList.contains('product-carbs')) {
+        return { label: 'Углеводы', required: false, min: 0 };
+    }
+
+    return null;
+}
+
+function validateDraftNumericInput(input, validateRequired = false) {
+    const definition = getDraftNumericFieldDefinition(input);
+    if (!definition) {
+        return null;
+    }
+
+    const rawValue = String(input.value || '').trim();
+    const isPlainNumber = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$/.test(rawValue);
+    let message = '';
+
+    if (input.validity?.badInput || (rawValue !== '' && !isPlainNumber)) {
+        message = `Поле «${definition.label}» должно содержать только число`;
+    } else if (validateRequired && definition.required && rawValue === '') {
+        message = `Укажите числовое значение в поле «${definition.label}»`;
+    } else if (rawValue !== '') {
+        const value = Number(rawValue);
+        if (!Number.isFinite(value)) {
+            message = `Поле «${definition.label}» должно содержать корректное число`;
+        } else if (value < definition.min) {
+            message = `Поле «${definition.label}» должно быть не меньше ${definition.min}`;
+        } else if (definition.max !== undefined && value > definition.max) {
+            message = `Поле «${definition.label}» должно быть не больше ${definition.max}`;
+        }
+    }
+
+    input.classList.toggle('draft-number-invalid', message !== '');
+    input.setAttribute('aria-invalid', String(message !== ''));
+    input.setCustomValidity(message);
+
+    return message || null;
+}
+
+function validateProductCardNumericFields(card, validateRequired = true) {
+    const inputs = card.querySelectorAll('.product-weight, .product-calories, .kbju-field');
+    let firstInvalidInput = null;
+    let firstMessage = null;
+
+    inputs.forEach(input => {
+        const message = validateDraftNumericInput(input, validateRequired);
+        if (message && !firstInvalidInput) {
+            firstInvalidInput = input;
+            firstMessage = message;
+        }
+    });
+
+    return { valid: !firstInvalidInput, input: firstInvalidInput, message: firstMessage };
+}
+
+function validateDraftNumericFields() {
+    for (const card of getDraftProductCards()) {
+        const result = validateProductCardNumericFields(card, true);
+        if (!result.valid) {
+            return result;
+        }
+    }
+
+    return { valid: true, input: null, message: null };
+}
+
 function getDraftScanCount() {
     const products = !editorScreen.classList.contains('hidden')
         ? getDraftProductCards().map(card => ({ scanId: card.dataset.scanId || '' }))

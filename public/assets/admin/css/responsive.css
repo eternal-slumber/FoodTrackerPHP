@@ -120,6 +120,10 @@
     .admin-meals-layout {
         grid-template-columns: 1fr;
     }
+
+    .admin-system-log-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 719px) {
@@ -179,6 +183,18 @@
 
     .admin-activity-scroll {
         max-height: 360px;
+    }
+
+    .admin-system-log-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-system-log-filter-actions {
+        flex-wrap: wrap;
+    }
+
+    .admin-system-log-row {
+        min-width: 0;
     }
 }
 

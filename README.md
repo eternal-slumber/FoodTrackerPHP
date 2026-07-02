@@ -60,6 +60,15 @@ docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app comp
 docker compose --env-file .env.db -f docker/docker-compose.yml --profile admin up -d
 ```
 
+Локально админка открывается через отдельный virtual host, а не через обычный `localhost`:
+
+```text
+http://admin.localhost:8080/<ADMIN_PATH>
+```
+
+Например, если `ADMIN_PATH=/ft-control-7d4c2a`, адрес будет
+`http://admin.localhost:8080/ft-control-7d4c2a`.
+
 Для основного приложения оставляй `ADMIN_ENABLED=false`. В admin-контейнере должны быть
 `ADMIN_ENABLED=true`, `ADMIN_ONLY=true` и отдельный непредсказуемый `ADMIN_PATH`.
 
@@ -191,6 +200,34 @@ Webhook регистрируется на публичный URL:
 ```bash
 curl "https://api.telegram.org/bot<token>/setWebhook?url=https://example.com/telegram/webhook&secret_token=<secret>"
 ```
+
+## Отправка напоминаний о приемах пищи
+
+Перед первым запуском примени миграции:
+
+```bash
+composer migrate
+```
+
+Один ручной цикл отправки запускается командой:
+
+```bash
+composer notifications:dispatch
+```
+
+Команда выбирает наступившие уведомления из `notification_queue`, отправляет их через Telegram и создает следующее напоминание. За один запуск обрабатывается не более 50 записей. Размер пачки можно изменить в `.env` в диапазоне от 1 до 100:
+
+```dotenv
+NOTIFICATION_DISPATCH_BATCH_SIZE=50
+```
+
+На production-сервере достаточно одного задания cron, запускаемого каждые пять минут. Для текущей Docker-конфигурации:
+
+```cron
+*/5 * * * * /usr/bin/docker exec foodtracker-app php /var/www/scripts/dispatch_notifications.php >> /var/log/foodtracker-notifications.log 2>&1
+```
+
+CLI-команда использует файловую блокировку. Если предыдущий запуск еще работает, новый завершится без повторной отправки. Статусы `processing` дополнительно защищены таймаутом в сервисе: зависшая запись снова станет доступна для обработки через 15 минут.
 
 ## Структура БД
 

@@ -52,7 +52,18 @@ async function saveMealDraft() {
         return;
     }
 
+    const numericValidation = validateDraftNumericFields();
+    if (!numericValidation.valid) {
+        tg.showAlert(numericValidation.message);
+        numericValidation.input?.focus();
+        haptic('error');
+        return;
+    }
+
     const products = collectDraftProducts();
+    if (!mealNameEditedByUser) {
+        mealNameInput.value = buildGeneratedMealName(products);
+    }
     const mealName = mealNameInput.value.trim() || buildGeneratedMealName(products);
 
     if (products.some(product => !product.name || product.weight <= 0)) {
@@ -95,6 +106,9 @@ async function saveMealDraft() {
             method: 'POST',
             json: {
                 meal_name: mealName || 'Прием пищи',
+                meal_type: getMealSlotFromDescription(draftMealType.value),
+                eaten_at: new Date().toISOString(),
+                timezone_offset: getTimezoneOffsetMinutes(),
                 products: products.map(({ baseWeight, portions, clientId, ...product }) => product),
                 draft_image_path: mealDraft.draftImagePath,
                 split_products: true
