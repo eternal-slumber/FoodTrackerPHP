@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Repositories\MealProductRepository;
 use App\Repositories\MealRepository;
 use App\Repositories\UserRepository;
+use DateTimeImmutable;
+use DateTimeZone;
 
 class MealService
 {
@@ -18,6 +20,7 @@ class MealService
         private readonly MealRepository $meals,
         private readonly MealProductRepository $mealProducts,
         private readonly MealNutritionService $nutrition,
+        private readonly ReminderScheduleService $reminderSchedule,
         private readonly UploadedFileStorage $storage
     ) {}
 
@@ -82,8 +85,15 @@ class MealService
         ];
     }
 
-    public function saveManualMeal(int $tgId, string $mealName, array $products, ?string $imagePath = null): array
-    {
+    public function saveManualMeal(
+        int $tgId,
+        string $mealName,
+        array $products,
+        ?string $imagePath = null,
+        ?string $mealType = null,
+        ?DateTimeImmutable $eatenAtUtc = null,
+        int $timezoneOffsetMinutes = 0
+    ): array {
         $mealName = substr(trim($mealName), 0, 120);
         if ($mealName === '') {
             $mealName = 'Прием пищи';
@@ -127,6 +137,13 @@ class MealService
             throw $e;
         }
 
+        $this->scheduleReminder(
+            (int)$user->id,
+            $mealType,
+            $eatenAtUtc,
+            $timezoneOffsetMinutes
+        );
+
         return [
             'status' => 'success',
             'today_calories' => $this->users->getTodayCalories((int)$user->id),
@@ -146,10 +163,13 @@ class MealService
         int $tgId,
         string $mealName,
         array $products,
-        ?string $imagePath = null
+        ?string $imagePath = null,
+        ?string $mealType = null,
+        ?DateTimeImmutable $eatenAtUtc = null,
+        int $timezoneOffsetMinutes = 0
     ): array {
         $user = $this->findUser($tgId);
-        $mealType = $this->mealTypePrefix($mealName);
+        $mealTypeLabel = $this->mealTypePrefix($mealName);
         $mainImagePath = $this->storage->sanitizeDraftImagePath($imagePath, $tgId);
         $savedMeals = [];
 
@@ -162,7 +182,7 @@ class MealService
                 $totals = $this->nutrition->sumProducts($processedProducts);
                 $totalWeight = $this->nutrition->sumWeight($processedProducts);
                 $productName = substr(trim((string)($processedProduct['name'] ?? 'Продукт')), 0, 120);
-                $description = substr($mealType . ': ' . $productName, 0, 120);
+                $description = substr($mealTypeLabel . ': ' . $productName, 0, 120);
                 $productImagePath = $index === 0
                     ? $mainImagePath
                     : $this->storage->sanitizeDraftImagePath(
@@ -207,6 +227,13 @@ class MealService
             throw $e;
         }
 
+        $this->scheduleReminder(
+            (int)$user->id,
+            $mealType,
+            $eatenAtUtc,
+            $timezoneOffsetMinutes
+        );
+
         return [
             'status' => 'success',
             'today_calories' => $this->users->getTodayCalories((int)$user->id),
@@ -220,6 +247,32 @@ class MealService
         $prefix = trim(explode(':', $mealName, 2)[0] ?? '');
 
         return $prefix !== '' ? substr($prefix, 0, 40) : 'Прием пищи';
+    }
+
+    private function scheduleReminder(
+        int $userId,
+        ?string $mealType,
+        ?DateTimeImmutable $eatenAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {
+        if (!in_array($mealType, ['breakfast', 'lunch', 'dinner'], true)) {
+            return;
+        }
+
+        try {
+            $this->reminderSchedule->scheduleFromMeal(
+                $userId,
+                $mealType,
+                $eatenAtUtc ?? new DateTimeImmutable('now', new DateTimeZone('UTC')),
+                $timezoneOffsetMinutes
+            );
+        } catch (\Throwable $error) {
+            error_log(sprintf(
+                'Meal reminder scheduling failed for user %d: %s',
+                $userId,
+                $error->getMessage()
+            ));
+        }
     }
 
     public function getMealDetails(int $mealId, int $tgId): array

@@ -10,7 +10,6 @@ use App\AI\AIChatClientInterface;
 use App\AI\AIJsonResponseParser;
 use App\AI\DailyNutritionInsightAIService;
 use App\AI\MealPhotoAnalysisAIService;
-use App\AI\MealRecommendationAIService;
 use App\AI\OpenAICompatibleChatClient;
 use App\AI\ProductNutritionAIService;
 use App\Core\Database;
@@ -19,6 +18,7 @@ use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Repositories\MealRepository;
 use App\Repositories\MealProductRepository;
 use App\Repositories\DailyNutritionInsightRepository;
+use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Services\CalorieCalculatorService;
 use App\Services\AiQuotaService;
@@ -32,7 +32,9 @@ use App\Services\MealRecommendationService;
 use App\Services\MealService;
 use App\Services\NutritionCalculatorService;
 use App\Services\NutritionStreakService;
+use App\Services\NotificationDispatchService;
 use App\Services\RateLimiterService;
+use App\Services\ReminderScheduleService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
@@ -89,15 +91,17 @@ $definitions = [
     DailyNutritionInsightService::class => autowire(),
     AIJsonResponseParser::class => autowire(),
     MealPhotoAnalysisAIService::class => autowire(),
-    MealRecommendationAIService::class => autowire(),
     ProductNutritionAIService::class => autowire(),
     UserRepository::class => autowire(),
     MealRepository::class => autowire(),
     MealProductRepository::class => autowire(),
     DailyNutritionInsightRepository::class => autowire(),
+    ReminderScheduleRepository::class => autowire(),
     RateLimiterService::class => autowire(),
+    ReminderScheduleService::class => autowire(),
     NutritionCalculatorService::class => autowire(),
     NutritionStreakService::class => autowire(),
+    NotificationDispatchService::class => autowire(),
     MealNutritionService::class => autowire(),
     MealRecommendationService::class => autowire(),
     MealDraftService::class => autowire(),

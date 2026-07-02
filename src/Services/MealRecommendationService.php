@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\AI\MealRecommendationAIService;
 use DateTimeImmutable;
-use DateTimeZone;
 
 class MealRecommendationService
 {
     public function __construct(
-        private readonly DailyNutritionSummaryService $dailySummary,
-        private readonly MealRecommendationAIService $recommendationAi
+        private readonly DailyNutritionInsightService $dailyInsight
     ) {}
 
     public function recommendForTelegramUser(
@@ -20,129 +17,52 @@ class MealRecommendationService
         int $timezoneOffsetMinutes = 0,
         ?DateTimeImmutable $nowUtc = null
     ): ?string {
-        $summary = $this->dailySummary->getForTelegramUser($telegramId, $timezoneOffsetMinutes);
-        if ($summary === null) {
+        try {
+            $result = $this->dailyInsight->refreshForTelegramUser(
+                $telegramId,
+                $timezoneOffsetMinutes,
+                $nowUtc
+            );
+        } catch (\InvalidArgumentException) {
             return null;
         }
 
-        $context = $this->buildContext($summary, $timezoneOffsetMinutes, $nowUtc);
-        $recommendation = $this->recommendationAi->recommend($context);
-
-        return $this->hasSuggestions($recommendation)
-            ? $this->formatRecommendation($recommendation)
-            : $this->fallbackRecommendation($context);
-    }
-
-    public function currentMealType(int $timezoneOffsetMinutes = 0, ?DateTimeImmutable $nowUtc = null): string
-    {
-        $nowUtc ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
-        $localTime = $nowUtc->modify(sprintf('%+d minutes', -$timezoneOffsetMinutes));
-        $hour = (int)$localTime->format('G');
-
-        return match (true) {
-            $hour >= 5 && $hour < 11 => 'завтрак',
-            $hour >= 11 && $hour < 17 => 'обед',
-            default => 'ужин',
-        };
-    }
-
-    private function buildContext(
-        array $summary,
-        int $timezoneOffsetMinutes,
-        ?DateTimeImmutable $nowUtc
-    ): array {
-        $todayMacros = $summary['today_macros'];
-        $macroGoals = $summary['macro_goals'];
-
-        return [
-            'meal_type' => $this->currentMealType($timezoneOffsetMinutes, $nowUtc),
-            'calories' => [
-                'consumed' => (int)$summary['today_sum'],
-                'goal' => (int)$summary['daily_goal'],
-                'remaining' => (int)$summary['remaining_calories'],
-            ],
-            'macros' => [
-                'proteins' => $this->macroContext($todayMacros['proteins'], $macroGoals['proteins_goal']),
-                'fats' => $this->macroContext($todayMacros['fats'], $macroGoals['fats_goal']),
-                'carbs' => $this->macroContext($todayMacros['carbs'], $macroGoals['carbs_goal']),
-            ],
-        ];
-    }
-
-    private function macroContext(float|int $current, float|int $goal): array
-    {
-        return [
-            'consumed' => round((float)$current, 1),
-            'goal' => round((float)$goal, 1),
-            'remaining' => round((float)$goal - (float)$current, 1),
-        ];
-    }
-
-    private function hasSuggestions(array $recommendation): bool
-    {
-        return !empty($recommendation['suggestions']) && is_array($recommendation['suggestions']);
-    }
-
-    private function formatRecommendation(array $recommendation): string
-    {
-        $mealType = trim((string)($recommendation['meal_type'] ?? 'прием пищи'));
-        $summary = trim((string)($recommendation['summary'] ?? ''));
-        $lines = ['Что можно съесть сейчас (' . $mealType . '):'];
-
-        if ($summary !== '') {
-            $lines[] = '';
-            $lines[] = $summary;
+        if (($result['state'] ?? null) === 'empty') {
+            return 'Добавь первый прием пищи в приложении — после него я проанализирую дневной баланс и предложу конкретные блюда.';
         }
 
-        foreach (array_values($recommendation['suggestions']) as $index => $suggestion) {
-            if (!is_array($suggestion)) {
-                continue;
-            }
+        $insight = is_array($result['insight'] ?? null) ? $result['insight'] : [];
+        $nextMeal = is_array($insight['next_meal'] ?? null) ? $insight['next_meal'] : [];
 
+        return $this->formatRecommendation($nextMeal);
+    }
+
+    private function formatRecommendation(array $nextMeal): string
+    {
+        $mealType = trim((string)($nextMeal['type'] ?? 'следующий прием'));
+        $advice = trim((string)($nextMeal['advice'] ?? ''));
+        $targetCalories = max(0, (int)($nextMeal['target_calories'] ?? 0));
+        $foods = array_values(array_filter(
+            (array)($nextMeal['foods'] ?? []),
+            static fn(mixed $food): bool => is_string($food) && trim($food) !== ''
+        ));
+        $lines = ['Что можно съесть сейчас (' . $mealType . '):'];
+
+        if ($advice !== '') {
             $lines[] = '';
-            $lines[] = ($index + 1) . '. ' . (string)($suggestion['title'] ?? 'Блюдо');
-            $lines[] = 'Порция: ' . (string)($suggestion['portion'] ?? 'порция по аппетиту');
-            $lines[] = 'Почему: ' . (string)($suggestion['reason'] ?? 'подходит под текущие дневные показатели');
-            $lines[] = sprintf(
-                'КБЖУ: %d ккал, Б %s г, Ж %s г, У %s г',
-                (int)($suggestion['calories'] ?? 0),
-                $this->formatNumber((float)($suggestion['proteins'] ?? 0)),
-                $this->formatNumber((float)($suggestion['fats'] ?? 0)),
-                $this->formatNumber((float)($suggestion['carbs'] ?? 0))
-            );
+            $lines[] = $advice;
+        }
+
+        foreach (array_slice($foods, 0, 3) as $index => $food) {
+            $lines[] = '';
+            $lines[] = ($index + 1) . '. ' . trim($food);
+        }
+
+        if ($targetCalories > 0) {
+            $lines[] = '';
+            $lines[] = "Ориентир на прием: около {$targetCalories} ккал.";
         }
 
         return implode("\n", $lines);
-    }
-
-    private function formatNumber(float $value): string
-    {
-        $rounded = round($value, 1);
-
-        if (abs($rounded - round($rounded)) < 0.01) {
-            return (string)(int)round($rounded);
-        }
-
-        return number_format($rounded, 1, '.', '');
-    }
-
-    private function fallbackRecommendation(array $context): string
-    {
-        $mealType = $context['meal_type'];
-        $remainingCalories = (int)$context['calories']['remaining'];
-        $proteinRemaining = (float)$context['macros']['proteins']['remaining'];
-
-        if ($remainingCalories < 250) {
-            return "Сейчас лучше выбрать легкий {$mealType}: творог 150 г или греческий йогурт без сахара.\n"
-                . "Так ты добавишь белка без сильного перебора по калориям.";
-        }
-
-        if ($proteinRemaining > 25) {
-            return "Для приема пищи подойдет куриная грудка или рыба с овощами и небольшим гарниром.\n"
-                . "Это поможет добрать белок и удержать калории под контролем.";
-        }
-
-        return "Для приема пищи подойдет сбалансированная тарелка: белок, овощи и умеренная порция крупы.\n"
-            . "Выбирай порцию примерно на " . max(250, min(700, $remainingCalories)) . ' ккал.';
     }
 }

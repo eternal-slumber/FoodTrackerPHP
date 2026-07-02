@@ -3616,6 +3616,9 @@ async function saveMealDraft() {
             method: 'POST',
             json: {
                 meal_name: mealName || 'Прием пищи',
+                meal_type: getMealSlotFromDescription(draftMealType.value),
+                eaten_at: new Date().toISOString(),
+                timezone_offset: getTimezoneOffsetMinutes(),
                 products: products.map(({ baseWeight, portions, clientId, ...product }) => product),
                 draft_image_path: mealDraft.draftImagePath,
                 split_products: true

@@ -201,6 +201,34 @@ Webhook регистрируется на публичный URL:
 curl "https://api.telegram.org/bot<token>/setWebhook?url=https://example.com/telegram/webhook&secret_token=<secret>"
 ```
 
+## Отправка напоминаний о приемах пищи
+
+Перед первым запуском примени миграции:
+
+```bash
+composer migrate
+```
+
+Один ручной цикл отправки запускается командой:
+
+```bash
+composer notifications:dispatch
+```
+
+Команда выбирает наступившие уведомления из `notification_queue`, отправляет их через Telegram и создает следующее напоминание. За один запуск обрабатывается не более 50 записей. Размер пачки можно изменить в `.env` в диапазоне от 1 до 100:
+
+```dotenv
+NOTIFICATION_DISPATCH_BATCH_SIZE=50
+```
+
+На production-сервере достаточно одного задания cron, запускаемого каждые пять минут. Для текущей Docker-конфигурации:
+
+```cron
+*/5 * * * * /usr/bin/docker exec foodtracker-app php /var/www/scripts/dispatch_notifications.php >> /var/log/foodtracker-notifications.log 2>&1
+```
+
+CLI-команда использует файловую блокировку. Если предыдущий запуск еще работает, новый завершится без повторной отправки. Статусы `processing` дополнительно защищены таймаутом в сервисе: зависшая запись снова станет доступна для обработки через 15 минут.
+
 ## Структура БД
 
 Базовая схема лежит в `schema.sql`, точечные изменения — в `database/migrations/`.

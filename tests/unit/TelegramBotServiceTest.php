@@ -208,10 +208,28 @@ class TelegramBotServiceTest extends TestCase
         $this->assertSame('Съешь омлет с овощами.', $client->editedMessages[0]['text']);
     }
 
+    public function testRecommendationFailureReplacesThinkingMessageWithError(): void
+    {
+        $client = new FakeTelegramBotClient();
+        $service = $this->createService($client, null, new \RuntimeException('AI unavailable'));
+
+        $service->handleUpdate([
+            'message' => [
+                'chat' => ['id' => 55],
+                'from' => ['id' => 100001],
+                'text' => '/eat',
+            ],
+        ]);
+
+        $this->assertSame('Думаю...', $client->messages[0]['text']);
+        $this->assertSame(1, $client->editedMessages[0]['message_id']);
+        $this->assertStringContainsString('Попробуй еще раз', $client->editedMessages[0]['text']);
+    }
+
     private function createService(
         FakeTelegramBotClient $client,
         ?array $summary,
-        ?string $recommendation = null
+        string|\Throwable|null $recommendation = null
     ): TelegramBotService
     {
         $rateLimiter = new FakeTelegramRateLimiterService();
@@ -278,13 +296,17 @@ class FakeTelegramDailySummaryService extends DailyNutritionSummaryService
 
 class FakeTelegramMealRecommendationService extends MealRecommendationService
 {
-    public function __construct(private readonly ?string $recommendation) {}
+    public function __construct(private readonly string|\Throwable|null $recommendation) {}
 
     public function recommendForTelegramUser(
         int $telegramId,
         int $timezoneOffsetMinutes = 0,
         ?\DateTimeImmutable $nowUtc = null
     ): ?string {
+        if ($this->recommendation instanceof \Throwable) {
+            throw $this->recommendation;
+        }
+
         return $this->recommendation;
     }
 }

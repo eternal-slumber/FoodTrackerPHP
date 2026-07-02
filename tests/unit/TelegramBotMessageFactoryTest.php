@@ -39,4 +39,13 @@ class TelegramBotMessageFactoryTest extends TestCase
             $message
         );
     }
+
+    public function testFormatsMealReminderMessage(): void
+    {
+        $factory = new TelegramBotMessageFactory();
+
+        $this->assertStringContainsString('завтрак', $factory->mealReminder('breakfast'));
+        $this->assertStringContainsString('обед', $factory->mealReminder('lunch'));
+        $this->assertStringContainsString('ужин', $factory->mealReminder('dinner'));
+    }
 }

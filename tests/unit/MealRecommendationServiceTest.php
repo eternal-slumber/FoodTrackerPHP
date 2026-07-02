@@ -4,95 +4,78 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use App\AI\MealRecommendationAIService;
-use App\Services\DailyNutritionSummaryService;
+use App\Services\DailyNutritionInsightService;
 use App\Services\MealRecommendationService;
 use DateTimeImmutable;
-use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 class MealRecommendationServiceTest extends TestCase
 {
-    public function testDetectsCurrentMealTypeWithTimezoneOffset(): void
+    public function testFormatsRecommendationFromSharedDailyInsight(): void
     {
-        $service = new MealRecommendationService(
-            new FakeRecommendationDailySummaryService(null),
-            new FakeRecommendationAiService()
-        );
-
-        $this->assertSame(
-            'обед',
-            $service->currentMealType(
-                -180,
-                new DateTimeImmutable('2026-05-22 09:30:00', new DateTimeZone('UTC'))
-            )
-        );
-    }
-
-    public function testBuildsRecommendationFromDailySummary(): void
-    {
-        $ai = new FakeRecommendationAiService([
-            'meal_type' => 'ужин',
-            'summary' => 'Нужно добрать белок без лишнего жира.',
-            'suggestions' => [[
-                'title' => 'Курица с рисом и овощами',
-                'portion' => 'куриная грудка 150 г, рис 120 г, овощи 200 г',
-                'reason' => 'поможет добрать белок и углеводы',
-                'calories' => 520,
-                'proteins' => 42.0,
-                'fats' => 8.0,
-                'carbs' => 62.0,
-            ]],
+        $insight = new FakeRecommendationDailyInsightService([
+            'state' => 'ready',
+            'insight' => [
+                'next_meal' => [
+                    'type' => 'ужин',
+                    'advice' => 'Нужно добрать белок без лишнего жира.',
+                    'target_calories' => 520,
+                    'foods' => [
+                        'Курица с рисом и овощами',
+                        'Треска с гречкой и салатом',
+                        'Омлет с творогом и томатами',
+                    ],
+                ],
+            ],
         ]);
-        $service = new MealRecommendationService(
-            new FakeRecommendationDailySummaryService([
-                'daily_goal' => 2200,
-                'today_sum' => 1450,
-                'remaining_calories' => 750,
-                'today_macros' => ['proteins' => 82.0, 'fats' => 78.0, 'carbs' => 160.0],
-                'macro_goals' => ['proteins_goal' => 130, 'fats_goal' => 65, 'carbs_goal' => 250],
-            ]),
-            $ai
-        );
+        $service = new MealRecommendationService($insight);
+        $now = new DateTimeImmutable('2026-05-22 15:00:00');
 
-        $recommendation = $service->recommendForTelegramUser(
-            100001,
-            -180,
-            new DateTimeImmutable('2026-05-22 15:00:00', new DateTimeZone('UTC'))
-        );
+        $recommendation = $service->recommendForTelegramUser(100001, -180, $now);
 
         $this->assertStringContainsString('Что можно съесть сейчас (ужин):', (string)$recommendation);
-        $this->assertStringContainsString('Курица с рисом и овощами', (string)$recommendation);
-        $this->assertStringContainsString('КБЖУ: 520 ккал, Б 42 г, Ж 8 г, У 62 г', (string)$recommendation);
-        $this->assertSame('ужин', $ai->lastContext['meal_type']);
-        $this->assertSame(48.0, $ai->lastContext['macros']['proteins']['remaining']);
-        $this->assertSame(-13.0, $ai->lastContext['macros']['fats']['remaining']);
+        $this->assertStringContainsString('Нужно добрать белок без лишнего жира.', (string)$recommendation);
+        $this->assertStringContainsString('1. Курица с рисом и овощами', (string)$recommendation);
+        $this->assertStringContainsString('Ориентир на прием: около 520 ккал.', (string)$recommendation);
+        $this->assertSame([100001, -180, $now], $insight->lastArguments);
+    }
+
+    public function testExplainsWhenThereAreNoMealsYet(): void
+    {
+        $service = new MealRecommendationService(
+            new FakeRecommendationDailyInsightService(['state' => 'empty', 'insight' => null])
+        );
+
+        $recommendation = $service->recommendForTelegramUser(100001);
+
+        $this->assertStringContainsString('Добавь первый прием пищи', (string)$recommendation);
+    }
+
+    public function testReturnsNullForUnknownUser(): void
+    {
+        $service = new MealRecommendationService(new FakeRecommendationDailyInsightService(null));
+
+        $this->assertNull($service->recommendForTelegramUser(999999));
     }
 }
 
-class FakeRecommendationDailySummaryService extends DailyNutritionSummaryService
+class FakeRecommendationDailyInsightService extends DailyNutritionInsightService
 {
-    public function __construct(private readonly ?array $summary) {}
+    public array $lastArguments = [];
 
-    public function getForTelegramUser(
+    public function __construct(private readonly ?array $result) {}
+
+    public function refreshForTelegramUser(
         int $telegramId,
         int $timezoneOffsetMinutes = 0,
         ?DateTimeImmutable $nowUtc = null
-    ): ?array {
-        return $this->summary;
-    }
-}
+    ): array {
+        $this->lastArguments = [$telegramId, $timezoneOffsetMinutes, $nowUtc];
 
-class FakeRecommendationAiService extends MealRecommendationAIService
-{
-    public array $lastContext = [];
+        if ($this->result === null) {
+            throw new \InvalidArgumentException('User not found');
+        }
 
-    public function __construct(private readonly array $recommendation = []) {}
-
-    public function recommend(array $context): array
-    {
-        $this->lastContext = $context;
-
-        return $this->recommendation;
+        return $this->result;
     }
 }

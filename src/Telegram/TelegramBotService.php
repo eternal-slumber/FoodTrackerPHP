@@ -161,10 +161,21 @@ class TelegramBotService
             $thinkingMessageId = isset($thinkingMessage['message_id']) ? (int)$thinkingMessage['message_id'] : 0;
         }
 
-        $recommendation = $this->mealRecommendation->recommendForTelegramUser(
-            $telegramId,
-            $this->config->defaultTimezoneOffsetMinutes
-        );
+        try {
+            $recommendation = $this->mealRecommendation->recommendForTelegramUser(
+                $telegramId,
+                $this->config->defaultTimezoneOffsetMinutes
+            );
+        } catch (\Throwable $error) {
+            error_log('Telegram meal recommendation failed: ' . $error->getMessage());
+            $this->sendOrEditMessage(
+                $chatId,
+                $thinkingMessageId,
+                'Не удалось обновить рекомендацию. Попробуй еще раз немного позже.',
+                $this->messages->recommendationInlineKeyboard($this->config->miniAppUrl)
+            );
+            return;
+        }
 
         if ($recommendation === null) {
             $this->sendOrEditMessage(

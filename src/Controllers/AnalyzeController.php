@@ -21,6 +21,8 @@ use App\Services\RateLimiterService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
 use App\Validators\AnalyzeValidator;
+use DateTimeImmutable;
+use DateTimeZone;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -314,6 +316,7 @@ class AnalyzeController
             $products = $data['products'] ?? [];
             $draftImagePath = isset($data['draft_image_path']) ? (string)$data['draft_image_path'] : null;
             $splitProducts = ($data['split_products'] ?? false) === true;
+            [$mealType, $eatenAtUtc, $timezoneOffsetMinutes] = $this->mealReminderData($data);
 
             if (empty($products)) {
                 throw new ValidationException('Список продуктов пуст');
@@ -351,8 +354,24 @@ class AnalyzeController
             }
 
             $result = $splitProducts
-                ? $this->mealAnalysisService->saveManualMealsAsCards($tgId, $mealName, $products, $draftImagePath)
-                : $this->mealAnalysisService->saveManualMeal($tgId, $mealName, $products, $draftImagePath);
+                ? $this->mealAnalysisService->saveManualMealsAsCards(
+                    $tgId,
+                    $mealName,
+                    $products,
+                    $draftImagePath,
+                    $mealType,
+                    $eatenAtUtc,
+                    $timezoneOffsetMinutes
+                )
+                : $this->mealAnalysisService->saveManualMeal(
+                    $tgId,
+                    $mealName,
+                    $products,
+                    $draftImagePath,
+                    $mealType,
+                    $eatenAtUtc,
+                    $timezoneOffsetMinutes
+                );
             $mealId = $result['meal']['id'] ?? null;
             $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_created', [
                 'meal_id' => is_numeric($mealId) ? (int)$mealId : null,
@@ -375,6 +394,54 @@ class AnalyzeController
 
             return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
         }
+    }
+
+    /** @return array{0:?string, 1:?DateTimeImmutable, 2:int} */
+    private function mealReminderData(array $data): array
+    {
+        $mealType = isset($data['meal_type']) ? strtolower(trim((string)$data['meal_type'])) : null;
+        if ($mealType === '') {
+            $mealType = null;
+        }
+
+        if ($mealType !== null && !in_array($mealType, ['breakfast', 'lunch', 'dinner', 'snacks'], true)) {
+            throw new ValidationException('Некорректный тип приема пищи');
+        }
+
+        $timezoneOffset = $data['timezone_offset'] ?? 0;
+        if (!is_int($timezoneOffset) && !(is_string($timezoneOffset) && preg_match('/^-?\d+$/', $timezoneOffset))) {
+            throw new ValidationException('Некорректный часовой пояс');
+        }
+
+        $timezoneOffset = (int)$timezoneOffset;
+        if ($timezoneOffset < -840 || $timezoneOffset > 840) {
+            throw new ValidationException('Некорректный часовой пояс');
+        }
+
+        if ($mealType === null) {
+            return [null, null, $timezoneOffset];
+        }
+
+        $eatenAt = trim((string)($data['eaten_at'] ?? ''));
+        if ($eatenAt === '') {
+            return [
+                $mealType,
+                new DateTimeImmutable('now', new DateTimeZone('UTC')),
+                $timezoneOffset,
+            ];
+        }
+
+        if (preg_match('/(?:Z|[+-]\d{2}:\d{2})$/', $eatenAt) !== 1) {
+            throw new ValidationException('Некорректное время приема пищи');
+        }
+
+        try {
+            $parsed = new DateTimeImmutable($eatenAt);
+        } catch (\Exception) {
+            throw new ValidationException('Некорректное время приема пищи');
+        }
+
+        return [$mealType, $parsed->setTimezone(new DateTimeZone('UTC')), $timezoneOffset];
     }
 
     #[RouteAttribute('/api/meals/{id}/image', 'GET')]

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTOs\AnalyzeRequestDTO;
+use DateTimeImmutable;
 
 class MealAnalysisService
 {
@@ -41,14 +42,44 @@ class MealAnalysisService
         return $this->meals->deleteMeal($mealId, $tgId);
     }
 
-    public function saveManualMeal(int $tgId, string $mealName, array $products, ?string $imagePath = null): array
-    {
-        return $this->meals->saveManualMeal($tgId, $mealName, $products, $imagePath);
+    public function saveManualMeal(
+        int $tgId,
+        string $mealName,
+        array $products,
+        ?string $imagePath = null,
+        ?string $mealType = null,
+        ?DateTimeImmutable $eatenAtUtc = null,
+        int $timezoneOffsetMinutes = 0
+    ): array {
+        return $this->meals->saveManualMeal(
+            $tgId,
+            $mealName,
+            $products,
+            $imagePath,
+            $mealType,
+            $eatenAtUtc,
+            $timezoneOffsetMinutes
+        );
     }
 
-    public function saveManualMealsAsCards(int $tgId, string $mealName, array $products, ?string $imagePath = null): array
-    {
-        return $this->meals->saveManualMealsAsCards($tgId, $mealName, $products, $imagePath);
+    public function saveManualMealsAsCards(
+        int $tgId,
+        string $mealName,
+        array $products,
+        ?string $imagePath = null,
+        ?string $mealType = null,
+        ?DateTimeImmutable $eatenAtUtc = null,
+        int $timezoneOffsetMinutes = 0
+    ): array {
+        return $this->meals->saveManualMealsAsCards(
+            $tgId,
+            $mealName,
+            $products,
+            $imagePath,
+            $mealType,
+            $eatenAtUtc,
+            $timezoneOffsetMinutes
+        );
     }
 
     public function getMealImage(int $mealId, int $tgId): array

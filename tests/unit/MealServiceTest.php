@@ -9,12 +9,16 @@ use App\Models\MealProduct;
 use App\Models\User;
 use App\Repositories\MealProductRepository;
 use App\Repositories\MealRepository;
+use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Services\CalorieCalculatorService;
 use App\Services\MealNutritionService;
 use App\Services\MealService;
 use App\Services\NutritionCalculatorService;
+use App\Services\ReminderScheduleService;
 use App\Services\UploadedFileStorage;
+use DateTimeImmutable;
+use DateTimeZone;
 use PHPUnit\Framework\TestCase;
 
 class MealServiceTest extends TestCase
@@ -116,6 +120,32 @@ class MealServiceTest extends TestCase
         $this->assertSame('user_100001/rice.jpg', $mealRepository->savedMeals[1]->imagePath);
         $this->assertCount(2, $productRepository->savedProductBatches);
         $this->assertCount(2, $result['meals']);
+    }
+
+    public function testSaveManualMealsAsCardsSchedulesOneReminderAfterCommit(): void
+    {
+        $mealRepository = new FakeMealServiceMealRepository();
+        $reminderRepository = new FakeMealServiceReminderRepository();
+        $service = $this->createService(
+            $mealRepository,
+            new FakeMealServiceProductRepository(),
+            reminderSchedule: new ReminderScheduleService($reminderRepository)
+        );
+
+        $service->saveManualMealsAsCards(
+            100001,
+            'Обед: Суп',
+            [[
+                'name' => 'Суп',
+                'weight' => 300,
+                'kbju' => ['calories' => 80, 'proteins' => 4, 'fats' => 3, 'carbs' => 10],
+            ]],
+            mealType: 'lunch',
+            eatenAtUtc: new DateTimeImmutable('2026-07-01 12:00:00', new DateTimeZone('UTC'))
+        );
+
+        $this->assertSame(['begin', 'save', 'commit'], $mealRepository->events);
+        $this->assertSame(['begin', 'setting', 'notification', 'commit'], $reminderRepository->events);
     }
 
     public function testGetMealDetailsReturnsProducts(): void
@@ -233,7 +263,8 @@ class MealServiceTest extends TestCase
     private function createService(
         FakeMealServiceMealRepository $mealRepository,
         FakeMealServiceProductRepository $productRepository,
-        ?UploadedFileStorage $storage = null
+        ?UploadedFileStorage $storage = null,
+        ?ReminderScheduleService $reminderSchedule = null
     ): MealService {
         return new MealService(
             new FakeMealServiceUserRepository(),
@@ -242,6 +273,7 @@ class MealServiceTest extends TestCase
             new MealNutritionService(
                 new NutritionCalculatorService()
             ),
+            $reminderSchedule ?? new ReminderScheduleService(new FakeMealServiceReminderRepository()),
             $storage ?? new UploadedFileStorage('/tmp/')
         );
     }
@@ -334,5 +366,50 @@ class FakeMealServiceProductRepository extends MealProductRepository
     public function findByMealId(int $mealId): array
     {
         return $this->products;
+    }
+}
+
+class FakeMealServiceReminderRepository extends ReminderScheduleRepository
+{
+    /** @var list<string> */
+    public array $events = [];
+
+    public function __construct() {}
+
+    public function beginTransaction(): void
+    {
+        $this->events[] = 'begin';
+    }
+
+    public function commit(): void
+    {
+        $this->events[] = 'commit';
+    }
+
+    public function rollBack(): void
+    {
+        $this->events[] = 'rollback';
+    }
+
+    public function upsertSetting(
+        int $userId,
+        string $mealType,
+        string $reminderTime,
+        int $remindBeforeMinutes,
+        int $timezoneOffsetMinutes,
+        string $lastMealAtUtc
+    ): void {
+        $this->events[] = 'setting';
+    }
+
+    public function upsertNotification(
+        int $userId,
+        string $notificationType,
+        string $mealType,
+        string $localDate,
+        string $sendAtUtc,
+        array $payload = []
+    ): void {
+        $this->events[] = 'notification';
     }
 }
