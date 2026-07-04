@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     activity_level VARCHAR(20) DEFAULT 'medium',
     goal VARCHAR(20) DEFAULT 'maintenance',
     daily_goal INT,
+    meal_reminders_enabled TINYINT(1) NOT NULL DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_tg_id (tg_id)

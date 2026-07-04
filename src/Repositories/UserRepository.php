@@ -91,6 +91,28 @@ class UserRepository
         return $stmt->rowCount();
     }
 
+    public function findMealRemindersEnabledByTelegramId(int $telegramId): ?bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT meal_reminders_enabled FROM users WHERE tg_id = :telegram_id LIMIT 1'
+        );
+        $stmt->execute(['telegram_id' => $telegramId]);
+        $value = $stmt->fetchColumn();
+
+        return $value === false ? null : (bool)$value;
+    }
+
+    public function setMealRemindersEnabled(int $userId, bool $enabled): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE users SET meal_reminders_enabled = :enabled WHERE id = :user_id'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'enabled' => $enabled ? 1 : 0,
+        ]);
+    }
+
     public function getTodayCalories(int $userId, int $timezoneOffsetMinutes = 0): int
     {
         return $this->getTodayNutrition($userId, $timezoneOffsetMinutes)['calories'];

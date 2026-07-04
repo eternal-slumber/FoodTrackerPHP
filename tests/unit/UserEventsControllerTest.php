@@ -11,12 +11,14 @@ use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Models\User;
 use App\Repositories\UserRepository;
 use App\Repositories\MealRepository;
+use App\Repositories\ReminderScheduleRepository;
 use App\Services\DailyNutritionSummaryService;
 use App\Services\DailyNutritionInsightService;
 use App\Services\AiQuotaService;
 use App\Services\MacroGoalCalculationService;
 use App\Services\NutritionStreakService;
 use App\Services\RateLimiterService;
+use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
@@ -48,6 +50,10 @@ class UserEventsControllerTest extends TestCase
                 devAuthEnabled: true,
                 devUserId: 100001,
                 devUsername: 'real_user'
+            ),
+            new ReminderPreferenceService(
+                new FakeUserEventsUserRepository(),
+                new FakeUserEventsReminderRepository()
             )
         );
         $request = (new ServerRequestFactory())
@@ -87,6 +93,10 @@ class UserEventsControllerTest extends TestCase
                 devAuthEnabled: true,
                 devUserId: 200002,
                 devUsername: 'dev_user'
+            ),
+            new ReminderPreferenceService(
+                new FakeUserEventsUserRepository(),
+                new FakeUserEventsReminderRepository()
             )
         );
         $request = (new ServerRequestFactory())
@@ -125,6 +135,10 @@ class UserEventsControllerTest extends TestCase
                 devAuthEnabled: false,
                 devUserId: 0,
                 devUsername: ''
+            ),
+            new ReminderPreferenceService(
+                new FakeUserEventsUserRepository(),
+                new FakeUserEventsReminderRepository()
             )
         );
         $request = (new ServerRequestFactory())
@@ -236,6 +250,11 @@ class FakeUserEventsDailyNutritionInsightService extends DailyNutritionInsightSe
 }
 
 class FakeUserEventsMealRepository extends MealRepository
+{
+    public function __construct() {}
+}
+
+class FakeUserEventsReminderRepository extends ReminderScheduleRepository
 {
     public function __construct() {}
 }

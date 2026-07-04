@@ -35,6 +35,7 @@ use App\Services\NutritionStreakService;
 use App\Services\NotificationDispatchService;
 use App\Services\RateLimiterService;
 use App\Services\ReminderScheduleService;
+use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
@@ -99,6 +100,7 @@ $definitions = [
     ReminderScheduleRepository::class => autowire(),
     RateLimiterService::class => autowire(),
     ReminderScheduleService::class => autowire(),
+    ReminderPreferenceService::class => autowire(),
     NutritionCalculatorService::class => autowire(),
     NutritionStreakService::class => autowire(),
     NotificationDispatchService::class => autowire(),
