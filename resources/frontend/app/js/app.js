@@ -122,6 +122,7 @@ function showScreen(screenName) {
 
     if (screenName === 'settings' && userData) {
         loadAiUsage();
+        loadReminderSettings();
     }
 }
 

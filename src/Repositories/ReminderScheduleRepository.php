@@ -38,16 +38,18 @@ class ReminderScheduleRepository
         $stmt = $this->db->prepare(
             'INSERT INTO user_meal_reminder_settings (
                 user_id, meal_type, reminder_time, remind_before_minutes,
-                timezone_offset, last_meal_at
+                timezone_offset, last_meal_at, enabled
              ) VALUES (
                 :user_id, :meal_type, :reminder_time, :remind_before_minutes,
-                :timezone_offset, :last_meal_at
+                :timezone_offset, :last_meal_at,
+                (SELECT meal_reminders_enabled FROM users WHERE id = :preference_user_id)
              )
              ON DUPLICATE KEY UPDATE
                 reminder_time = VALUES(reminder_time),
                 remind_before_minutes = VALUES(remind_before_minutes),
                 timezone_offset = VALUES(timezone_offset),
-                last_meal_at = VALUES(last_meal_at)'
+                last_meal_at = VALUES(last_meal_at),
+                enabled = VALUES(enabled)'
         );
         $stmt->execute([
             'user_id' => $userId,
@@ -56,7 +58,31 @@ class ReminderScheduleRepository
             'remind_before_minutes' => $remindBeforeMinutes,
             'timezone_offset' => $timezoneOffsetMinutes,
             'last_meal_at' => $lastMealAtUtc,
+            'preference_user_id' => $userId,
         ]);
+    }
+
+    public function setUserSettingsEnabled(int $userId, bool $enabled): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE user_meal_reminder_settings SET enabled = :enabled WHERE user_id = :user_id'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'enabled' => $enabled ? 1 : 0,
+        ]);
+    }
+
+    public function skipPendingForUser(int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE notification_queue
+             SET status = 'skipped', last_error = NULL
+             WHERE user_id = :user_id
+               AND notification_type = 'meal_reminder'
+               AND status = 'pending'"
+        );
+        $stmt->execute(['user_id' => $userId]);
     }
 
     public function upsertNotification(
@@ -113,6 +139,7 @@ class ReminderScheduleRepository
                     queue.send_at,
                     queue.attempts,
                     users.tg_id AS telegram_id,
+                    users.meal_reminders_enabled AS user_reminders_enabled,
                     settings.reminder_time,
                     settings.remind_before_minutes,
                     settings.timezone_offset,

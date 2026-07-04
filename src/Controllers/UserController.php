@@ -18,6 +18,7 @@ use App\Services\AiQuotaService;
 use App\Services\MacroGoalCalculationService;
 use App\Services\NutritionStreakService;
 use App\Services\RateLimiterService;
+use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
@@ -40,7 +41,8 @@ class UserController
         private readonly NutritionStreakService $nutritionStreak,
         private readonly UploadedFileStorage $storage,
         private readonly TelemetryService $telemetry,
-        private readonly TelegramAuthConfig $telegramAuthConfig
+        private readonly TelegramAuthConfig $telegramAuthConfig,
+        private readonly ReminderPreferenceService $reminderPreferences
     ) {}
 
     private function currentUser(Request $request): CurrentUser
@@ -52,6 +54,57 @@ class UserController
         }
 
         return $currentUser;
+    }
+
+    #[RouteAttribute('/api/reminder-settings', 'GET')]
+    public function reminderSettings(Request $request, Response $response): Response
+    {
+        $currentUser = $this->currentUser($request);
+        $enabled = $this->reminderPreferences->getForTelegramUser($currentUser->telegramId);
+
+        if ($enabled === null) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => ['enabled' => $enabled],
+        ]);
+    }
+
+    #[RouteAttribute('/api/reminder-settings', 'POST')]
+    public function updateReminderSettings(Request $request, Response $response): Response
+    {
+        $currentUser = $this->currentUser($request);
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+
+        if (!array_key_exists('enabled', $data) || !is_bool($data['enabled'])) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => 'Поле enabled должно быть boolean',
+            ], 400);
+        }
+
+        try {
+            $enabled = $this->reminderPreferences->updateForTelegramUser(
+                $currentUser->telegramId,
+                $data['enabled']
+            );
+        } catch (\InvalidArgumentException $error) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => $error->getMessage(),
+            ], 404);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => ['enabled' => $enabled],
+        ]);
     }
 
     #[RouteAttribute('/api/events/app-opened', 'POST')]

@@ -63,6 +63,22 @@ class NotificationDispatchServiceTest extends TestCase
         $this->assertSame([], $client->messages);
     }
 
+    public function testDisabledUserPreferenceIsSkippedWithoutNextNotification(): void
+    {
+        $notification = $this->notification();
+        $notification['user_reminders_enabled'] = 0;
+        $repository = new FakeNotificationDispatchRepository([$notification]);
+        $client = new FakeNotificationTelegramClient();
+        $service = $this->createService($repository, $client, mealExists: false);
+
+        $result = $service->dispatchDue($this->now());
+
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame(0, $result['next_scheduled']);
+        $this->assertSame(['skipped:10'], $repository->events);
+        $this->assertSame([], $client->messages);
+    }
+
     public function testTelegramFailureMarksNotificationFailedAndKeepsScheduleAlive(): void
     {
         $repository = new FakeNotificationDispatchRepository([$this->notification()]);
@@ -106,6 +122,7 @@ class NotificationDispatchServiceTest extends TestCase
             'reminder_time' => '10:00:00',
             'remind_before_minutes' => 15,
             'timezone_offset' => -180,
+            'user_reminders_enabled' => 1,
             'setting_enabled' => 1,
         ];
     }

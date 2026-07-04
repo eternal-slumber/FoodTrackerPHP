@@ -92,6 +92,7 @@ final class NotificationDispatchService
 
         return ($notification['notification_type'] ?? null) === self::NOTIFICATION_TYPE
             && isset(self::MEAL_DESCRIPTION_PREFIXES[$mealType])
+            && (int)($notification['user_reminders_enabled'] ?? 0) === 1
             && (int)($notification['setting_enabled'] ?? 0) === 1
             && trim((string)($notification['reminder_time'] ?? '')) !== '';
     }

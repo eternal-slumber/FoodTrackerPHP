@@ -118,6 +118,41 @@ function formatAiQuotaReset(seconds) {
 
 document.getElementById('btn-retry-ai-usage')?.addEventListener('click', loadAiUsage);
 
+const mealRemindersToggle = document.getElementById('profile-meal-reminders-toggle');
+
+async function loadReminderSettings() {
+    if (!mealRemindersToggle) return;
+
+    mealRemindersToggle.disabled = true;
+
+    try {
+        const result = await apiRequestJson('/api/reminder-settings');
+        mealRemindersToggle.checked = Boolean(result.data?.enabled);
+    } catch (error) {
+        tg.showAlert(error?.message || 'Не удалось загрузить настройки уведомлений');
+    } finally {
+        mealRemindersToggle.disabled = false;
+    }
+}
+
+mealRemindersToggle?.addEventListener('change', async () => {
+    const previousValue = !mealRemindersToggle.checked;
+    mealRemindersToggle.disabled = true;
+
+    try {
+        const result = await apiRequestJson('/api/reminder-settings', {
+            method: 'POST',
+            json: { enabled: mealRemindersToggle.checked }
+        });
+        mealRemindersToggle.checked = Boolean(result.data?.enabled);
+    } catch (error) {
+        mealRemindersToggle.checked = previousValue;
+        tg.showAlert(error?.message || 'Не удалось сохранить настройки уведомлений');
+    } finally {
+        mealRemindersToggle.disabled = false;
+    }
+});
+
 function formatProfileUserMeta(data) {
     const age = data.age ? `${data.age} лет` : null;
     const gender = data.gender === 'male' ? 'мужчина' : data.gender === 'female' ? 'женщина' : null;
