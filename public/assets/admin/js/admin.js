@@ -93,6 +93,40 @@
         });
     }
 
+    function initAdminMobileNavigation() {
+        const toggleButton = document.querySelector('[data-admin-mobile-nav-toggle]');
+        const toggleIcon = document.querySelector('[data-admin-mobile-nav-icon]');
+        const navigation = document.getElementById('admin-navigation');
+
+        if (!toggleButton || !navigation) {
+            return;
+        }
+
+        function setOpen(isOpen) {
+            document.body.classList.toggle('admin-mobile-nav-open', isOpen);
+            toggleButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+
+            if (toggleIcon) {
+                toggleIcon.textContent = isOpen ? '×' : '☰';
+            }
+        }
+
+        toggleButton.addEventListener('click', () => {
+            setOpen(!document.body.classList.contains('admin-mobile-nav-open'));
+        });
+
+        navigation.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => setOpen(false));
+        });
+
+        window.matchMedia('(min-width: 980px)').addEventListener('change', event => {
+            if (event.matches) {
+                setOpen(false);
+            }
+        });
+    }
+
     initAdminLogout();
     initAdminSidebar();
+    initAdminMobileNavigation();
 })();

@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="/assets/admin/css/admin.css?v=20260620-pages">
-    <link rel="stylesheet" href="/assets/admin/css/dashboard.css?v=20260620-pages">
-    <link rel="stylesheet" href="/assets/admin/css/responsive.css?v=20260620-pages">
+    <link rel="stylesheet" href="/assets/admin/css/admin.css?v=20260704-mobile-menu-account">
+    <link rel="stylesheet" href="/assets/admin/css/dashboard.css?v=20260704-mobile-menu-account">
+    <link rel="stylesheet" href="/assets/admin/css/responsive.css?v=20260704-mobile-menu-account">
     <title>{{DOCUMENT_TITLE}}</title>
 </head>
 <body class="admin-body admin-dashboard-page">
@@ -20,9 +20,13 @@
                 <button class="admin-sidebar-toggle" type="button" data-admin-sidebar-toggle aria-label="Свернуть меню" aria-expanded="true">
                     <span data-admin-sidebar-toggle-icon>&lt;</span>
                 </button>
+                <button class="admin-mobile-nav-toggle" type="button" data-admin-mobile-nav-toggle aria-controls="admin-navigation" aria-expanded="false">
+                    <span aria-hidden="true" data-admin-mobile-nav-icon>☰</span>
+                    <span>Меню</span>
+                </button>
             </div>
 
-            <nav class="admin-nav" aria-label="Навигация">
+            <nav class="admin-nav" id="admin-navigation" aria-label="Навигация">
                 <a class="admin-nav-link {{OVERVIEW_ACTIVE_CLASS}}" href="{{ADMIN_DASHBOARD_PATH}}" title="Главная">
                     <span class="admin-nav-short" aria-hidden="true">Г</span>
                     <span class="admin-nav-label">Главная</span>
@@ -72,11 +76,11 @@
     <script id="admin-meal-hourly-chart-data" type="application/json">{{MEAL_HOURLY_CHART_JSON}}</script>
     <script id="admin-ai-requests-chart-data" type="application/json">{{AI_REQUEST_CHART_JSON}}</script>
     <script id="admin-ai-types-chart-data" type="application/json">{{AI_REQUEST_TYPES_JSON}}</script>
-    <script src="/assets/admin/js/admin.js?v=20260630-csrf"></script>
+    <script src="/assets/admin/js/admin.js?v=20260704-mobile-nav"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <script src="/assets/admin/js/activity.js?v=20260620-pages"></script>
     <script src="/assets/admin/js/overview.js?v=20260620-pages"></script>
     <script src="/assets/admin/js/meal-activity.js?v=20260620-pages"></script>
-    <script src="/assets/admin/js/ai-activity.js?v=20260620-pages"></script>
+    <script src="/assets/admin/js/ai-activity.js?v=20260704-ai-types"></script>
 </body>
 </html>

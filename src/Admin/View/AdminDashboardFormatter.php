@@ -153,7 +153,7 @@ class AdminDashboardFormatter
     }
 
     /**
-     * @param array{scan:int, autocomplete:int, other:int} $typeStats
+     * @param array{scan:int, autocomplete:int, recommendation:int, other:int} $typeStats
      * @return list<array{label:string, value:int}>
      */
     public function formatAiRequestTypeChart(array $typeStats): array
@@ -161,7 +161,8 @@ class AdminDashboardFormatter
         return [
             ['label' => 'Сканирования', 'value' => $typeStats['scan']],
             ['label' => 'Автозаполнения', 'value' => $typeStats['autocomplete']],
-            ['label' => 'Прочее', 'value' => $typeStats['other']],
+            ['label' => 'AI-рекомендации', 'value' => $typeStats['recommendation']],
+            ['label' => 'Другие операции', 'value' => $typeStats['other']],
         ];
     }
 
@@ -228,8 +229,9 @@ class AdminDashboardFormatter
         return match ($requestType) {
             'analyze' => 'Сканирование',
             'getProductNutrients' => 'Автозаполнение',
-            'recommendMeal' => 'Рекомендация',
-            default => $requestType,
+            'recommendMeal' => 'Рекомендация приёма пищи',
+            'dailyNutritionInsight' => 'Рекомендация по рациону',
+            default => 'Другая операция: ' . $requestType,
         };
     }
 

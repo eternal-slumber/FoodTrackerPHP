@@ -3,8 +3,7 @@
             <div class="main-content">
                 <header class="home-header">
                     <div class="home-greeting">
-                        <span id="home-greeting-text" class="home-greeting-text">Добрый день</span>
-                        <span class="home-greeting-comma">, </span><strong id="home-greeting-name" class="home-greeting-name">пользователь</strong>
+                        <span id="home-greeting-text" class="home-greeting-text">Добрый день</span><span class="home-greeting-comma">, </span><strong id="home-greeting-name" class="home-greeting-name">пользователь</strong>
                     </div>
                     <button id="btn-home-profile" class="profile-button" type="button" aria-label="Профиль">
                         <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
@@ -17,7 +16,7 @@
                 <section id="home-progress-card" class="progress-card daily-nutrition-card" data-state="loading" aria-label="Дневная сводка" aria-busy="true">
                     <div class="progress-header">
                         <div class="daily-summary-title">
-                            <h1>Сегодня</h1>
+                            <h1 class="section-title">Сегодня</h1>
                             <p id="user-body-params" class="summary-body-params">Параметры не указаны</p>
                         </div>
                         <div class="completion-chip" aria-label="Заполнение дня">
@@ -118,7 +117,7 @@
                         </svg>
                     </span>
                     <div class="ai-recommendation-content">
-                        <h2>AI-рекомендация</h2>
+                        <h2 class="recommendation-title">AI-рекомендация</h2>
                         <p id="home-ai-insight-short">Загружаем рекомендацию...</p>
                     </div>
                     <span class="ai-recommendation-arrow" aria-hidden="true">
@@ -129,7 +128,7 @@
                 </section>
 
                 <section class="meals-section" aria-label="Сегодняшние приемы">
-                    <h2 class="meals-section-title">Сегодняшние приемы</h2>
+                    <h2 class="meals-section-title section-title">Сегодняшние приемы</h2>
                     <div id="history-list" class="meal-accordion" aria-live="polite">
                         <p class="home-meals-loading">Загружаем приёмы...</p>
                     </div>

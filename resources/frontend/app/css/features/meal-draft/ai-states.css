@@ -1,90 +1,128 @@
 /* Main product AI states */
 #bottom-sheet .meal-photo-preview img {
-    transition: filter .2s ease, opacity .2s ease, transform .2s ease;
+    transition: filter .35s ease, transform .35s ease;
 }
 
-#bottom-sheet .meal-photo-preview.is-processing img {
-    filter: blur(9px);
-    opacity: .58;
-    transform: scale(1.04);
+#bottom-sheet .meal-photo-preview.is-scanning img {
+    filter: blur(3px) brightness(.72);
+    transform: scale(1.025);
 }
 
-#bottom-sheet .meal-photo-preview.is-processing .photo-processing-overlay {
+#bottom-sheet .scan-overlay {
     align-items: center;
-    background: transparent;
-    color: #ffffff;
+    background: rgba(5, 10, 5, .25);
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    opacity: 0;
+    padding: 24px;
+    pointer-events: none;
+    position: absolute;
+    transition: opacity .35s ease, visibility .35s ease;
+    visibility: hidden;
+    z-index: 3;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+#bottom-sheet .meal-photo-preview.is-scanning .scan-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+#bottom-sheet .scan-content {
+    align-items: center;
+    color: #f3f5ec;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    justify-content: center;
+    width: min(260px, calc(100vw - 48px));
 }
 
-#bottom-sheet .photo-processing-overlay > strong {
-    font-size: 14px;
-    font-weight: 750;
-    letter-spacing: .01em;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, .7);
-}
-
-#bottom-sheet .ai-photo-scan-animation {
-    display: block;
-    height: 82px;
-    margin: 18px 0 8px;
+#bottom-sheet .scan-visual {
+    flex: 0 0 112px;
+    height: 112px;
     position: relative;
-    width: 116px;
+    width: 160px;
 }
 
-#bottom-sheet .ai-photo-scan-orbit {
-    animation: aiPhotoMagnifierOrbit 2s linear infinite;
+#bottom-sheet .scan-icon-path {
+    animation: scanIconSearchPathFallback 3.2s linear infinite;
     display: block;
-    height: 44px;
-    left: 36px;
+    height: 60px;
+    left: 50px;
     position: absolute;
-    top: 19px;
-    transform-origin: 50% 50%;
-    visibility: visible;
-    width: 44px;
+    top: 26px;
+    transform: translate3d(0, -24px, 0);
+    width: 60px;
+    will-change: transform;
     z-index: 2;
 }
 
-#bottom-sheet .ai-photo-scan-magnifier {
-    animation: aiPhotoMagnifierCounterRotate 2s linear infinite;
-    color: #ffffff;
+#bottom-sheet .scan-icon {
+    animation: scanIconTilt 1.6s ease-in-out infinite alternate;
+    color: #f3f5ec;
     display: block;
-    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, .65));
+    filter: drop-shadow(0 3px 9px rgba(2, 8, 3, .32));
     height: 100%;
-    opacity: 1;
-    overflow: visible;
-    transform: translateX(11px) rotate(-12deg);
+    transform: rotate(-5deg);
     transform-origin: 50% 50%;
     width: 100%;
 }
 
-#bottom-sheet .ai-photo-scan-star {
-    animation: aiPhotoStarPulse 1.35s ease-in-out infinite;
-    color: #ffffff;
-    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, .55));
-    height: 17px;
-    opacity: 0;
+#bottom-sheet .scan-particles {
+    inset: 0;
+    pointer-events: none;
     position: absolute;
-    width: 17px;
-    z-index: 3;
 }
 
-#bottom-sheet .ai-photo-scan-star.star-one {
-    left: 4px;
-    top: 15px;
+#bottom-sheet .scan-particle {
+    background: #8fd35a;
+    border-radius: 999px;
+    display: block;
+    height: var(--particle-size);
+    left: 50%;
+    opacity: 0;
+    padding: 0;
+    position: absolute;
+    top: 50%;
+    transform: translate3d(var(--particle-x), var(--particle-y), 0) scale(.55);
+    will-change: opacity, transform;
+    width: var(--particle-size);
+    z-index: 1;
 }
 
-#bottom-sheet .ai-photo-scan-star.star-two {
-    animation-delay: -.45s;
-    right: 4px;
-    top: 10px;
+#bottom-sheet .scan-particle.is-active {
+    animation: scanParticleFloat var(--particle-life) ease-out forwards;
 }
 
-#bottom-sheet .ai-photo-scan-star.star-three {
-    animation-delay: -.9s;
-    bottom: 2px;
-    left: 20px;
+#bottom-sheet .scan-particle.is-lime {
+    background: #d6f78a;
+}
+
+#bottom-sheet .scan-particle.is-light {
+    background: rgba(255, 255, 255, .85);
+}
+
+#bottom-sheet .scan-title {
+    color: inherit;
+    font-size: 15px;
+    font-weight: 750;
+    letter-spacing: .005em;
+    line-height: 1.2;
+    margin: 0;
+    text-align: center;
+    text-shadow: 0 2px 9px rgba(2, 8, 3, .38);
+}
+
+#bottom-sheet .scan-status {
+    color: color-mix(in srgb, currentColor 68%, transparent);
+    font-size: 11px;
+    font-weight: 550;
+    line-height: 1.3;
+    margin: 5px 0 0;
+    text-align: center;
+    text-shadow: 0 2px 8px rgba(2, 8, 3, .34);
 }
 
 #bottom-sheet .meal-draft-card .draft-main-product-form.main-product-scan-loading > * {
@@ -148,31 +186,79 @@
     background: color-mix(in srgb, #0b100c 91%, transparent);
 }
 
-@keyframes aiPhotoMagnifierOrbit {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes scanIconSearchPathFallback {
+    0%, 100% { transform: translate3d(0, -24px, 0); }
+    6.25% { transform: translate3d(9px, -22px, 0); }
+    12.5% { transform: translate3d(17px, -17px, 0); }
+    18.75% { transform: translate3d(22px, -9px, 0); }
+    25% { transform: translate3d(24px, 0, 0); }
+    31.25% { transform: translate3d(22px, 9px, 0); }
+    37.5% { transform: translate3d(17px, 17px, 0); }
+    43.75% { transform: translate3d(9px, 22px, 0); }
+    50% { transform: translate3d(0, 24px, 0); }
+    56.25% { transform: translate3d(-9px, 22px, 0); }
+    62.5% { transform: translate3d(-17px, 17px, 0); }
+    68.75% { transform: translate3d(-22px, 9px, 0); }
+    75% { transform: translate3d(-24px, 0, 0); }
+    81.25% { transform: translate3d(-22px, -9px, 0); }
+    87.5% { transform: translate3d(-17px, -17px, 0); }
+    93.75% { transform: translate3d(-9px, -22px, 0); }
 }
 
-@keyframes aiPhotoMagnifierCounterRotate {
-    from { transform: translateX(11px) rotate(-12deg); }
-    to { transform: translateX(11px) rotate(-372deg); }
+@keyframes scanIconMotionPath {
+    from { offset-distance: 0%; }
+    to { offset-distance: 100%; }
 }
 
-@keyframes aiPhotoStarPulse {
-    0%, 28%, 100% { opacity: 0; }
-    45%, 68% { opacity: 1; }
+@keyframes scanIconTilt {
+    from { transform: rotate(-5deg); }
+    to { transform: rotate(7deg); }
+}
+
+@keyframes scanParticleFloat {
+    0% { opacity: 0; }
+    24% { opacity: .9; }
+    72% { opacity: .65; }
+    100% {
+        opacity: 0;
+        transform: translate3d(
+            calc(var(--particle-x) + var(--particle-drift-x)),
+            calc(var(--particle-y) + var(--particle-drift-y)),
+            0
+        ) scale(1);
+    }
+}
+
+@supports (offset-path: path("M 80 32 A 24 24 0 1 1 80 80 A 24 24 0 1 1 80 32")) {
+    #bottom-sheet .scan-icon-path {
+        animation-name: scanIconMotionPath;
+        left: 0;
+        offset-anchor: 50% 50%;
+        offset-distance: 0%;
+        offset-path: path("M 80 32 A 24 24 0 1 1 80 80 A 24 24 0 1 1 80 32");
+        offset-rotate: 0deg;
+        top: 0;
+        transform: none;
+    }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    #bottom-sheet .ai-photo-scan-orbit,
-    #bottom-sheet .ai-photo-scan-magnifier,
-    #bottom-sheet .ai-photo-scan-star,
+    #bottom-sheet .meal-photo-preview img,
+    #bottom-sheet .scan-overlay {
+        transition: none;
+    }
+
+    #bottom-sheet .scan-icon-path,
+    #bottom-sheet .scan-icon,
     #bottom-sheet .draft-main-product-loading-spinner {
         animation: none;
     }
 
-    #bottom-sheet .ai-photo-scan-star {
-        opacity: .75;
+    #bottom-sheet .scan-icon-path {
+        left: 50px;
+        offset-path: none;
+        top: 26px;
+        transform: none;
     }
 
     #bottom-sheet .draft-save-button.is-analyzing::after {

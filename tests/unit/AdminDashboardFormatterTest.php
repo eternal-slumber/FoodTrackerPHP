@@ -44,4 +44,34 @@ class AdminDashboardFormatterTest extends TestCase
         $this->assertStringNotContainsString('<script>', $html);
         $this->assertStringContainsString('&lt;script&gt;', $html);
     }
+
+    public function testExplainsRecommendationAndUnknownAiRequestTypes(): void
+    {
+        $formatter = new AdminDashboardFormatter();
+        $requests = [
+            [
+                'id' => 1,
+                'user_id' => 1,
+                'request_type' => 'dailyNutritionInsight',
+                'status' => 'success',
+                'response_time_ms' => 400,
+                'error_message' => null,
+                'created_at' => '2026-06-30 10:00:00',
+            ],
+            [
+                'id' => 2,
+                'user_id' => 1,
+                'request_type' => 'customFutureOperation',
+                'status' => 'success',
+                'response_time_ms' => 300,
+                'error_message' => null,
+                'created_at' => '2026-06-30 10:05:00',
+            ],
+        ];
+
+        $html = $formatter->renderAiRequestRows($requests);
+
+        $this->assertStringContainsString('Рекомендация по рациону', $html);
+        $this->assertStringContainsString('Другая операция: customFutureOperation', $html);
+    }
 }

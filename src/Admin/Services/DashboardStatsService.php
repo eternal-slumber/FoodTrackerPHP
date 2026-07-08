@@ -173,7 +173,7 @@ class DashboardStatsService
     }
 
     /**
-     * @return array{scan:int, autocomplete:int, other:int}
+     * @return array{scan:int, autocomplete:int, recommendation:int, other:int}
      */
     public function aiRequestTypeStats(int $weekOffset = 0, ?DateTimeImmutable $now = null): array
     {
@@ -193,6 +193,7 @@ class DashboardStatsService
         $stats = [
             'scan' => 0,
             'autocomplete' => 0,
+            'recommendation' => 0,
             'other' => 0,
         ];
 
@@ -511,6 +512,14 @@ class DashboardStatsService
 
         if (str_contains($normalizedType, 'nutrient') || str_contains($normalizedType, 'auto')) {
             return 'autocomplete';
+        }
+
+        if (
+            str_contains($normalizedType, 'recommend')
+            || str_contains($normalizedType, 'insight')
+            || str_contains($normalizedType, 'advice')
+        ) {
+            return 'recommendation';
         }
 
         return 'other';
