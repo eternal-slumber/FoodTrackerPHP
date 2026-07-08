@@ -109,7 +109,8 @@
                     backgroundColor: [
                         'rgba(74, 163, 255, 0.72)',
                         'rgba(88, 214, 141, 0.72)',
-                        'rgba(246, 196, 83, 0.72)'
+                        'rgba(246, 196, 83, 0.72)',
+                        'rgba(181, 142, 255, 0.72)'
                     ],
                     borderColor: 'rgba(9, 13, 20, 1)',
                     borderWidth: 2

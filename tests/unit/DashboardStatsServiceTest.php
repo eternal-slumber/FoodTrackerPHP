@@ -154,11 +154,40 @@ class DashboardStatsServiceTest extends TestCase
         $this->assertSame(3, $chart[1]['requests']);
         $this->assertSame('17.06', $chart[2]['label']);
         $this->assertSame(1, $chart[2]['requests']);
-        $this->assertSame(['scan' => 2, 'autocomplete' => 1, 'other' => 1], $typeStats);
+        $this->assertSame([
+            'scan' => 2,
+            'autocomplete' => 1,
+            'recommendation' => 1,
+            'other' => 0,
+        ], $typeStats);
         $this->assertSame(3, $summary['total']);
         $this->assertSame(0.8, $summary['weekly_average']);
         $this->assertSame(4, $requests[0]['id']);
         $this->assertSame(3, $requests[1]['id']);
+    }
+
+    public function testSeparatesRecommendationsFromUnknownAiOperations(): void
+    {
+        $db = $this->createDatabase();
+        $service = new DashboardStatsService(new FakeDashboardStatsDatabaseConnection($db));
+
+        $db->exec(
+            "INSERT INTO ai_requests (request_type, status, created_at) VALUES
+             ('dailyNutritionInsight', 'success', '2026-06-16 08:00:00'),
+             ('customFutureOperation', 'success', '2026-06-16 09:00:00')"
+        );
+
+        $typeStats = $service->aiRequestTypeStats(
+            0,
+            new DateTimeImmutable('2026-06-16 12:00:00', new DateTimeZone('UTC'))
+        );
+
+        $this->assertSame([
+            'scan' => 0,
+            'autocomplete' => 0,
+            'recommendation' => 1,
+            'other' => 1,
+        ], $typeStats);
     }
 
     public function testBuildsMealActivityForSelectedMoscowDayAndUser(): void

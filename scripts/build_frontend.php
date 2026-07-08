@@ -6,6 +6,7 @@ const FRONTEND_ROOT = __DIR__ . '/../resources/frontend';
 const PUBLIC_ROOT = __DIR__ . '/../public/assets/app/dist';
 
 $cssSources = [
+    'app/css/base/fonts.css',
     'app/css/base/tokens.css',
     'app/css/base/reset.css',
     'app/css/base/layout.css',
@@ -56,6 +57,7 @@ $jsSources = [
     'app/js/features/history/support.js',
     'app/js/features/meal-draft/state.js',
     'app/js/features/meal-draft/sheet.js',
+    'app/js/features/meal-draft/scan-animation.js',
     'app/js/features/meal-draft/photo.js',
     'app/js/features/meal-draft/products-render.js',
     'app/js/features/meal-draft/products-draft.js',

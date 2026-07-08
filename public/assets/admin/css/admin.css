@@ -256,6 +256,10 @@ body.admin-body {
     border-color: rgba(74, 163, 255, 0.26);
 }
 
+.admin-mobile-nav-toggle {
+    display: none;
+}
+
 .admin-dashboard-page.admin-sidebar-collapsed .admin-sidebar-toggle {
     margin-left: 0;
     order: -1;

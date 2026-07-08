@@ -26,7 +26,7 @@ class AdminDashboardPageRenderer
      * @param array{label:string, previous_url:string, next_url:string, current_url:string, next_class:string, next_aria_disabled:string} $dayNavigation
      * @param list<array{id:int, user_id:?int, request_type:string, status:string, response_time_ms:?int, error_message:?string, created_at:string}> $aiRequests
      * @param list<array{date:string, label:string, requests:int}> $aiRequestsChart
-     * @param array{scan:int, autocomplete:int, other:int} $aiRequestTypeStats
+     * @param array{scan:int, autocomplete:int, recommendation:int, other:int} $aiRequestTypeStats
      * @param array{label:string, previous_url:string, next_url:string, current_url:string, next_class:string, next_aria_disabled:string} $weekNavigation
      */
     public function render(
@@ -92,7 +92,7 @@ class AdminDashboardPageRenderer
      * @param array{label:string, previous_url:string, next_url:string, current_url:string, next_class:string, next_aria_disabled:string} $dayNavigation
      * @param list<array{id:int, user_id:?int, request_type:string, status:string, response_time_ms:?int, error_message:?string, created_at:string}> $aiRequests
      * @param list<array{date:string, label:string, requests:int}> $aiRequestsChart
-     * @param array{scan:int, autocomplete:int, other:int} $aiRequestTypeStats
+     * @param array{scan:int, autocomplete:int, recommendation:int, other:int} $aiRequestTypeStats
      * @param array{label:string, previous_url:string, next_url:string, current_url:string, next_class:string, next_aria_disabled:string} $weekNavigation
      * @return array<string, string>
      */
@@ -160,9 +160,10 @@ class AdminDashboardPageRenderer
             'AI_REQUEST_CHART_JSON' => $this->formatter->jsonForHtml($aiRequestsChart),
             'AI_REQUEST_TYPES_JSON' => $this->formatter->jsonForHtml($this->formatter->formatAiRequestTypeChart($aiRequestTypeStats)),
             'AI_REQUESTS_SELECTED_WEEK' => (string)array_sum($aiRequestTypeStats),
-            'AI_SCAN_REQUESTS_TODAY' => (string)$aiRequestTypeStats['scan'],
-            'AI_AUTOCOMPLETE_REQUESTS_TODAY' => (string)$aiRequestTypeStats['autocomplete'],
-            'AI_OTHER_REQUESTS_TODAY' => (string)$aiRequestTypeStats['other'],
+            'AI_SCAN_REQUESTS_SELECTED_WEEK' => (string)$aiRequestTypeStats['scan'],
+            'AI_AUTOCOMPLETE_REQUESTS_SELECTED_WEEK' => (string)$aiRequestTypeStats['autocomplete'],
+            'AI_RECOMMENDATION_REQUESTS_SELECTED_WEEK' => (string)$aiRequestTypeStats['recommendation'],
+            'AI_OTHER_REQUESTS_SELECTED_WEEK' => (string)$aiRequestTypeStats['other'],
             'WEEK_LABEL' => $this->escape($weekNavigation['label']),
             'PREVIOUS_WEEK_URL' => $this->escape($weekNavigation['previous_url']),
             'NEXT_WEEK_URL' => $this->escape($weekNavigation['next_url']),

@@ -167,7 +167,7 @@ function updateAnalyzePhotoButton() {
     btnDraftPhotoSelect.disabled = aiBusy;
     btnChangePhoto.setAttribute('aria-hidden', String(isAnalyzingPhoto));
     photoActions?.classList.toggle('is-analyzing', isAnalyzingPhoto);
-    draftPhotoPreview?.classList.toggle('is-processing', isAnalyzingPhoto);
+    setPhotoScanAnimation(isAnalyzingPhoto);
     setMainProductScanState(isAnalyzingPhoto);
 }
 

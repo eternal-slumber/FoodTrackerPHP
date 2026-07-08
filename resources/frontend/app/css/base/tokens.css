@@ -1,4 +1,6 @@
 :root {
+    --font-display: "Lora", Georgia, "Times New Roman", serif;
+    --font-ui: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     --bg-color: #ffffff;
     --text-color: #222222;
     --hint-color: #8e8e93;

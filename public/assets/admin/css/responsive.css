@@ -63,20 +63,37 @@
         display: none;
     }
 
-    .admin-nav {
-        display: flex;
+    .admin-mobile-nav-toggle {
+        align-items: center;
+        background: var(--admin-surface-2);
+        border: 1px solid var(--admin-border);
+        border-radius: 8px;
+        color: var(--admin-text);
+        display: inline-flex;
         gap: 8px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        padding-bottom: 2px;
+        margin-left: auto;
+        min-height: 40px;
+        padding: 0 12px;
+    }
+
+    .admin-nav {
+        border-top: 1px solid var(--admin-border);
+        display: none;
+        gap: 8px;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        overflow: visible;
+        padding-top: 14px;
+    }
+
+    .admin-mobile-nav-open .admin-nav {
+        display: grid;
     }
 
     .admin-nav-link,
     .admin-dashboard-page.admin-sidebar-collapsed .admin-nav-link {
-        flex: 0 0 auto;
         justify-content: flex-start;
         padding: 0 14px;
-        width: auto;
+        width: 100%;
     }
 
     .admin-nav-short,
@@ -86,12 +103,29 @@
 
     .admin-sidebar-footer,
     .admin-dashboard-page.admin-sidebar-collapsed .admin-sidebar-footer {
+        display: none;
+    }
+
+    .admin-mobile-nav-open .admin-sidebar-footer,
+    .admin-mobile-nav-open.admin-sidebar-collapsed .admin-sidebar-footer {
         align-items: center;
         border-top: 1px solid var(--admin-border);
         display: flex;
         gap: 12px;
         justify-content: space-between;
-        padding-top: 12px;
+        margin-top: 0;
+        min-width: 0;
+        padding-top: 14px;
+    }
+
+    .admin-mobile-nav-open .admin-sidebar-footer .admin-account-meta {
+        flex: 1 1 auto;
+    }
+
+    .admin-mobile-nav-open .admin-sidebar-footer .admin-logout-button {
+        flex: 0 0 auto;
+        min-height: 42px;
+        width: auto;
     }
 
     .admin-dashboard-page.admin-sidebar-collapsed .admin-logout-button-muted {
@@ -160,8 +194,23 @@
         flex-direction: column;
     }
 
-    .admin-chart-controls {
+    .admin-chart-controls,
+    .admin-meal-chart-actions {
+        align-items: stretch;
+        flex-direction: column;
         justify-content: flex-start;
+        width: 100%;
+    }
+
+    .admin-filter-form-inline {
+        align-items: stretch;
+        display: grid;
+        width: 100%;
+    }
+
+    .admin-filter-form-inline select {
+        min-width: 0;
+        width: 100%;
     }
 
     .admin-chart-shell {
@@ -176,6 +225,47 @@
     .admin-placeholder-row {
         grid-template-columns: 1fr;
     }
+
+    .admin-activity-scroll .admin-placeholder-row {
+        gap: 8px;
+    }
+
+    .admin-activity-scroll .admin-placeholder-row span {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: minmax(88px, 0.7fr) minmax(0, 1.3fr);
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .admin-activity-scroll .admin-placeholder-row span::before {
+        color: var(--admin-text);
+        content: "";
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+
+    .admin-activity-scroll .admin-placeholder-row span:nth-child(1)::before { content: "Время"; }
+    .admin-activity-scroll .admin-placeholder-row span:nth-child(2)::before { content: "Пользователь"; }
+    .admin-activity-scroll .admin-placeholder-row span:nth-child(3)::before { content: "Событие"; }
+    .admin-activity-scroll .admin-placeholder-row span:nth-child(4)::before { content: "Источник"; }
+
+    .admin-activity-scroll .admin-ai-request-row span:nth-child(2)::before { content: "Тип"; }
+    .admin-activity-scroll .admin-ai-request-row span:nth-child(3)::before { content: "Статус"; }
+    .admin-activity-scroll .admin-ai-request-row span:nth-child(4)::before { content: "Ответ"; }
+    .admin-activity-scroll .admin-ai-request-row span:nth-child(5)::before { content: "Ошибка"; }
+
+    .admin-activity-scroll .admin-meal-row span:nth-child(2)::before { content: "Пользователь"; }
+    .admin-activity-scroll .admin-meal-row span:nth-child(3)::before { content: "Описание"; }
+    .admin-activity-scroll .admin-meal-row span:nth-child(4)::before { content: "Калории"; }
+    .admin-activity-scroll .admin-meal-row span:nth-child(5)::before { content: "КБЖУ / вес"; }
+
+    .admin-activity-scroll .admin-system-log-row span:nth-child(2)::before { content: "Уровень"; }
+    .admin-activity-scroll .admin-system-log-row span:nth-child(3)::before { content: "Канал"; }
+    .admin-activity-scroll .admin-system-log-row span:nth-child(4)::before { content: "Сообщение"; }
+    .admin-activity-scroll .admin-system-log-row span:nth-child(5)::before { content: "Исключение"; }
+    .admin-activity-scroll .admin-system-log-row span:nth-child(6)::before { content: "Trace ID"; }
 
     .admin-placeholder-head {
         display: none;
@@ -217,9 +307,14 @@
         font-size: 12px;
     }
 
-    .admin-sidebar-footer {
+    .admin-mobile-nav-open .admin-sidebar-footer,
+    .admin-mobile-nav-open.admin-sidebar-collapsed .admin-sidebar-footer {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .admin-mobile-nav-open .admin-sidebar-footer .admin-logout-button {
+        width: 100%;
     }
 
     .admin-stat-grid,
@@ -241,6 +336,35 @@
     .admin-segmented-control,
     .admin-week-nav {
         width: 100%;
+    }
+
+    .admin-segmented-control {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    .admin-week-nav {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .admin-week-nav .admin-chart-toggle {
+        grid-column: 1 / -1;
+    }
+
+    .admin-nav-link,
+    .admin-dashboard-page.admin-sidebar-collapsed .admin-nav-link {
+        font-size: 12px;
+        min-height: 40px;
+        padding: 0 11px;
+    }
+
+    .admin-nav {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-activity-scroll .admin-placeholder-row span {
+        grid-template-columns: 82px minmax(0, 1fr);
     }
 
     .admin-chart-toggle {

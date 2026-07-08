@@ -229,6 +229,7 @@ class AdminDashboardController
             'ai_request_type_stats' => [
                 'scan' => 0,
                 'autocomplete' => 0,
+                'recommendation' => 0,
                 'other' => 0,
             ],
             'week_navigation' => $this->weekNavigation($activePage, $weekOffset),
