@@ -13,6 +13,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\MealRepository;
 use App\Repositories\ReminderScheduleRepository;
 use App\Services\DailyNutritionSummaryService;
+use App\Services\EveningSummaryScheduleService;
 use App\Services\DailyNutritionInsightService;
 use App\Services\AiQuotaService;
 use App\Services\MacroGoalCalculationService;
@@ -21,6 +22,7 @@ use App\Services\RateLimiterService;
 use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
+use App\Services\TrainerShareService;
 use App\Services\UploadedFileStorage;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -53,8 +55,10 @@ class UserEventsControllerTest extends TestCase
             ),
             new ReminderPreferenceService(
                 new FakeUserEventsUserRepository(),
-                new FakeUserEventsReminderRepository()
-            )
+                new FakeUserEventsReminderRepository(),
+                new FakeUserEventsEveningSummarySchedule()
+            ),
+            new FakeUserEventsTrainerShareService()
         );
         $request = (new ServerRequestFactory())
             ->createServerRequest('POST', '/api/events/app-opened')
@@ -96,8 +100,10 @@ class UserEventsControllerTest extends TestCase
             ),
             new ReminderPreferenceService(
                 new FakeUserEventsUserRepository(),
-                new FakeUserEventsReminderRepository()
-            )
+                new FakeUserEventsReminderRepository(),
+                new FakeUserEventsEveningSummarySchedule()
+            ),
+            new FakeUserEventsTrainerShareService()
         );
         $request = (new ServerRequestFactory())
             ->createServerRequest('POST', '/api/events/app-opened')
@@ -138,8 +144,10 @@ class UserEventsControllerTest extends TestCase
             ),
             new ReminderPreferenceService(
                 new FakeUserEventsUserRepository(),
-                new FakeUserEventsReminderRepository()
-            )
+                new FakeUserEventsReminderRepository(),
+                new FakeUserEventsEveningSummarySchedule()
+            ),
+            new FakeUserEventsTrainerShareService()
         );
         $request = (new ServerRequestFactory())
             ->createServerRequest('POST', '/api/register')
@@ -255,6 +263,16 @@ class FakeUserEventsMealRepository extends MealRepository
 }
 
 class FakeUserEventsReminderRepository extends ReminderScheduleRepository
+{
+    public function __construct() {}
+}
+
+class FakeUserEventsEveningSummarySchedule extends EveningSummaryScheduleService
+{
+    public function __construct() {}
+}
+
+class FakeUserEventsTrainerShareService extends TrainerShareService
 {
     public function __construct() {}
 }

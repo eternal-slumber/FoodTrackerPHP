@@ -56,13 +56,57 @@
                     </div>
                 </section>
 
-                <section class="profile-card profile-trainer-card" aria-label="Доступ для тренера">
+                <section id="profile-trainer-share-card" class="profile-card profile-trainer-card" data-state="loading" aria-label="Доступ для тренера" aria-live="polite">
                     <div class="profile-section-head">
                         <h2>Доступ для тренера</h2>
-                        <span>Скоро</span>
+                        <span id="profile-trainer-share-status">Загрузка</span>
                     </div>
-                    <p>Поделитесь дневником питания с тренером. Он сможет смотреть приемы, калории и динамику.</p>
-                    <button class="profile-wide-action" type="button" disabled aria-disabled="true">Создать ссылку · Скоро</button>
+                    <p>Поделитесь дневником питания с тренером или другим человеком. Он сможет смотреть приёмы, калории, БЖУ и динамику без возможности редактирования.</p>
+                    <button id="btn-create-trainer-share" class="profile-wide-action" type="button" disabled>Создать ссылку</button>
+                    <div id="profile-trainer-share-active" class="profile-trainer-share-active hidden">
+                        <small id="profile-trainer-share-expiry"></small>
+                        <small id="profile-trainer-share-scope" class="profile-trainer-share-scope"></small>
+                        <div class="profile-trainer-share-link-field">
+                            <input id="profile-trainer-share-url" type="text" readonly aria-label="Ссылка для тренера">
+                            <button id="btn-copy-trainer-share" type="button" aria-label="Скопировать ссылку">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <rect x="8" y="8" width="11" height="11" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                                    <path d="M16 8V6.5A2.5 2.5 0 0 0 13.5 4h-7A2.5 2.5 0 0 0 4 6.5v7A2.5 2.5 0 0 0 6.5 16H8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                                </svg>
+                                <span>Копировать</span>
+                            </button>
+                        </div>
+                        <small id="profile-trainer-share-copy-status" class="profile-trainer-share-copy-status" role="status"></small>
+                        <div class="profile-trainer-share-actions">
+                            <button id="btn-configure-trainer-share" class="profile-wide-action" type="button">Настроить доступ</button>
+                            <button id="btn-revoke-trainer-share" class="profile-wide-action profile-trainer-revoke" type="button">Отключить</button>
+                        </div>
+                    </div>
+                    <div id="profile-trainer-share-config" class="profile-trainer-share-config hidden">
+                        <fieldset>
+                            <legend>Срок действия</legend>
+                            <div class="profile-trainer-duration-options">
+                                <label><input type="radio" name="trainer-share-duration" value="7"><span>7 дней</span></label>
+                                <label><input type="radio" name="trainer-share-duration" value="30" checked><span>30 дней</span></label>
+                                <label><input type="radio" name="trainer-share-duration" value="unlimited"><span>Без срока</span></label>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend>Что показывать</legend>
+                            <div class="profile-trainer-visibility-options">
+                                <label><span>Приёмы пищи</span><input data-trainer-visibility="meals" type="checkbox" checked></label>
+                                <label><span>Калории и БЖУ</span><input data-trainer-visibility="nutrition" type="checkbox" checked></label>
+                                <label><span>История по дням</span><input data-trainer-visibility="history" type="checkbox" checked></label>
+                                <label><span>AI-анализ</span><input data-trainer-visibility="ai_analysis" type="checkbox" checked></label>
+                                <label><span>Параметры профиля</span><input data-trainer-visibility="profile_params" type="checkbox"></label>
+                            </div>
+                        </fieldset>
+                        <p id="profile-trainer-config-error" class="profile-trainer-config-error hidden">Выберите хотя бы один раздел.</p>
+                        <div class="profile-trainer-share-actions">
+                            <button id="btn-save-trainer-share" class="profile-wide-action" type="button">Создать ссылку</button>
+                            <button id="btn-cancel-trainer-share" class="profile-wide-action" type="button">Отмена</button>
+                        </div>
+                    </div>
                 </section>
 
                 <section class="profile-card profile-settings-card" aria-label="Настройки">
@@ -108,10 +152,14 @@
                                 <input id="profile-meal-reminders-toggle" class="profile-switch-input" type="checkbox" aria-label="Напоминания о приемах" disabled>
                                 <span class="profile-switch" aria-hidden="true"></span>
                             </label>
-                            <label class="profile-setting-row is-disabled">
-                                <span>Итог дня <small class="profile-setting-soon">Скоро</small></span>
-                                <input class="profile-switch-input" type="checkbox" aria-label="Итог дня" disabled>
+                            <label class="profile-setting-row">
+                                <span>Вечерняя сводка</span>
+                                <input id="profile-evening-summary-toggle" class="profile-switch-input" type="checkbox" aria-label="Вечерняя сводка" disabled>
                                 <span class="profile-switch" aria-hidden="true"></span>
+                            </label>
+                            <label class="profile-setting-row">
+                                <span>Время сводки</span>
+                                <input id="profile-evening-summary-time" class="profile-select profile-time-input" type="time" value="21:00" aria-label="Время вечерней сводки" disabled>
                             </label>
                         </section>
                         <section class="profile-settings-section">

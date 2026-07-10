@@ -48,4 +48,19 @@ class TelegramBotMessageFactoryTest extends TestCase
         $this->assertStringContainsString('обед', $factory->mealReminder('lunch'));
         $this->assertStringContainsString('ужин', $factory->mealReminder('dinner'));
     }
+
+    public function testEveningSummaryLinksDirectlyToSummaryScreen(): void
+    {
+        $factory = new TelegramBotMessageFactory();
+        $keyboard = $factory->eveningSummaryInlineKeyboard('https://example.com/app');
+
+        $this->assertSame(
+            'Открыть подробности',
+            $keyboard['inline_keyboard'][0][0]['text']
+        );
+        $this->assertSame(
+            'https://example.com/app?screen=summary',
+            $keyboard['inline_keyboard'][0][0]['web_app']['url']
+        );
+    }
 }

@@ -85,6 +85,73 @@ class ReminderScheduleRepository
         $stmt->execute(['user_id' => $userId]);
     }
 
+    public function skipPendingEveningSummariesForUser(int $userId): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE notification_queue
+             SET status = 'skipped', last_error = NULL
+             WHERE user_id = :user_id
+               AND notification_type = 'evening_summary'
+               AND status = 'pending'"
+        );
+        $stmt->execute(['user_id' => $userId]);
+    }
+
+    public function scheduleEveningSummary(
+        int $userId,
+        string $localDate,
+        string $sendAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {
+        $stmt = $this->db->prepare(
+            "INSERT INTO notification_queue (
+                user_id, notification_type, meal_type, local_date, send_at, payload
+             ) VALUES (
+                :user_id, 'evening_summary', 'dinner', :local_date, :send_at, :payload
+             )
+             ON DUPLICATE KEY UPDATE
+                send_at = IF(status = 'pending', VALUES(send_at), send_at),
+                payload = IF(status = 'pending', VALUES(payload), payload)"
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'local_date' => $localDate,
+            'send_at' => $sendAtUtc,
+            'payload' => json_encode(
+                ['timezone_offset' => $timezoneOffsetMinutes],
+                JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+            ),
+        ]);
+    }
+
+    /** @return list<array{id:int|string,local_date:string,payload:?string}> */
+    public function findPendingEveningSummariesForUser(int $userId): array
+    {
+        $stmt = $this->db->prepare(
+            "SELECT id, local_date, payload
+             FROM notification_queue
+             WHERE user_id = :user_id
+               AND notification_type = 'evening_summary'
+               AND status = 'pending'"
+        );
+        $stmt->execute(['user_id' => $userId]);
+
+        return $stmt->fetchAll();
+    }
+
+    public function reschedulePendingEveningSummary(int $notificationId, string $sendAtUtc): void
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE notification_queue
+             SET send_at = :send_at
+             WHERE id = :id AND status = 'pending'"
+        );
+        $stmt->execute([
+            'id' => $notificationId,
+            'send_at' => $sendAtUtc,
+        ]);
+    }
+
     public function upsertNotification(
         int $userId,
         string $notificationType,
@@ -138,8 +205,11 @@ class ReminderScheduleRepository
                     queue.local_date,
                     queue.send_at,
                     queue.attempts,
+                    queue.payload,
                     users.tg_id AS telegram_id,
                     users.meal_reminders_enabled AS user_reminders_enabled,
+                    users.evening_summary_enabled,
+                    users.evening_summary_time,
                     settings.reminder_time,
                     settings.remind_before_minutes,
                     settings.timezone_offset,

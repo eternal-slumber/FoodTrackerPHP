@@ -8,6 +8,7 @@ use App\Config\TelegramBotConfig;
 use App\Repositories\MealRepository;
 use App\Repositories\ReminderScheduleRepository;
 use App\Services\NotificationDispatchService;
+use App\Services\EveningSummaryDeliveryService;
 use App\Services\ReminderScheduleService;
 use App\Telegram\TelegramBotClientInterface;
 use App\Telegram\TelegramBotMessageFactory;
@@ -92,10 +93,50 @@ class NotificationDispatchServiceTest extends TestCase
         $this->assertSame(['failed:10', 'next:2026-07-03'], $repository->events);
     }
 
+    public function testSendsDueEveningSummaryWithoutSchedulingNextNotification(): void
+    {
+        $notification = $this->notification();
+        $notification['notification_type'] = 'evening_summary';
+        $notification['evening_summary_enabled'] = 1;
+        $repository = new FakeNotificationDispatchRepository([$notification]);
+        $service = $this->createService(
+            $repository,
+            new FakeNotificationTelegramClient(),
+            mealExists: false,
+            eveningSummaryHasData: true
+        );
+
+        $result = $service->dispatchDue($this->now());
+
+        $this->assertSame(1, $result['sent']);
+        $this->assertSame(0, $result['next_scheduled']);
+        $this->assertSame(['sent:10'], $repository->events);
+    }
+
+    public function testSkipsEveningSummaryWhenDayHasNoData(): void
+    {
+        $notification = $this->notification();
+        $notification['notification_type'] = 'evening_summary';
+        $notification['evening_summary_enabled'] = 1;
+        $repository = new FakeNotificationDispatchRepository([$notification]);
+        $service = $this->createService(
+            $repository,
+            new FakeNotificationTelegramClient(),
+            mealExists: false,
+            eveningSummaryHasData: false
+        );
+
+        $result = $service->dispatchDue($this->now());
+
+        $this->assertSame(1, $result['skipped']);
+        $this->assertSame(['skipped:10'], $repository->events);
+    }
+
     private function createService(
         FakeNotificationDispatchRepository $repository,
         FakeNotificationTelegramClient $client,
-        bool $mealExists
+        bool $mealExists,
+        bool $eveningSummaryHasData = true
     ): NotificationDispatchService {
         return new NotificationDispatchService(
             $repository,
@@ -103,7 +144,8 @@ class NotificationDispatchServiceTest extends TestCase
             new FakeNotificationMealRepository($mealExists),
             $client,
             new TelegramBotMessageFactory(),
-            new TelegramBotConfig('token', 'secret', 'https://example.com', -180)
+            new TelegramBotConfig('token', 'secret', 'https://example.com', -180),
+            new FakeEveningSummaryDeliveryService($eveningSummaryHasData)
         );
     }
 
@@ -130,6 +172,16 @@ class NotificationDispatchServiceTest extends TestCase
     private function now(): DateTimeImmutable
     {
         return new DateTimeImmutable('2026-07-02 06:45:00', new DateTimeZone('UTC'));
+    }
+}
+
+class FakeEveningSummaryDeliveryService extends EveningSummaryDeliveryService
+{
+    public function __construct(private readonly bool $hasData) {}
+
+    public function send(array $notification, DateTimeImmutable $nowUtc): bool
+    {
+        return $this->hasData;
     }
 }
 

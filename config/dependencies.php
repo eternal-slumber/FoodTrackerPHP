@@ -20,10 +20,13 @@ use App\Repositories\MealProductRepository;
 use App\Repositories\DailyNutritionInsightRepository;
 use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
+use App\Repositories\SharedAccessLinkRepository;
 use App\Services\CalorieCalculatorService;
 use App\Services\AiQuotaService;
 use App\Services\DailyNutritionSummaryService;
 use App\Services\DailyNutritionInsightService;
+use App\Services\EveningSummaryScheduleService;
+use App\Services\EveningSummaryDeliveryService;
 use App\Services\MacroGoalCalculationService;
 use App\Services\MealDraftService;
 use App\Services\MealAnalysisService;
@@ -39,6 +42,7 @@ use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
+use App\Services\TrainerShareService;
 use App\Telegram\TelegramBotApiClient;
 use App\Telegram\TelegramBotClientInterface;
 use App\Telegram\TelegramBotMessageFactory;
@@ -90,10 +94,13 @@ $definitions = [
     DailyNutritionSummaryService::class => autowire(),
     DailyNutritionInsightAIService::class => autowire(),
     DailyNutritionInsightService::class => autowire(),
+    EveningSummaryScheduleService::class => autowire(),
+    EveningSummaryDeliveryService::class => autowire(),
     AIJsonResponseParser::class => autowire(),
     MealPhotoAnalysisAIService::class => autowire(),
     ProductNutritionAIService::class => autowire(),
     UserRepository::class => autowire(),
+    SharedAccessLinkRepository::class => autowire(),
     MealRepository::class => autowire(),
     MealProductRepository::class => autowire(),
     DailyNutritionInsightRepository::class => autowire(),
@@ -110,6 +117,7 @@ $definitions = [
     MealService::class => autowire(),
     SummaryService::class => autowire(),
     TelemetryService::class => autowire(),
+    TrainerShareService::class => autowire(),
 
     ViewRenderer::class => fn(): ViewRenderer => new ViewRenderer(
         dirname(__DIR__) . '/resources/views'
@@ -127,6 +135,7 @@ $definitions = [
     App\Controllers\UserController::class => autowire(),
     App\Controllers\AnalyzeController::class => autowire(),
     App\Controllers\TelegramBotController::class => autowire(),
+    App\Controllers\TrainerShareController::class => autowire(),
 ];
 
 if (filter_var($_ENV['ADMIN_ENABLED'] ?? false, FILTER_VALIDATE_BOOLEAN)) {

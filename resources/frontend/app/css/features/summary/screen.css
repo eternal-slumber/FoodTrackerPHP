@@ -48,7 +48,15 @@
     opacity: 0.7;
 }
 
+#screen-summary .summary-mini-nutrition.is-loading {
+    opacity: 0.7;
+}
+
 #screen-summary .summary-progress-card.is-error {
+    background: #ffe8cc;
+}
+
+#screen-summary .summary-mini-nutrition.is-error {
     background: #ffe8cc;
 }
 

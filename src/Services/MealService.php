@@ -21,6 +21,7 @@ class MealService
         private readonly MealProductRepository $mealProducts,
         private readonly MealNutritionService $nutrition,
         private readonly ReminderScheduleService $reminderSchedule,
+        private readonly EveningSummaryScheduleService $eveningSummarySchedule,
         private readonly UploadedFileStorage $storage
     ) {}
 
@@ -143,6 +144,7 @@ class MealService
             $eatenAtUtc,
             $timezoneOffsetMinutes
         );
+        $this->scheduleEveningSummary((int)$user->id, $eatenAtUtc, $timezoneOffsetMinutes);
 
         return [
             'status' => 'success',
@@ -233,6 +235,7 @@ class MealService
             $eatenAtUtc,
             $timezoneOffsetMinutes
         );
+        $this->scheduleEveningSummary((int)$user->id, $eatenAtUtc, $timezoneOffsetMinutes);
 
         return [
             'status' => 'success',
@@ -269,6 +272,26 @@ class MealService
         } catch (\Throwable $error) {
             error_log(sprintf(
                 'Meal reminder scheduling failed for user %d: %s',
+                $userId,
+                $error->getMessage()
+            ));
+        }
+    }
+
+    private function scheduleEveningSummary(
+        int $userId,
+        ?DateTimeImmutable $eatenAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {
+        try {
+            $this->eveningSummarySchedule->scheduleFromMeal(
+                $userId,
+                $eatenAtUtc ?? new DateTimeImmutable('now', new DateTimeZone('UTC')),
+                $timezoneOffsetMinutes
+            );
+        } catch (\Throwable $error) {
+            error_log(sprintf(
+                'Evening summary scheduling failed for user %d: %s',
                 $userId,
                 $error->getMessage()
             ));

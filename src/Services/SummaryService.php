@@ -42,11 +42,17 @@ class SummaryService
             fn(array $day): array => $this->formatDay($day, $dailyGoal),
             $this->meals->getDailyCaloriesForMonth((int)$user->id, $month, $timezoneOffsetMinutes)
         );
+        $daysWithData = count($days);
+        $averageDailyCalories = $daysWithData > 0
+            ? (int)round(array_sum(array_column($days, 'calories')) / $daysWithData)
+            : 0;
 
         return [
             'month' => $month,
             'daily_goal' => $dailyGoal,
             'macro_goals' => $macroGoals,
+            'average_daily_calories' => $averageDailyCalories,
+            'days_with_data' => $daysWithData,
             'days' => $days,
         ];
     }

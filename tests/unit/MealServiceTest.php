@@ -12,6 +12,7 @@ use App\Repositories\MealRepository;
 use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Services\CalorieCalculatorService;
+use App\Services\EveningSummaryScheduleService;
 use App\Services\MealNutritionService;
 use App\Services\MealService;
 use App\Services\NutritionCalculatorService;
@@ -274,9 +275,21 @@ class MealServiceTest extends TestCase
                 new NutritionCalculatorService()
             ),
             $reminderSchedule ?? new ReminderScheduleService(new FakeMealServiceReminderRepository()),
+            new FakeMealServiceEveningSummarySchedule(),
             $storage ?? new UploadedFileStorage('/tmp/')
         );
     }
+}
+
+class FakeMealServiceEveningSummarySchedule extends EveningSummaryScheduleService
+{
+    public function __construct() {}
+
+    public function scheduleFromMeal(
+        int $userId,
+        DateTimeImmutable $eatenAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {}
 }
 
 class FakeMealServiceUserRepository extends UserRepository

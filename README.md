@@ -221,10 +221,10 @@ composer notifications:dispatch
 NOTIFICATION_DISPATCH_BATCH_SIZE=50
 ```
 
-На production-сервере достаточно одного задания cron, запускаемого каждые пять минут. Для текущей Docker-конфигурации:
+На production-сервере достаточно одного задания cron, запускаемого каждую минуту. Такой интервал нужен, чтобы вечерняя сводка приходила вскоре после добавления полного набора из завтрака, обеда и ужина. Для текущей Docker-конфигурации:
 
 ```cron
-*/5 * * * * /usr/bin/docker exec foodtracker-app php /var/www/scripts/dispatch_notifications.php >> /var/log/foodtracker-notifications.log 2>&1
+* * * * * /usr/bin/docker exec foodtracker-app php /var/www/scripts/dispatch_notifications.php >> /var/log/foodtracker-notifications.log 2>&1
 ```
 
 CLI-команда использует файловую блокировку. Если предыдущий запуск еще работает, новый завершится без повторной отправки. Статусы `processing` дополнительно защищены таймаутом в сервисе: зависшая запись снова станет доступна для обработки через 15 минут.

@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use App\Models\User;
 use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
+use App\Services\EveningSummaryScheduleService;
 use App\Services\ReminderPreferenceService;
 use PHPUnit\Framework\TestCase;
 
@@ -16,7 +17,11 @@ class ReminderPreferenceServiceTest extends TestCase
     {
         $users = new FakeReminderPreferenceUserRepository();
         $reminders = new FakeReminderPreferenceRepository();
-        $service = new ReminderPreferenceService($users, $reminders);
+        $service = new ReminderPreferenceService(
+            $users,
+            $reminders,
+            new FakeReminderPreferenceEveningSummarySchedule($reminders)
+        );
 
         $enabled = $service->updateForTelegramUser(100001, false);
 
@@ -32,7 +37,11 @@ class ReminderPreferenceServiceTest extends TestCase
     {
         $users = new FakeReminderPreferenceUserRepository(enabled: false);
         $reminders = new FakeReminderPreferenceRepository();
-        $service = new ReminderPreferenceService($users, $reminders);
+        $service = new ReminderPreferenceService(
+            $users,
+            $reminders,
+            new FakeReminderPreferenceEveningSummarySchedule($reminders)
+        );
 
         $enabled = $service->updateForTelegramUser(100001, true);
 
@@ -43,9 +52,11 @@ class ReminderPreferenceServiceTest extends TestCase
 
     public function testRejectsUnknownUser(): void
     {
+        $reminders = new FakeReminderPreferenceRepository();
         $service = new ReminderPreferenceService(
             new FakeReminderPreferenceUserRepository(userExists: false),
-            new FakeReminderPreferenceRepository()
+            $reminders,
+            new FakeReminderPreferenceEveningSummarySchedule($reminders)
         );
 
         $this->expectException(\InvalidArgumentException::class);
@@ -53,13 +64,49 @@ class ReminderPreferenceServiceTest extends TestCase
 
         $service->updateForTelegramUser(999999, false);
     }
+
+    public function testChangingEveningSummaryTimeReschedulesPendingQueueInTransaction(): void
+    {
+        $users = new FakeReminderPreferenceUserRepository();
+        $reminders = new FakeReminderPreferenceRepository();
+        $service = new ReminderPreferenceService(
+            $users,
+            $reminders,
+            new FakeReminderPreferenceEveningSummarySchedule($reminders)
+        );
+
+        $settings = $service->updateEveningSummaryForTelegramUser(100001, true, '22:30');
+
+        $this->assertSame(['enabled' => true, 'time' => '22:30'], $settings);
+        $this->assertTrue($users->eveningSummaryEnabled);
+        $this->assertSame('22:30', $users->eveningSummaryTime);
+        $this->assertSame(['begin', 'reschedule:5:22:30', 'commit'], $reminders->events);
+    }
+
+    public function testDisablingEveningSummarySkipsPendingQueueInTransaction(): void
+    {
+        $users = new FakeReminderPreferenceUserRepository();
+        $reminders = new FakeReminderPreferenceRepository();
+        $service = new ReminderPreferenceService(
+            $users,
+            $reminders,
+            new FakeReminderPreferenceEveningSummarySchedule($reminders)
+        );
+
+        $service->updateEveningSummaryForTelegramUser(100001, false, '21:00');
+
+        $this->assertFalse($users->eveningSummaryEnabled);
+        $this->assertSame(['begin', 'skip-evening-pending', 'commit'], $reminders->events);
+    }
 }
 
 class FakeReminderPreferenceUserRepository extends UserRepository
 {
     public function __construct(
         public bool $enabled = true,
-        private readonly bool $userExists = true
+        private readonly bool $userExists = true,
+        public bool $eveningSummaryEnabled = true,
+        public string $eveningSummaryTime = '21:00'
     ) {}
 
     public function findByTelegramId(int $telegramId): ?User
@@ -77,6 +124,12 @@ class FakeReminderPreferenceUserRepository extends UserRepository
     public function setMealRemindersEnabled(int $userId, bool $enabled): void
     {
         $this->enabled = $enabled;
+    }
+
+    public function setEveningSummarySettings(int $userId, bool $enabled, string $time): void
+    {
+        $this->eveningSummaryEnabled = $enabled;
+        $this->eveningSummaryTime = $time;
     }
 }
 
@@ -110,5 +163,20 @@ class FakeReminderPreferenceRepository extends ReminderScheduleRepository
     public function skipPendingForUser(int $userId): void
     {
         $this->events[] = 'skip-pending';
+    }
+
+    public function skipPendingEveningSummariesForUser(int $userId): void
+    {
+        $this->events[] = 'skip-evening-pending';
+    }
+}
+
+class FakeReminderPreferenceEveningSummarySchedule extends EveningSummaryScheduleService
+{
+    public function __construct(private readonly FakeReminderPreferenceRepository $reminders) {}
+
+    public function reschedulePendingForUser(int $userId, string $time): void
+    {
+        $this->reminders->events[] = sprintf('reschedule:%d:%s', $userId, $time);
     }
 }

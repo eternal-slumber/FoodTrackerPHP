@@ -21,6 +21,7 @@ use App\Services\RateLimiterService;
 use App\Services\ReminderPreferenceService;
 use App\Services\SummaryService;
 use App\Services\TelemetryService;
+use App\Services\TrainerShareService;
 use App\Services\UploadedFileStorage;
 use App\Validators\UserValidator;
 use App\Exceptions\ValidationException;
@@ -42,7 +43,8 @@ class UserController
         private readonly UploadedFileStorage $storage,
         private readonly TelemetryService $telemetry,
         private readonly TelegramAuthConfig $telegramAuthConfig,
-        private readonly ReminderPreferenceService $reminderPreferences
+        private readonly ReminderPreferenceService $reminderPreferences,
+        private readonly TrainerShareService $trainerShare
     ) {}
 
     private function currentUser(Request $request): CurrentUser
@@ -54,6 +56,93 @@ class UserController
         }
 
         return $currentUser;
+    }
+
+    #[RouteAttribute('/api/trainer-share', 'GET')]
+    public function trainerShare(Request $request, Response $response): Response
+    {
+        $link = $this->trainerShare->getForOwner($this->currentUser($request)->telegramId);
+        if ($link === null) {
+            return ResponseResponder::json($response, ['status' => 'error', 'message' => 'User not found'], 404);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->withTrainerShareUrl($link),
+        ]);
+    }
+
+    #[RouteAttribute('/api/trainer-share', 'POST')]
+    public function createTrainerShare(Request $request, Response $response): Response
+    {
+        $currentUser = $this->currentUser($request);
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+        $timezoneOffset = (int)($data['timezone_offset'] ?? 0);
+        $displayName = $currentUser->username ?: $currentUser->firstName ?: 'Пользователь FoodTracker';
+
+        try {
+            $link = $this->trainerShare->createForOwner(
+                $currentUser->telegramId,
+                $displayName,
+                $timezoneOffset,
+                duration: (string)($data['duration'] ?? '30'),
+                visibility: is_array($data['visibility'] ?? null) ? $data['visibility'] : []
+            );
+        } catch (\InvalidArgumentException $error) {
+            return ResponseResponder::json($response, ['status' => 'error', 'message' => $error->getMessage()], 400);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->withTrainerShareUrl($link),
+        ]);
+    }
+
+    #[RouteAttribute('/api/trainer-share', 'PATCH')]
+    public function updateTrainerShare(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+
+        try {
+            $link = $this->trainerShare->updateForOwner(
+                $this->currentUser($request)->telegramId,
+                (string)($data['duration'] ?? '30'),
+                is_array($data['visibility'] ?? null) ? $data['visibility'] : []
+            );
+        } catch (\InvalidArgumentException $error) {
+            return ResponseResponder::json($response, ['status' => 'error', 'message' => $error->getMessage()], 400);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->withTrainerShareUrl($link),
+        ]);
+    }
+
+    #[RouteAttribute('/api/trainer-share', 'DELETE')]
+    public function revokeTrainerShare(Request $request, Response $response): Response
+    {
+        try {
+            $this->trainerShare->revokeForOwner($this->currentUser($request)->telegramId);
+        } catch (\InvalidArgumentException $error) {
+            return ResponseResponder::json($response, ['status' => 'error', 'message' => $error->getMessage()], 404);
+        }
+
+        return ResponseResponder::json($response, ['status' => 'success', 'data' => ['active' => false]]);
+    }
+
+    private function withTrainerShareUrl(array $link): array
+    {
+        if (!($link['active'] ?? false) || !isset($link['token'])) {
+            return $link;
+        }
+
+        $link['url'] = '/s/' . $link['token'];
+        unset($link['token']);
+
+        return $link;
     }
 
     #[RouteAttribute('/api/reminder-settings', 'GET')]
@@ -105,6 +194,47 @@ class UserController
             'status' => 'success',
             'data' => ['enabled' => $enabled],
         ]);
+    }
+
+    #[RouteAttribute('/api/evening-summary-settings', 'GET')]
+    public function eveningSummarySettings(Request $request, Response $response): Response
+    {
+        $settings = $this->reminderPreferences->getEveningSummaryForTelegramUser(
+            $this->currentUser($request)->telegramId
+        );
+
+        return $settings === null
+            ? ResponseResponder::json($response, ['status' => 'error', 'message' => 'User not found'], 404)
+            : ResponseResponder::json($response, ['status' => 'success', 'data' => $settings]);
+    }
+
+    #[RouteAttribute('/api/evening-summary-settings', 'POST')]
+    public function updateEveningSummarySettings(Request $request, Response $response): Response
+    {
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+
+        if (!isset($data['enabled'], $data['time']) || !is_bool($data['enabled']) || !is_string($data['time'])) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => 'Нужны корректные поля enabled и time',
+            ], 400);
+        }
+
+        try {
+            $settings = $this->reminderPreferences->updateEveningSummaryForTelegramUser(
+                $this->currentUser($request)->telegramId,
+                $data['enabled'],
+                $data['time']
+            );
+        } catch (\InvalidArgumentException $error) {
+            return ResponseResponder::json($response, [
+                'status' => 'error',
+                'message' => $error->getMessage(),
+            ], 400);
+        }
+
+        return ResponseResponder::json($response, ['status' => 'success', 'data' => $settings]);
     }
 
     #[RouteAttribute('/api/events/app-opened', 'POST')]
