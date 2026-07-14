@@ -97,7 +97,7 @@ class AdminSession
                 'path' => $cookie['path'],
                 'secure' => $cookie['secure'],
                 'httponly' => $cookie['httponly'],
-                'samesite' => $cookie['samesite'] ?? 'Strict',
+                'samesite' => $cookie['samesite'],
             ]);
             session_destroy();
         }

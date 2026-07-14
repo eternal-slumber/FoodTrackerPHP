@@ -8,7 +8,6 @@ use App\AI\ProductNutritionAIService;
 use App\Auth\CurrentUser;
 use App\Attributes\RouteAttribute;
 use App\DTOs\AnalyzeRequestDTO;
-use App\Exceptions\AppException;
 use App\Exceptions\ValidationException;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Http\ResponseResponder;
@@ -22,6 +21,7 @@ use App\Services\TelemetryService;
 use App\Services\UploadedFileStorage;
 use App\Validators\AnalyzeValidator;
 use DateTimeImmutable;
+use DateMalformedStringException;
 use DateTimeZone;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -62,19 +62,6 @@ class AnalyzeController
         return $user?->id !== null ? (int)$user->id : null;
     }
 
-    private function recordServerAppException(AppException $exception, string $action): void
-    {
-        $statusCode = $exception->getCode() ?: 500;
-        if ($statusCode < 500) {
-            return;
-        }
-
-        $this->telemetry->recordSystemError('error', 'analyze', $exception->getMessage(), [
-            'action' => $action,
-            'status_code' => $statusCode,
-        ], $exception);
-    }
-
     #[RouteAttribute('/api/processing-options', 'GET')]
     public function processingOptions(Request $request, Response $response): Response
     {
@@ -87,39 +74,24 @@ class AnalyzeController
     #[RouteAttribute('/api/product-nutrition', 'POST')]
     public function productNutrition(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $data = $request->getParsedBody();
-            $data = is_array($data) ? $data : [];
-            $productName = substr(trim((string)($data['product_name'] ?? '')), 0, 120);
-            $processing = $this->normalizeProcessing((string)($data['processing'] ?? ''));
+        $currentUser = $this->currentUser($request);
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+        $productName = substr(trim((string)($data['product_name'] ?? '')), 0, 120);
+        $processing = $this->normalizeProcessing((string)($data['processing'] ?? ''));
 
-            if ($productName === '') {
-                throw new ValidationException('Введите название продукта');
-            }
-
-            if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
-                return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
-            }
-
-            return ResponseResponder::json($response, [
-                'status' => 'success',
-                'data' => $this->productNutrition->getProductNutrients($productName, $processing),
-            ]);
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'product_nutrition');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Product nutrition error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'product_nutrition',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        if ($productName === '') {
+            throw new ValidationException('Введите название продукта');
         }
+
+        if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
+            return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
+        }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->productNutrition->getProductNutrients($productName, $processing),
+        ]);
     }
 
     private function normalizeProcessing(string $processing): string
@@ -139,261 +111,164 @@ class AnalyzeController
     #[RouteAttribute('/api/upload', 'POST')]
     public function analyzeDraft(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $postData = $request->getParsedBody();
-            $postData = is_array($postData) ? $postData : [];
+        $currentUser = $this->currentUser($request);
+        $postData = $request->getParsedBody();
+        $postData = is_array($postData) ? $postData : [];
 
-            //Валидация входных данных
-            AnalyzeValidator::validate($postData, $_FILES);
-            $mimeType = AnalyzeValidator::detectMimeType($_FILES['photo']['tmp_name']);
+        AnalyzeValidator::validate($postData, $_FILES);
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'upload', 10, 3600)) {
-                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
-            }
-
-            if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
-                return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
-            }
-
-            //Создание DTO
-            $dto = AnalyzeRequestDTO::fromPost([
-                'telegram_id' => $currentUser->telegramId,
-                'mime_type' => $mimeType,
-            ], $_FILES);
-
-            $result = $this->mealAnalysisService->analyzeDraft($dto);
-
-            return ResponseResponder::json($response, $result);
-
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'analyze_draft');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Upload error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'analyze_draft',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'upload', 10, 3600)) {
+            return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
         }
+
+        if (!$this->aiQuota->consumeGeneral($currentUser->telegramId)) {
+            return ResponseResponder::json($response, ['error' => 'Daily AI quota exceeded'], 429);
+        }
+
+        $dto = AnalyzeRequestDTO::fromPost([
+            'telegram_id' => $currentUser->telegramId,
+        ], $_FILES);
+
+        return ResponseResponder::json($response, $this->mealAnalysisService->analyzeDraft($dto));
     }
 
     #[RouteAttribute('/api/upload-draft-image', 'POST')]
     public function uploadDraftImage(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $postData = $request->getParsedBody();
-            $postData = is_array($postData) ? $postData : [];
+        $currentUser = $this->currentUser($request);
+        $postData = $request->getParsedBody();
+        $postData = is_array($postData) ? $postData : [];
 
-            AnalyzeValidator::validate($postData, $_FILES);
-            $mimeType = AnalyzeValidator::detectMimeType($_FILES['photo']['tmp_name']);
+        AnalyzeValidator::validate($postData, $_FILES);
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'upload', 10, 3600)) {
-                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
-            }
-
-            $relativePath = $this->uploadedFileStorage->saveUploadedFile(
-                $_FILES['photo']['tmp_name'],
-                $currentUser->telegramId,
-                $mimeType
-            );
-
-            return ResponseResponder::json($response, [
-                'status' => 'success',
-                'data' => [
-                    'draft_image_path' => $relativePath,
-                ],
-            ]);
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'upload_draft_image');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Draft image upload error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'upload_draft_image',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'upload', 10, 3600)) {
+            return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
         }
+
+        $relativePath = $this->uploadedFileStorage->saveUploadedFile(
+            $_FILES['photo']['tmp_name'],
+            $currentUser->telegramId
+        );
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => [
+                'draft_image_path' => $relativePath,
+            ],
+        ]);
     }
 
     #[RouteAttribute('/api/history', 'GET')]
     public function history(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
+        $currentUser = $this->currentUser($request);
 
-            //Валидация tg_id
-            $tgId = $currentUser->telegramId;
-
-            //Получаем историю приемов пищи
-            $meals = $this->mealAnalysisService->getMealHistory($tgId);
-
-            return ResponseResponder::json($response, [
-                'status' => 'success',
-                'data' => $meals
-            ]);
-
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'history');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('History error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'history',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
-        }
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->mealAnalysisService->getMealHistory($currentUser->telegramId),
+        ]);
     }
 
     #[RouteAttribute('/api/delete-meal', 'POST')]
     public function deleteMeal(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            //Получаем данные из запроса
-            $data = $request->getParsedBody();
-            $data = is_array($data) ? $data : [];
-            
-            //Валидация
-            $tgId = $currentUser->telegramId;
-            $mealId = $data['meal_id'] ?? null;
-            
-            if (!$mealId || !is_numeric($mealId)) {
-                throw new ValidationException('Invalid meal_id parameter');
-            }
+        $currentUser = $this->currentUser($request);
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
+        $tgId = $currentUser->telegramId;
+        $mealId = $data['meal_id'] ?? null;
 
-            if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'delete_meal', 30, 3600)) {
-                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
-            }
-
-            // 3. Удаляем запись
-            $result = $this->mealAnalysisService->deleteMeal((int)$mealId, $tgId);
-            $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_deleted', [
-                'meal_id' => (int)$mealId,
-            ], $request);
- 
-            return ResponseResponder::json($response, $result);
-
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'delete_meal');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Delete meal error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'delete_meal',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        if (!$mealId || !is_numeric($mealId)) {
+            throw new ValidationException('Invalid meal_id parameter');
         }
+
+        if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'delete_meal', 30, 3600)) {
+            return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
+        }
+
+        $result = $this->mealAnalysisService->deleteMeal((int)$mealId, $tgId);
+        $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_deleted', [
+            'meal_id' => (int)$mealId,
+        ], $request);
+
+        return ResponseResponder::json($response, $result);
     }
 
     #[RouteAttribute('/api/save-meal', 'POST')]
     public function saveMeal(Request $request, Response $response): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $data = $request->getParsedBody();
-            $data = is_array($data) ? $data : [];
-            
-            $tgId = $currentUser->telegramId;
-            $mealName = trim($data['meal_name'] ?? 'Прием пищи');
-            $products = $data['products'] ?? [];
-            $draftImagePath = isset($data['draft_image_path']) ? (string)$data['draft_image_path'] : null;
-            $splitProducts = ($data['split_products'] ?? false) === true;
-            [$mealType, $eatenAtUtc, $timezoneOffsetMinutes] = $this->mealReminderData($data);
+        $currentUser = $this->currentUser($request);
+        $data = $request->getParsedBody();
+        $data = is_array($data) ? $data : [];
 
-            if (empty($products)) {
-                throw new ValidationException('Список продуктов пуст');
-            }
+        $tgId = $currentUser->telegramId;
+        $mealName = trim($data['meal_name'] ?? 'Прием пищи');
+        $products = $data['products'] ?? [];
+        $draftImagePath = isset($data['draft_image_path']) ? (string)$data['draft_image_path'] : null;
+        $splitProducts = ($data['split_products'] ?? false) === true;
+        [$mealType, $eatenAtUtc, $timezoneOffsetMinutes] = $this->mealReminderData($data);
 
-            if (!is_array($products)) {
-                throw new ValidationException('Некорректный список продуктов');
-            }
-
-            if (count($products) > MealNutritionService::MAX_PRODUCTS_PER_MEAL) {
-                throw new ValidationException('В одном приеме можно сохранить не больше ' . MealNutritionService::MAX_PRODUCTS_PER_MEAL . ' продуктов');
-            }
-
-            $rateLimitScope = 'tg:' . $currentUser->telegramId;
-
-            if (!$this->rateLimiter->consume(
-                $rateLimitScope,
-                'save_meal_burst',
-                self::SAVE_MEAL_BURST_LIMIT,
-                self::SAVE_MEAL_BURST_WINDOW_SECONDS
-            )) {
-                return ResponseResponder::json($response, [
-                    'error' => 'Too Many Requests',
-                    'message' => 'Подождите несколько секунд перед повторным сохранением',
-                ], 429);
-            }
-
-            if (!$this->rateLimiter->consume(
-                $rateLimitScope,
-                'save_meal',
-                self::SAVE_MEAL_HOURLY_LIMIT,
-                self::SAVE_MEAL_HOURLY_WINDOW_SECONDS
-            )) {
-                return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
-            }
-
-            $result = $splitProducts
-                ? $this->mealAnalysisService->saveManualMealsAsCards(
-                    $tgId,
-                    $mealName,
-                    $products,
-                    $draftImagePath,
-                    $mealType,
-                    $eatenAtUtc,
-                    $timezoneOffsetMinutes
-                )
-                : $this->mealAnalysisService->saveManualMeal(
-                    $tgId,
-                    $mealName,
-                    $products,
-                    $draftImagePath,
-                    $mealType,
-                    $eatenAtUtc,
-                    $timezoneOffsetMinutes
-                );
-            $mealId = $result['meal']['id'] ?? null;
-            $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_created', [
-                'meal_id' => is_numeric($mealId) ? (int)$mealId : null,
-                'source' => 'manual',
-            ], $request);
-            
-            return ResponseResponder::json($response, $result);
-
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'save_meal');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Save meal error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'save_meal',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Internal server error'], 500);
+        if (empty($products)) {
+            throw new ValidationException('Список продуктов пуст');
         }
+
+        if (!is_array($products)) {
+            throw new ValidationException('Некорректный список продуктов');
+        }
+
+        if (count($products) > MealNutritionService::MAX_PRODUCTS_PER_MEAL) {
+            throw new ValidationException('В одном приеме можно сохранить не больше ' . MealNutritionService::MAX_PRODUCTS_PER_MEAL . ' продуктов');
+        }
+
+        $rateLimitScope = 'tg:' . $currentUser->telegramId;
+
+        if (!$this->rateLimiter->consume(
+            $rateLimitScope,
+            'save_meal_burst',
+            self::SAVE_MEAL_BURST_LIMIT,
+            self::SAVE_MEAL_BURST_WINDOW_SECONDS
+        )) {
+            return ResponseResponder::json($response, [
+                'error' => 'Too Many Requests',
+                'message' => 'Подождите несколько секунд перед повторным сохранением',
+            ], 429);
+        }
+
+        if (!$this->rateLimiter->consume(
+            $rateLimitScope,
+            'save_meal',
+            self::SAVE_MEAL_HOURLY_LIMIT,
+            self::SAVE_MEAL_HOURLY_WINDOW_SECONDS
+        )) {
+            return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
+        }
+
+        $result = $splitProducts
+            ? $this->mealAnalysisService->saveManualMealsAsCards(
+                $tgId,
+                $mealName,
+                $products,
+                $draftImagePath,
+                $mealType,
+                $eatenAtUtc,
+                $timezoneOffsetMinutes
+            )
+            : $this->mealAnalysisService->saveManualMeal(
+                $tgId,
+                $mealName,
+                $products,
+                $draftImagePath,
+                $mealType,
+                $eatenAtUtc,
+                $timezoneOffsetMinutes
+            );
+        $mealId = $result['meal']['id'] ?? null;
+        $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_created', [
+            'meal_id' => is_numeric($mealId) ? (int)$mealId : null,
+            'source' => 'manual',
+        ], $request);
+
+        return ResponseResponder::json($response, $result);
     }
 
     /** @return array{0:?string, 1:?DateTimeImmutable, 2:int} */
@@ -437,7 +312,7 @@ class AnalyzeController
 
         try {
             $parsed = new DateTimeImmutable($eatenAt);
-        } catch (\Exception) {
+        } catch (DateMalformedStringException) {
             throw new ValidationException('Некорректное время приема пищи');
         }
 
@@ -447,80 +322,53 @@ class AnalyzeController
     #[RouteAttribute('/api/meals/{id}/image', 'GET')]
     public function mealImage(Request $request, Response $response, array $args): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+        $currentUser = $this->currentUser($request);
+        $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
 
-            if ($mealId < 1) {
-                throw new ValidationException('Invalid meal id');
-            }
-
-            $image = $this->mealAnalysisService->getMealImage($mealId, $currentUser->telegramId);
-            $response->getBody()->write((string)file_get_contents($image['path']));
-
-            return $response
-                ->withHeader('Content-Type', $image['mime_type'])
-                ->withHeader('Cache-Control', 'private, max-age=3600');
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (\Exception $e) {
-            return ResponseResponder::json($response, ['error' => 'Not Found'], 404);
+        if ($mealId < 1) {
+            throw new ValidationException('Invalid meal id');
         }
+
+        $image = $this->mealAnalysisService->getMealImage($mealId, $currentUser->telegramId);
+        $response->getBody()->write((string)file_get_contents($image['path']));
+
+        return $response
+            ->withHeader('Content-Type', $image['mime_type'])
+            ->withHeader('Cache-Control', 'private, max-age=3600');
     }
 
     #[RouteAttribute('/api/meals/{id}/thumbnail', 'GET')]
     public function mealThumbnail(Request $request, Response $response, array $args): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+        $currentUser = $this->currentUser($request);
+        $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
 
-            if ($mealId < 1) {
-                throw new ValidationException('Invalid meal id');
-            }
-
-            $image = $this->mealAnalysisService->getMealThumbnail($mealId, $currentUser->telegramId);
-            $response->getBody()->write((string)file_get_contents($image['path']));
-
-            return $response
-                ->withHeader('Content-Type', $image['mime_type'])
-                ->withHeader('Cache-Control', 'private, max-age=3600');
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (\Exception $e) {
-            return ResponseResponder::json($response, ['error' => 'Not Found'], 404);
+        if ($mealId < 1) {
+            throw new ValidationException('Invalid meal id');
         }
+
+        $image = $this->mealAnalysisService->getMealThumbnail($mealId, $currentUser->telegramId);
+        $response->getBody()->write((string)file_get_contents($image['path']));
+
+        return $response
+            ->withHeader('Content-Type', $image['mime_type'])
+            ->withHeader('Cache-Control', 'private, max-age=3600');
     }
 
     #[RouteAttribute('/api/meals/{id}', 'GET')]
     public function mealDetails(Request $request, Response $response, array $args): Response
     {
-        try {
-            $currentUser = $this->currentUser($request);
-            $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+        $currentUser = $this->currentUser($request);
+        $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
 
-            if ($mealId < 1) {
-                throw new ValidationException('Invalid meal id');
-            }
-
-            return ResponseResponder::json($response, [
-                'status' => 'success',
-                'data' => $this->mealAnalysisService->getMealDetails($mealId, $currentUser->telegramId),
-            ]);
-        } catch (ValidationException $e) {
-            return ResponseResponder::json($response, $e->toArray(), 400);
-        } catch (AppException $e) {
-            $this->recordServerAppException($e, 'meal_details');
-
-            return ResponseResponder::json($response, $e->toArray(), $e->getCode() ?: 500);
-        } catch (\Exception $e) {
-            error_log('Meal details error: ' . $e->getMessage());
-            $this->telemetry->recordSystemError('error', 'analyze', $e->getMessage(), [
-                'action' => 'meal_details',
-            ], $e);
-
-            return ResponseResponder::json($response, ['error' => 'Not Found'], 404);
+        if ($mealId < 1) {
+            throw new ValidationException('Invalid meal id');
         }
+
+        return ResponseResponder::json($response, [
+            'status' => 'success',
+            'data' => $this->mealAnalysisService->getMealDetails($mealId, $currentUser->telegramId),
+        ]);
     }
 
 }

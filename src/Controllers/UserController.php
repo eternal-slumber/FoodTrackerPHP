@@ -276,11 +276,12 @@ class UserController
             $currentUser = $this->currentUser($request);
             $data = $request->getParsedBody();
             $data = is_array($data) ? $data : [];
-            $data['tg_id'] = $currentUser->telegramId;
 
-            if (!$data) {
+            if ($data === []) {
                 return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Пустые данные'], 400);
             }
+
+            $data['tg_id'] = $currentUser->telegramId;
 
             if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'register', 10, 3600)) {
                 return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
@@ -372,11 +373,12 @@ class UserController
             $currentUser = $this->currentUser($request);
             $data = $request->getParsedBody();
             $data = is_array($data) ? $data : [];
-            $data['tg_id'] = $currentUser->telegramId;
 
-            if (!$data) {
+            if ($data === []) {
                 return ResponseResponder::json($response, ['status' => 'error', 'message' => 'Пустые данные'], 400);
             }
+
+            $data['tg_id'] = $currentUser->telegramId;
 
             if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'update_profile', 20, 3600)) {
                 return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);

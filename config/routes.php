@@ -17,7 +17,7 @@ return function (App $app, ContainerInterface $container): void {
     $adminOnly = filter_var($_ENV['ADMIN_ONLY'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
     if (!$adminOnly) {
-        $routeLoader = new RouteLoader($app, $container, [
+        $routeLoader = new RouteLoader($app, [
             HomeController::class,
             UserController::class,
             AiUsageController::class,

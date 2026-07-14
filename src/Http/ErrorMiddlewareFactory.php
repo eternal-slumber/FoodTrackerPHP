@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http;
 
+use App\Exceptions\AppException;
+use App\Exceptions\ValidationException;
+use App\Services\TelemetryService;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
@@ -13,6 +17,10 @@ use Throwable;
 
 final class ErrorMiddlewareFactory
 {
+    /**
+     * @param App<ContainerInterface|null> $app
+     * @param (callable(): TelemetryService)|null $telemetryFactory
+     */
     public static function create(App $app, bool $displayErrorDetails, ?callable $telemetryFactory = null): ErrorMiddleware
     {
         $errorMiddleware = $app->addErrorMiddleware(
@@ -27,12 +35,15 @@ final class ErrorMiddlewareFactory
                 Throwable $exception,
                 bool $displayErrorDetails
             ) use ($app, $telemetryFactory): Response {
-                $statusCode = $exception instanceof HttpException ? $exception->getCode() : 500;
+                $isAppException = $exception instanceof AppException;
+                $statusCode = $isAppException || $exception instanceof HttpException
+                    ? $exception->getCode()
+                    : 500;
                 $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
-                $payload = [
-                    'error' => $statusCode === 404 ? 'Not Found' : 'Internal Server Error',
-                ];
+                $payload = $isAppException
+                    ? $exception->toArray()
+                    : ['error' => $statusCode === 404 ? 'Not Found' : 'Internal Server Error'];
 
                 if ($displayErrorDetails) {
                     $payload['exception'] = $exception::class;
@@ -42,18 +53,21 @@ final class ErrorMiddlewareFactory
                     $payload['trace'] = $exception->getTrace();
                 }
 
-                error_log(sprintf(
-                    'HTTP %d %s %s: %s',
-                    $statusCode,
-                    $request->getMethod(),
-                    (string) $request->getUri(),
-                    $exception->getMessage()
-                ));
+                $shouldRecordError = !$exception instanceof ValidationException && $statusCode >= 500;
+                if ($shouldRecordError) {
+                    error_log(sprintf(
+                        'HTTP %d %s %s: %s',
+                        $statusCode,
+                        $request->getMethod(),
+                        (string) $request->getUri(),
+                        $exception->getMessage()
+                    ));
+                }
 
-                if ($telemetryFactory !== null) {
+                if ($telemetryFactory !== null && $shouldRecordError) {
                     try {
                         $telemetryFactory()->recordSystemError(
-                            $statusCode >= 500 ? 'error' : 'warning',
+                            'error',
                             'http',
                             $exception->getMessage(),
                             [
