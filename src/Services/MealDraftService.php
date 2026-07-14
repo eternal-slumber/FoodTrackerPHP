@@ -24,7 +24,7 @@ class MealDraftService
             throw new \RuntimeException('User not found. Register first!');
         }
 
-        $relativePath = $this->storage->saveUploadedFile($dto->imagePath, $dto->telegramId, $dto->mimeType);
+        $relativePath = $this->storage->saveUploadedFile($dto->imagePath, $dto->telegramId);
         $analysis = $this->photoAnalysis->analyze($this->storage->fullPath($relativePath));
         $product = $this->nutrition->createAiDraftProduct($analysis);
         $totals = $this->nutrition->calculateDraftProductPortion($product);

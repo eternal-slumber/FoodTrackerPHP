@@ -38,23 +38,6 @@ class MealRepository
         return $result;
     }
 
-    public function beginTransaction(): void
-    {
-        $this->db->beginTransaction();
-    }
-
-    public function commit(): void
-    {
-        $this->db->commit();
-    }
-
-    public function rollBack(): void
-    {
-        if ($this->db->inTransaction()) {
-            $this->db->rollBack();
-        }
-    }
-
     public function findByUserId(int $userId): array
     {
         $stmt = $this->db->prepare('SELECT * FROM meals WHERE user_id = ? ORDER BY created_at DESC');
@@ -333,7 +316,7 @@ class MealRepository
     {
         $stmt = $this->db->prepare('DELETE FROM meals WHERE id = ?');
 
-        return $stmt->execute([$id]);
+        return $stmt->execute([$id]) && $stmt->rowCount() === 1;
     }
 
     private function hydrate(array $data): Meal

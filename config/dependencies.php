@@ -60,6 +60,7 @@ $builder = new ContainerBuilder();
 
 $definitions = [
     DatabaseConnection::class => autowire(),
+    TransactionManager::class => autowire(),
     PDO::class => fn(): PDO => Database::getConnection(),
     AIProviderConfig::class => fn(): AIProviderConfig => AIProviderConfig::fromEnv($_ENV),
 
