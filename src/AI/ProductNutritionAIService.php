@@ -40,10 +40,6 @@ class ProductNutritionAIService
             'json_schema' => $this->responseSchema(),
         ]);
 
-        if ($textResponse === null) {
-            return $this->emptyNutrients();
-        }
-
         $parsed = $this->jsonParser->parseObject($textResponse);
 
         return $parsed ? $this->normalizeNutrients($parsed) : $this->emptyNutrients();

@@ -10,10 +10,12 @@ use App\AI\AIChatClientInterface;
 use App\AI\AIJsonResponseParser;
 use App\AI\DailyNutritionInsightAIService;
 use App\AI\MealPhotoAnalysisAIService;
+use App\AI\MealPhotoAnalysisResponseValidator;
 use App\AI\OpenAICompatibleChatClient;
 use App\AI\ProductNutritionAIService;
 use App\Core\Database;
 use App\Core\DatabaseConnection;
+use App\Core\TransactionManager;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use App\Repositories\MealRepository;
 use App\Repositories\MealProductRepository;
@@ -97,6 +99,7 @@ $definitions = [
     EveningSummaryScheduleService::class => autowire(),
     EveningSummaryDeliveryService::class => autowire(),
     AIJsonResponseParser::class => autowire(),
+    MealPhotoAnalysisResponseValidator::class => autowire(),
     MealPhotoAnalysisAIService::class => autowire(),
     ProductNutritionAIService::class => autowire(),
     UserRepository::class => autowire(),

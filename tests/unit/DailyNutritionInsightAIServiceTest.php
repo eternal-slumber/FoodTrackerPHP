@@ -55,14 +55,14 @@ class FakeDailyInsightChatClient implements AIChatClientInterface
     public array $options = [];
     public string $prompt = '';
 
-    public function __construct(private readonly ?string $response) {}
+    public function __construct(private readonly string $response) {}
 
     public function complete(
         array $messages,
         int $timeoutSeconds,
         string $operation,
         array $options = []
-    ): ?string {
+    ): string {
         $this->options = $options;
         $this->prompt = (string)($messages[0]['content'] ?? '');
 

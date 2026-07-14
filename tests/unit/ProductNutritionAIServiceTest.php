@@ -46,14 +46,14 @@ class FakeProductNutritionChatClient implements AIChatClientInterface
     public string $lastPrompt = '';
     public array $lastOptions = [];
 
-    public function __construct(private readonly ?string $response) {}
+    public function __construct(private readonly string $response) {}
 
     public function complete(
         array $messages,
         int $timeoutSeconds,
         string $operation,
         array $options = []
-    ): ?string {
+    ): string {
         $this->lastPrompt = (string)($messages[0]['content'] ?? '');
         $this->lastOptions = $options;
 
