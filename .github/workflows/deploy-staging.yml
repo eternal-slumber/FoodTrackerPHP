@@ -5,18 +5,81 @@ on:
     branches:
       - develop
 
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
 jobs:
+  quality:
+    name: Tests and lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Install PHP dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Lint PHP
+        run: find src public scripts tests config bootstrap -type f -name '*.php' -print0 | xargs -0 -n1 php -l
+
+      - name: Run static analysis
+        run: composer analyse
+
+      - name: Run PHP tests
+        run: ./vendor/bin/phpunit
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run frontend tests
+        run: composer test:frontend
+
   deploy:
     name: Deploy staging on VPS
     runs-on: ubuntu-latest
+    needs: quality
 
     steps:
       - name: Deploy staging over SSH
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
+          envs: DEPLOY_SHA
           script: |
+            set -eu
             cd /opt/foodtracker-staging
-            ./deploy-staging.sh
+            git fetch --no-tags origin "$DEPLOY_SHA"
+            git checkout --detach "$DEPLOY_SHA"
+            ./scripts/deploy-staging.sh "$DEPLOY_SHA"
+
+            deployed_sha="$(git rev-parse HEAD)"
+            if [ "$deployed_sha" != "$DEPLOY_SHA" ]; then
+              echo "Expected $DEPLOY_SHA, but deployed $deployed_sha" >&2
+              exit 1
+            fi
+
+      - name: Check staging health
+        env:
+          HEALTHCHECK_URL: ${{ secrets.STAGING_HEALTHCHECK_URL }}
+        run: |
+          test -n "$HEALTHCHECK_URL"
+          curl --fail --silent --show-error \
+            --retry 5 \
+            --retry-all-errors \
+            --retry-delay 5 \
+            --max-time 15 \
+            "$HEALTHCHECK_URL"
