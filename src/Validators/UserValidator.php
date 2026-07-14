@@ -73,8 +73,10 @@ class UserValidator
             'height' => (int)$data['height'],
             'weight' => (float)$data['weight'],
             'gender' => $data['gender'],
-            'activity_level' => $activityLevel?->value ?? ActivityLevel::MEDIUM->value,
-            'goal' => $goal?->value ?? Goal::MAINTENANCE->value,
+            'activity_level' => $activityLevel instanceof ActivityLevel
+                ? $activityLevel->value
+                : ActivityLevel::MEDIUM->value,
+            'goal' => $goal instanceof Goal ? $goal->value : Goal::MAINTENANCE->value,
         ];
     }
 }
