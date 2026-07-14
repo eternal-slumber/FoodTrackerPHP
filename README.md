@@ -1,280 +1,108 @@
-# Mini App для трекинга питания
+# FoodTrackerPHP
 
-Telegram Mini App для отслеживания питания и калорий. Анализирует фото еды через AI API и считает ежедневное потребление калорий.
+FoodTrackerPHP is a Telegram Mini App for tracking meals, calories, and macronutrients.
 
-## Возможности
+The app allows users to register, add meals, upload food photos, analyze meals through an OpenAI-compatible AI provider, and view daily nutrition progress. The project is built with PHP 8.5, Slim 4, MySQL, Docker, and vanilla HTML/CSS/JavaScript.
 
-- Регистрация (3-шаговая форма: базовые данные → активность → цель)
-- Анализ фото еды через OpenAI-compatible AI provider: OpenRouter или локальный LM Studio
-- Подсчет калорий по формуле
-- Прогресс-бар потребления калорий за день
-- История приемов пищи
-- Telegram-бот как панель быстрого доступа: `/start`, `/summary`, `/eat`, `/help`
-- Серверная проверка Telegram Mini App auth data
-- Приватная выдача загруженных фото через authenticated API
+## Features
 
-## Технологии
+- Telegram Mini App authentication
+- 3-step user registration flow
+- Meal tracking and daily calorie progress
+- Calories and macronutrients calculation
+- Food photo upload and AI analysis
+- Meal history and nutrition insights
+- Telegram bot commands and meal reminders
+- Trainer sharing through read-only links
+- Separate administration panel
 
-- **Backend:** PHP 8.5, Slim 4, PHP-DI
-- **Frontend:** HTML/CSS/JS (Telegram WebApp API)
-- **Database:** MySQL
-- **AI:** OpenAI-compatible API: OpenRouter или LM Studio
-- **Host** Ngrok free
+## Tech Stack
 
-## Архитектура и безопасность
+**Backend**
 
-- Slim 4 отвечает за HTTP routing и middleware.
-- PHP-DI собирает контроллеры, сервисы и repositories.
-- API endpoints под `/api/*` требуют заголовок `X-Telegram-Init-Data`.
-- Backend проверяет подпись Telegram `initData` через `TELEGRAM_BOT_TOKEN`.
-- Telegram Bot webhook живет отдельно на `/telegram/webhook` и не заменяет Mini App.
-- Webhook проверяет `X-Telegram-Bot-Api-Secret-Token`, если задан `TELEGRAM_WEBHOOK_SECRET_TOKEN`.
-- `tg_id` из query/body не используется как источник авторизации.
-- SQL вынесен в repository layer (`UserRepository`, `MealRepository`).
-- Загруженные фото проверяются через `finfo` и разрешены только JPEG/PNG/WebP.
-- Прямой доступ к `/storage` закрыт в nginx; фото выдаются через `/api/meals/{id}/image` с проверкой владельца.
-- Upload и AI-запросы ограничиваются через MySQL-backed rate limits.
+- PHP 8.5
+- Slim 4
+- PHP-DI
+- MySQL
+- Composer
 
-## Установка
+**Frontend**
 
-1. Клонировать репозиторий
-2. `composer install`
-3. Создать `.env` файл (см. `.env.example`)
-4. Для новой пустой БД выполнить `composer db:bootstrap`
-5. Для последующих обновлений запускать `composer migrate`
-6. Настроить веб-сервер на `public/`
+- HTML
+- CSS
+- JavaScript
+- Telegram WebApp API
 
-## Docker запуск
+**Infrastructure**
 
-Обычный запуск поднимает только Mini App, Nginx и БД. Незавершённая админка в него не входит:
+- Docker / Docker Compose
+- Nginx
+- VPS deployment
+- HTTPS / domain setup
 
-```bash
-docker compose --env-file .env.db -f docker/docker-compose.yml up -d
-docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer install
-docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer migrate
-```
+**AI**
 
-Админка подключается отдельно только через Docker profile после настройки `.env.admin`:
+- OpenAI-compatible API
+- OpenRouter
+- Local LM Studio support for development
 
-```bash
-docker compose --env-file .env.db -f docker/docker-compose.yml --profile admin up -d
-```
+## Architecture
 
-Локально админка открывается через отдельный virtual host, а не через обычный `localhost`:
+The project follows a layered structure:
 
-```text
-http://admin.localhost:8080/<ADMIN_PATH>
-```
+- `Controllers` handle HTTP requests
+- `Services` contain business logic
+- `Repositories` handle SQL queries
+- `Auth` validates Telegram Mini App authentication
+- `Telegram` contains bot-related logic
+- `Validators`, `Enums`, and `ValueObjects` keep domain logic isolated
 
-Например, если `ADMIN_PATH=/ft-control-7d4c2a`, адрес будет
-`http://admin.localhost:8080/ft-control-7d4c2a`.
+Slim 4 is used for routing and middleware, while PHP-DI is used for dependency injection.
 
-Для основного приложения оставляй `ADMIN_ENABLED=false`. В admin-контейнере должны быть
-`ADMIN_ENABLED=true`, `ADMIN_ONLY=true` и отдельный непредсказуемый `ADMIN_PATH`.
+## Security
 
-## Web root / DocumentRoot
+- Telegram Mini App `initData` is validated on the backend
+- API endpoints under `/api/*` require `X-Telegram-Init-Data`
+- `tg_id` from query or body data is not trusted for authorization
+- Uploaded images are validated by content, MIME type, size, and dimensions
+- Only JPEG, PNG, and WebP uploads are allowed
+- Direct access to internal files and uploaded images is blocked by Nginx
+- Meal images are served through authenticated API endpoints
+- Upload and AI requests are protected by MySQL-backed rate limits
 
-Production и локальный Apache/MAMP должны обслуживать только директорию `public/`.
-Нельзя направлять web root на корень проекта, иначе наружу могут попасть `.env`, `vendor/`, `storage/`, `schema.sql` и другие внутренние файлы.
+## Meal tracking
 
-Правильный DocumentRoot для MAMP:
+Users can set their body metrics, activity level, and nutrition goal during registration. Meals are organized by day and meal type, with calories, proteins, fats, carbohydrates, weight, and photos stored for each entry.
 
-```text
-/Applications/MAMP/htdocs/foodTracker/public
-```
+The daily view shows consumed calories and macronutrients against personal targets. History and progress indicators make it easy to compare recent days without opening every entry.
 
-Пример Apache VirtualHost лежит в `deploy/apache/foodtracker.local.conf.example`.
-В Docker/Nginx это уже настроено через `root /var/www/public`.
+## AI-assisted nutrition analysis
 
-После настройки проверь:
+A meal can be analyzed from a photo or entered by product name. The AI provider returns an estimated dish name, weight, calories, macronutrients, confidence, and product breakdown.
 
-```bash
-curl -I http://localhost/.env
-curl -I http://localhost/schema.sql
-curl -I http://localhost/vendor/autoload.php
-curl -I http://localhost/storage/uploads/
-curl -I http://localhost/
-```
+Responses are validated before they reach the meal draft. Invalid JSON, missing fields, unsupported values, rate limits, authentication errors, and temporary provider failures are handled separately instead of silently producing zero values.
 
-Ожидаемо: внутренние пути возвращают `403` или `404`, главная страница возвращает `200`.
+## Nutrition insights
 
-## Local UX testing without Telegram
+The app calculates daily calorie and macronutrient totals from saved meals. It can generate a short AI insight based on the current balance and suggest what to eat next while accounting for the selected meal type and remaining daily targets.
 
-Для быстрой проверки интерфейса можно открыть приложение прямо в браузере без Telegram и ngrok.
-Этот режим предназначен только для локальной разработки.
+## Telegram bot and reminders
 
-В `.env` включи:
+The Telegram bot provides quick access to the same data as the Mini App:
 
-```dotenv
-APP_ENV=local
-TELEGRAM_DEV_AUTH_ENABLED=true
-TELEGRAM_DEV_USER_ID=100001
-TELEGRAM_DEV_USERNAME=dev_user
-```
+- `/start` displays quick actions
+- `/summary` shows today's nutrition summary
+- `/eat` generates a meal recommendation
+- `/help` lists available commands
 
-После этого открой локальный URL, например `http://localhost:8080`.
-Frontend подставит mock Telegram WebApp API, а backend будет считать запросы авторизованными от dev-пользователя.
+Users can configure meal reminders and an evening summary. Notifications are queued in MySQL and dispatched without duplicating overlapping jobs.
 
-Никогда не включай `TELEGRAM_DEV_AUTH_ENABLED=true` на публичном сервере.
-В production должны быть:
+## Trainer sharing
 
-```dotenv
-APP_ENV=production
-TELEGRAM_DEV_AUTH_ENABLED=false
-```
+Users can create a read-only link for a trainer or nutrition specialist. Shared access can include profile information, nutrition totals, meal history, and recent daily progress without exposing Telegram authentication data.
 
-## Local AI через LM Studio
+The guest view displays calorie progress rings for recent days, allowing the trainer to compare consumption against the daily target before opening a specific day.
 
-Чтобы не тратить внешние AI-запросы во время разработки, можно переключить приложение на локальный сервер LM Studio.
+## Administration
 
-1. В LM Studio скачай модель.
-2. Открой `Developer` / `Local Server`.
-3. Запусти OpenAI-compatible server.
-4. Укажи в `.env`:
-
-```dotenv
-AI_PROVIDER=lmstudio
-AI_BASE_URL=http://127.0.0.1:1234/v1
-AI_API_KEY=lm-studio
-AI_MODEL=название-модели-из-LM-Studio
-```
-
-Если PHP работает внутри Docker, `127.0.0.1` будет указывать на контейнер. Тогда используй:
-
-```dotenv
-AI_BASE_URL=http://host.docker.internal:1234/v1
-```
-
-Для анализа фото нужна vision/multimodal модель. Обычная текстовая модель подойдет только для ручного расчета КБЖУ по названию продукта.
-
-## Telegram Bot
-
-Бот используется как панель быстрого доступа к данным Mini App, а не как отдельный продукт.
-
-Команды:
-
-```text
-/start   приветствие и быстрые кнопки
-/summary сводка за сегодня
-/eat     рекомендация, что съесть сейчас
-/help    список команд
-```
-
-Под приветствием показываются кнопки:
-
-```text
-Сводка за сегодня
-Что съесть
-Настроить напоминания
-Открыть приложение
-```
-
-Сводка берется из той же БД и тех же сервисов, что и Mini App. Формат ответа:
-
-```text
-Сегодня ты съел 1450 / 2200 ккал.
-
-БЖУ:
-Белки: 82 / 130 г
-Жиры: 78 / 65 г
-Углеводы: 160 / 250 г
-
-Осталось 750 ккал.
-```
-
-Кнопка `Что съесть` делает AI-рекомендацию с учетом текущего приема пищи (`завтрак`, `обед`, `ужин`) и дневных остатков/переборов по калориям, белкам, жирам и углеводам. После рекомендации показываются кнопки `Назад` и `Добавить еду`; `Добавить еду` открывает Mini App.
-
-Настройки:
-
-```dotenv
-TELEGRAM_BOT_TOKEN=
-TELEGRAM_WEBHOOK_SECRET_TOKEN=
-TELEGRAM_MINI_APP_URL=https://example.com
-TELEGRAM_BOT_DEFAULT_TZ_OFFSET_MINUTES=0
-```
-
-`TELEGRAM_BOT_DEFAULT_TZ_OFFSET_MINUTES` использует тот же знак, что `Date.getTimezoneOffset()` в браузере: Москва `-180`, UTC `0`. Нужен потому, что обычные Telegram bot updates не передают часовой пояс пользователя.
-
-Webhook регистрируется на публичный URL:
-
-```bash
-curl "https://api.telegram.org/bot<token>/setWebhook?url=https://example.com/telegram/webhook&secret_token=<secret>"
-```
-
-## Отправка напоминаний о приемах пищи
-
-Перед первым запуском примени миграции:
-
-```bash
-composer migrate
-```
-
-Один ручной цикл отправки запускается командой:
-
-```bash
-composer notifications:dispatch
-```
-
-Команда выбирает наступившие уведомления из `notification_queue`, отправляет их через Telegram и создает следующее напоминание. За один запуск обрабатывается не более 50 записей. Размер пачки можно изменить в `.env` в диапазоне от 1 до 100:
-
-```dotenv
-NOTIFICATION_DISPATCH_BATCH_SIZE=50
-```
-
-На production-сервере достаточно одного задания cron, запускаемого каждую минуту. Такой интервал нужен, чтобы вечерняя сводка приходила вскоре после добавления полного набора из завтрака, обеда и ужина. Для текущей Docker-конфигурации:
-
-```cron
-* * * * * /usr/bin/docker exec foodtracker-app php /var/www/scripts/dispatch_notifications.php >> /var/log/foodtracker-notifications.log 2>&1
-```
-
-CLI-команда использует файловую блокировку. Если предыдущий запуск еще работает, новый завершится без повторной отправки. Статусы `processing` дополнительно защищены таймаутом в сервисе: зависшая запись снова станет доступна для обработки через 15 минут.
-
-## Структура БД
-
-Базовая схема лежит в `schema.sql`, точечные изменения — в `database/migrations/`.
-
-## Очистка загруженных фото
-
-Фото из сохранённых приёмов удаляются best effort после успешного удаления записи из БД. Ошибка файловой очистки не откатывает удаление приёма: оставшийся orphan-файл удалит периодическая cleanup-команда. При удалении профиля удаляется папка пользователя в `storage/uploads/user_<telegram_id>`.
-
-Если пользователь загрузил фото в черновик, но не сохранил прием, файл остается orphan-файлом. Для их периодической очистки есть команда:
-
-```bash
-composer cleanup:uploads
-```
-
-По умолчанию удаляются только orphan-файлы старше 24 часов. TTL можно изменить через:
-
-```dotenv
-UPLOAD_ORPHAN_TTL_SECONDS=86400
-```
-
-Не запускай cleanup без понимания текущего TTL. Значение `0` означало бы удаление всех orphan-файлов сразу, поэтому команда намеренно отказывается работать с `UPLOAD_ORPHAN_TTL_SECONDS=0`.
-
-## Запуск тестов
-
-```bash
-docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app ./vendor/bin/phpunit tests/unit/
-```
-
-## Структура проекта
-
-```
-foodTracker/
-├── bootstrap/           # Общая загрузка env/container/app для web и CLI
-├── src/
-│   ├── Controllers/    # HTTP контроллеры
-│   ├── Models/         # Модели данных
-│   ├── Repositories/   # SQL доступ к данным
-│   ├── Auth/           # Telegram auth
-│   ├── Telegram/       # Telegram Bot API client и обработка команд
-│   ├── Services/       # Бизнес-логика
-│   ├── Enums/          # Перечисления
-│   ├── ValueObjects/   # Value Objects
-│   └── Validators/     # Валидация
-├── config/             # DI контейнер и маршруты Slim
-├── database/           # SQL миграции
-├── public/             # Публичная директория
-├── storage/            # Загруженные файлы
-└── tests/              # Unit тесты
-```
+The administration panel runs separately from the main Mini App. It provides application health information, usage statistics, system logs, and protected administrator authentication without exposing administrative routes through the public user interface.
