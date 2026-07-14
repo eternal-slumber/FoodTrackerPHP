@@ -1,4 +1,31 @@
 // Source: trainer/js/share.js
+function trainerShareGetDayRingVisual(day, dailyGoal) {
+    const rawCalories = Number(day?.calories ?? 0);
+    const rawGoal = Number(dailyGoal ?? 0);
+    const calories = Number.isFinite(rawCalories) ? Math.max(rawCalories, 0) : 0;
+    const goal = Number.isFinite(rawGoal) ? Math.max(rawGoal, 0) : 0;
+    const percentage = goal > 0 ? (calories / goal) * 100 : 0;
+    const progress = Math.min(Math.max(percentage, 0), 100);
+
+    let color = 'empty';
+    if (goal <= 0) color = 'empty';
+    else if (calories > 0 && percentage < 60) color = 'low';
+    else if (percentage < 90 && calories > 0) color = 'warning';
+    else if (percentage <= 105 && calories > 0) color = 'good';
+    else if (percentage <= 120 && calories > 0) color = 'over';
+    else if (calories > 0) color = 'danger';
+
+    return {
+        calories,
+        goal,
+        percentage: Math.round(percentage * 10) / 10,
+        progress: Math.round(progress * 100) / 100,
+        color,
+        hasGoal: goal > 0,
+        hasOver: percentage > 100
+    };
+}
+
 (() => {
     const state = document.body.dataset.shareState;
     const content = document.getElementById('trainer-share-content');
@@ -162,6 +189,7 @@
         const container = document.getElementById('trainer-share-calendar');
         const [year, month, day] = data.today.split('-').map(Number);
         const todayDate = new Date(year, month - 1, day);
+        const showNutritionPreview = Boolean(visibility.nutrition);
 
         for (let offset = 6; offset >= 0; offset -= 1) {
             const date = new Date(todayDate);
@@ -169,18 +197,78 @@
             const key = dateKey(date);
             const item = document.createElement('button');
             const weekday = document.createElement('span');
-            const number = document.createElement('strong');
+            const dayData = daysByDate.get(key) || { date: key, calories: 0 };
+            const ringVisual = trainerShareGetDayRingVisual(dayData, summary.daily_goal);
+            const ring = renderDayRing(date.getDate(), ringVisual, showNutritionPreview);
 
             item.type = 'button';
             item.dataset.date = key;
-            item.className = `trainer-share-day${daysByDate.has(key) ? ' has-data' : ''}${key === data.today ? ' is-today' : ''}`;
-            item.setAttribute('aria-label', `Показать дневник за ${formatDate(key)}`);
+            item.className = [
+                'trainer-share-day',
+                daysByDate.has(key) ? 'has-data' : '',
+                key === data.today ? 'is-today' : '',
+                showNutritionPreview ? `has-nutrition-preview day-${ringVisual.color}` : ''
+            ].filter(Boolean).join(' ');
+            item.setAttribute('aria-label', calendarDayLabel(key, ringVisual, showNutritionPreview));
+            weekday.className = 'trainer-share-day-weekday';
             weekday.textContent = date.toLocaleDateString('ru-RU', { weekday: 'short' }).replace('.', '');
-            number.textContent = date.getDate();
-            item.append(weekday, number);
+            item.append(weekday, ring);
+            if (showNutritionPreview) {
+                const percentage = document.createElement('small');
+                percentage.className = 'trainer-share-day-percentage';
+                percentage.textContent = ringVisual.hasGoal ? `${round(ringVisual.percentage)}%` : '—';
+                item.append(percentage);
+            }
             item.addEventListener('click', () => selectDate(key));
             container.append(item);
         }
+    }
+
+    function renderDayRing(dayNumber, visual, showNutritionPreview) {
+        const ring = document.createElement('strong');
+        const number = document.createElement('span');
+
+        ring.className = 'trainer-share-day-ring';
+        number.className = 'trainer-share-day-number';
+        number.textContent = dayNumber;
+
+        if (showNutritionPreview) {
+            const namespace = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(namespace, 'svg');
+            const track = document.createElementNS(namespace, 'circle');
+            const progress = document.createElementNS(namespace, 'circle');
+            const overMarker = document.createElement('i');
+
+            svg.classList.add('trainer-share-day-ring-svg');
+            svg.setAttribute('viewBox', '0 0 44 44');
+            svg.setAttribute('aria-hidden', 'true');
+            track.classList.add('trainer-share-day-ring-track');
+            progress.classList.add('trainer-share-day-ring-progress');
+            [track, progress].forEach(circle => {
+                circle.setAttribute('cx', '22');
+                circle.setAttribute('cy', '22');
+                circle.setAttribute('r', '18');
+                circle.setAttribute('pathLength', '100');
+            });
+            progress.style.strokeDashoffset = String(100 - visual.progress);
+            overMarker.className = 'trainer-share-day-over-marker';
+            overMarker.style.transform = `rotate(${visual.percentage * 3.6}deg)`;
+            ring.classList.toggle('has-over', visual.hasOver);
+            svg.append(track, progress);
+            ring.append(svg, overMarker);
+        }
+
+        ring.append(number);
+
+        return ring;
+    }
+
+    function calendarDayLabel(key, visual, showNutritionPreview) {
+        const prefix = `Показать дневник за ${formatDate(key)}`;
+        if (!showNutritionPreview) return prefix;
+        if (!visual.hasGoal) return `${prefix}, дневная норма не задана`;
+
+        return `${prefix}, ${round(visual.percentage)}% нормы, ${round(visual.calories)} из ${round(visual.goal)} килокалорий`;
     }
 
     function renderHistory() {
@@ -212,12 +300,6 @@
     function selectDate(date) {
         selectedDate = date;
         renderSelectedDay();
-        const detailCard = visibility.nutrition
-            ? document.getElementById('trainer-share-summary-card')
-            : visibility.meals
-                ? document.getElementById('trainer-share-meals-card')
-                : document.getElementById('trainer-share-history-card');
-        detailCard?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function updateSelectedControls() {

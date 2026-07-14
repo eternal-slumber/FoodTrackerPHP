@@ -10361,12 +10361,29 @@ body.sheet-open {
 .trainer-share-empty { color: #777f73; font-size: 13px; margin: 14px 0 0; }
 
 .trainer-share-calendar { display: grid; gap: 7px; grid-template-columns: repeat(7, 1fr); margin-top: 16px; }
-.trainer-share-day { appearance: none; align-items: center; background: transparent; border: 0; color: inherit; cursor: pointer; display: flex; flex-direction: column; font: inherit; gap: 6px; min-width: 0; padding: 0; }
-.trainer-share-day span { color: #737b6f; font-size: 10px; }
-.trainer-share-day strong { align-items: center; background: #edf1e8; border: 2px solid transparent; border-radius: 50%; display: flex; font-size: 12px; height: 38px; justify-content: center; width: 38px; }
-.trainer-share-day.has-data strong { background: #dff3bd; border-color: #70bc3d; }
-.trainer-share-day.is-today span { color: #3f7222; font-weight: 750; }
-.trainer-share-day.is-selected strong { background: #171717; border-color: #171717; color: #fff; }
+.trainer-share-day { appearance: none; align-items: center; background: transparent; border: 0; color: inherit; cursor: pointer; display: flex; flex-direction: column; font: inherit; gap: 5px; min-width: 0; padding: 0; }
+.trainer-share-day-weekday { color: #737b6f; font-size: 10px; }
+.trainer-share-day-ring { --day-ring-color: #c7c7cc; --day-ring-track: rgba(17, 17, 17, .08); align-items: center; background: #edf1e8; border: 2px solid transparent; border-radius: 50%; display: grid; flex: 0 0 auto; height: 38px; justify-items: center; place-items: center; position: relative; transition: box-shadow 160ms ease, transform 160ms ease; width: 38px; }
+.trainer-share-day-number { font-size: 12px; font-weight: 700; grid-area: 1 / 1; position: relative; z-index: 3; }
+.trainer-share-day.has-data:not(.has-nutrition-preview) .trainer-share-day-ring { background: #dff3bd; border-color: #70bc3d; }
+.trainer-share-day.has-nutrition-preview .trainer-share-day-ring { background: transparent; border: 0; }
+.trainer-share-day.is-today .trainer-share-day-weekday { color: #3f7222; font-weight: 750; }
+.trainer-share-day.is-selected .trainer-share-day-ring { box-shadow: 0 0 0 3px rgba(112, 188, 61, .24); transform: scale(1.04); }
+.trainer-share-day.is-selected .trainer-share-day-number { color: #171717; font-weight: 800; }
+.trainer-share-day-percentage { color: #687064; font-size: 9px; font-weight: 700; line-height: 1; }
+.trainer-share-day-ring-svg { display: block; grid-area: 1 / 1; height: 100%; overflow: visible; width: 100%; z-index: 1; }
+.trainer-share-day-ring-track,
+.trainer-share-day-ring-progress { fill: none; stroke-width: 6; transform: rotate(-90deg); transform-box: fill-box; transform-origin: 50% 50%; }
+.trainer-share-day-ring-track { stroke: var(--day-ring-track); }
+.trainer-share-day-ring-progress { filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--day-ring-color) 30%, transparent)); stroke: var(--day-ring-color); stroke-dasharray: 100 100; stroke-dashoffset: 100; stroke-linecap: round; transition: stroke-dashoffset .6s cubic-bezier(.16, 1, .3, 1); }
+.trainer-share-day-over-marker { grid-area: 1 / 1; height: 100%; opacity: 0; pointer-events: none; position: relative; width: 100%; z-index: 2; }
+.trainer-share-day-over-marker::after { background: var(--day-ring-color); border-radius: 50%; box-shadow: 1px 0 2px rgba(0, 0, 0, .22); content: ""; height: 6px; left: calc(50% - 3px); position: absolute; top: 1px; width: 6px; }
+.trainer-share-day-ring.has-over .trainer-share-day-over-marker { opacity: 1; }
+.trainer-share-day.day-low .trainer-share-day-ring { --day-ring-color: #4aa3d8; --day-ring-track: rgba(74, 163, 216, .18); }
+.trainer-share-day.day-warning .trainer-share-day-ring { --day-ring-color: #f4c542; --day-ring-track: rgba(244, 197, 66, .2); }
+.trainer-share-day.day-good .trainer-share-day-ring { --day-ring-color: #70bc3d; --day-ring-track: rgba(112, 188, 61, .2); }
+.trainer-share-day.day-over .trainer-share-day-ring { --day-ring-color: #f39a2e; --day-ring-track: rgba(243, 154, 46, .2); }
+.trainer-share-day.day-danger .trainer-share-day-ring { --day-ring-color: #e95d4f; --day-ring-track: rgba(233, 93, 79, .2); }
 .trainer-share-day:focus-visible { outline: 2px solid #70bc3d; outline-offset: 4px; }
 
 .trainer-share-history { border-top: 1px solid #edf0e9; margin-top: 16px; padding-top: 4px; }
@@ -10403,6 +10420,6 @@ body.sheet-open {
     .trainer-share-summary-head { align-items: flex-start; flex-direction: column; gap: 4px; }
     .trainer-share-macros { gap: 6px; }
     .trainer-share-macros div { padding: 9px 7px; }
-    .trainer-share-day strong { height: 34px; width: 34px; }
+    .trainer-share-day-ring { height: 34px; width: 34px; }
     .trainer-share-profile-params { grid-template-columns: 1fr; }
 }
