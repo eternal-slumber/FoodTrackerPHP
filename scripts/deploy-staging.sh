@@ -17,6 +17,6 @@ if [ "$deployed_sha" != "$deploy_sha" ]; then
     exit 1
 fi
 
-composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
-composer migrate
-composer build:frontend
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer install --no-interaction --prefer-dist --no-progress --no-dev --optimize-autoloader
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer migrate
+docker compose --env-file .env.db -f docker/docker-compose.yml run --rm app composer build:frontend
