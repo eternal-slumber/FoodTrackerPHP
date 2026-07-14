@@ -11,7 +11,8 @@
         "cleanup:uploads": "php scripts/cleanup_uploads.php",
         "notifications:dispatch": "php scripts/dispatch_notifications.php",
         "build:frontend": "php scripts/build_frontend.php",
-        "test:frontend": "node --test tests/frontend/*.test.js"
+        "test:frontend": "node --test tests/frontend/*.test.js",
+        "analyse": "phpstan analyse --memory-limit=512M"
     },
     "require": {
         "php": "^8.5",
@@ -21,7 +22,8 @@
         "php-di/php-di": "^7.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^13"
+        "phpunit/phpunit": "^13",
+        "phpstan/phpstan": "^2.2"
     }
 
 }

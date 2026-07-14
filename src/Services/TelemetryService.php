@@ -10,8 +10,20 @@ use Throwable;
 
 class TelemetryService
 {
+    private const AI_ERROR_CATEGORIES = [
+        'request_encoding_failed',
+        'transport_error',
+        'authentication_error',
+        'rate_limit',
+        'retryable_error',
+        'configuration_error',
+        'invalid_json_response',
+        'missing_content',
+    ];
+
     public function __construct(private readonly PDO $db) {}
 
+    /** @param array<string, mixed>|null $eventData */
     public function recordUserEvent(
         ?int $userId,
         string $eventName,
@@ -39,14 +51,22 @@ class TelemetryService
         string $requestType,
         string $status,
         ?int $responseTimeMs = null,
-        ?string $errorMessage = null,
+        ?string $errorCategory = null,
         ?int $userId = null,
-        ?int $aiModelId = null
+        ?int $aiModelId = null,
+        ?string $provider = null,
+        ?string $model = null,
+        ?int $httpStatus = null,
+        ?string $traceId = null
     ): void {
         try {
             $stmt = $this->db->prepare(
-                'INSERT INTO ai_requests (user_id, ai_model_id, request_type, status, response_time_ms, error_message)
-                 VALUES (:user_id, :ai_model_id, :request_type, :status, :response_time_ms, :error_message)'
+                'INSERT INTO ai_requests
+                    (user_id, ai_model_id, request_type, status, response_time_ms, error_message,
+                     provider, model, http_status, trace_id)
+                 VALUES
+                    (:user_id, :ai_model_id, :request_type, :status, :response_time_ms, :error_message,
+                     :provider, :model, :http_status, :trace_id)'
             );
             $stmt->execute([
                 'user_id' => $userId,
@@ -54,13 +74,31 @@ class TelemetryService
                 'request_type' => substr($requestType, 0, 60),
                 'status' => substr($status, 0, 30),
                 'response_time_ms' => $responseTimeMs,
-                'error_message' => $errorMessage !== null ? substr($errorMessage, 0, 2000) : null,
+                'error_message' => $this->safeAiErrorCategory($errorCategory),
+                'provider' => $provider !== null ? substr($provider, 0, 60) : null,
+                'model' => $model !== null ? substr($model, 0, 180) : null,
+                'http_status' => $httpStatus !== null && $httpStatus >= 100 && $httpStatus <= 599
+                    ? $httpStatus
+                    : null,
+                'trace_id' => $traceId !== null ? substr($traceId, 0, 80) : null,
             ]);
         } catch (Throwable $e) {
             error_log('Telemetry AI request write failed: ' . $e->getMessage());
         }
     }
 
+    private function safeAiErrorCategory(?string $errorCategory): ?string
+    {
+        if ($errorCategory === null) {
+            return null;
+        }
+
+        return in_array($errorCategory, self::AI_ERROR_CATEGORIES, true)
+            ? $errorCategory
+            : 'unspecified_error';
+    }
+
+    /** @param array<string, mixed> $context */
     public function recordSystemError(
         string $level,
         string $channel,
@@ -86,6 +124,7 @@ class TelemetryService
         }
     }
 
+    /** @param array<string, mixed>|null $value */
     private function encodeJson(?array $value): ?string
     {
         if ($value === null || $value === []) {
@@ -102,10 +141,12 @@ class TelemetryService
     private function clientIp(Request $request): string
     {
         $serverParams = $request->getServerParams();
+        $remoteAddress = $serverParams['REMOTE_ADDR'] ?? '';
 
-        return substr((string)($serverParams['REMOTE_ADDR'] ?? ''), 0, 45);
+        return is_scalar($remoteAddress) ? substr((string)$remoteAddress, 0, 45) : '';
     }
 
+    /** @param array<string, mixed> $context */
     private function traceId(array $context): ?string
     {
         $traceId = $context['trace_id'] ?? null;

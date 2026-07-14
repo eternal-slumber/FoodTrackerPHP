@@ -510,6 +510,98 @@
     min-height: 38px;
 }
 
+.profile-trainer-share-active { margin-top: 12px; }
+
+.profile-trainer-share-active > small {
+    color: var(--hint-color);
+    display: block;
+    font-size: 11px;
+    margin-bottom: 8px;
+}
+
+.profile-trainer-share-active > .profile-trainer-share-scope {
+    color: var(--text-color);
+    line-height: 1.35;
+}
+
+.profile-trainer-share-link-field {
+    align-items: center;
+    background: var(--secondary-bg);
+    border-radius: 14px;
+    display: flex;
+    gap: 6px;
+    padding: 4px;
+    width: 100%;
+}
+
+.profile-trainer-share-link-field input {
+    background: transparent;
+    border: 0;
+    color: var(--text-color);
+    flex: 1;
+    font: inherit;
+    font-size: 11px;
+    min-width: 0;
+    padding: 8px;
+}
+
+.profile-trainer-share-link-field button {
+    align-items: center;
+    background: var(--button-color);
+    border: 0;
+    border-radius: 11px;
+    color: var(--button-text);
+    display: inline-flex;
+    flex: 0 0 auto;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    gap: 5px;
+    padding: 8px 10px;
+}
+
+.profile-trainer-share-link-field button svg { height: 15px; width: 15px; }
+
+.profile-trainer-share-copy-status {
+    color: var(--button-color) !important;
+    min-height: 14px;
+    padding: 5px 2px 0;
+}
+
+.profile-trainer-share-actions {
+    display: grid;
+    gap: 8px;
+    grid-template-columns: 1fr 1fr;
+    margin-top: 8px;
+}
+
+.profile-trainer-share-actions .profile-wide-action { margin-top: 0; }
+.profile-trainer-revoke { color: #d63b35; }
+
+.profile-trainer-share-config {
+    border-top: 1px solid var(--surface-border);
+    margin-top: 14px;
+    padding-top: 14px;
+}
+
+.profile-trainer-share-config fieldset { border: 0; margin: 0; padding: 0; }
+.profile-trainer-share-config fieldset + fieldset { margin-top: 16px; }
+.profile-trainer-share-config legend { font-size: 12px; font-weight: 750; margin-bottom: 9px; }
+
+.profile-trainer-duration-options { display: grid; gap: 6px; grid-template-columns: repeat(3, 1fr); }
+.profile-trainer-duration-options input { height: 1px; opacity: 0; position: absolute; width: 1px; }
+.profile-trainer-duration-options span { background: var(--secondary-bg); border: 1px solid transparent; border-radius: 12px; display: block; font-size: 11px; font-weight: 650; padding: 9px 4px; text-align: center; }
+.profile-trainer-duration-options input:checked + span { border-color: var(--button-color); color: var(--button-color); }
+
+.profile-trainer-visibility-options { display: grid; gap: 7px; }
+.profile-trainer-visibility-options label { align-items: center; display: flex; font-size: 12px; justify-content: space-between; }
+.profile-trainer-visibility-options input { accent-color: var(--button-color); height: 18px; width: 18px; }
+.profile-trainer-config-error { color: #d63b35 !important; font-size: 11px !important; margin-top: 8px !important; }
+
+@media (max-width: 380px) {
+    .profile-trainer-share-actions { grid-template-columns: 1fr; }
+}
+
 .profile-setting-row + .profile-setting-row {
     margin-top: 7px;
 }
@@ -555,6 +647,10 @@
 .profile-select:disabled {
     color: var(--hint-color);
     cursor: default;
+}
+
+.profile-time-input {
+    padding-right: 11px;
 }
 
 .profile-switch-input {

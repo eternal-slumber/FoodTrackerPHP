@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\ValidationException;
+use App\Uploads\UploadedImagePolicy;
+
 class UploadedFileStorage
 {
     private readonly string $uploadPath;
@@ -13,24 +16,20 @@ class UploadedFileStorage
         $this->uploadPath = rtrim($uploadPath, '/') . '/';
     }
 
-    public function saveUploadedFile(string $tmpPath, int $tgId, string $mimeType): string
+    public function saveUploadedFile(string $tmpPath, int $tgId): string
     {
-        $userFolder = $this->uploadPath . 'user_' . $tgId;
+        [$sourcePath, $mimeType] = $this->validateSourceImage($tmpPath);
+        $userFolder = $this->trustedUserFolder($tgId);
 
-        if (!file_exists($userFolder) && !mkdir($userFolder, 0755, true)) {
-            throw new \RuntimeException('Failed to create user folder');
-        }
-
-        $extension = match ($mimeType) {
-            'image/png' => 'png',
-            'image/webp' => 'webp',
-            default => 'jpg',
-        };
+        $extension = UploadedImagePolicy::MIME_TO_EXTENSION[$mimeType];
 
         $fileName = time() . '_' . bin2hex(random_bytes(8)) . '.' . $extension;
         $targetPath = $userFolder . '/' . $fileName;
 
-        if (!move_uploaded_file($tmpPath, $targetPath)) {
+        $moved = is_uploaded_file($sourcePath)
+            ? move_uploaded_file($sourcePath, $targetPath)
+            : @rename($sourcePath, $targetPath);
+        if (!$moved) {
             throw new \RuntimeException('Failed to save uploaded file');
         }
 
@@ -72,8 +71,8 @@ class UploadedFileStorage
         }
 
         $path = $this->fullPath($relativePath);
-        if (is_file($path)) {
-            unlink($path);
+        if (is_file($path) && !@unlink($path)) {
+            throw new \RuntimeException('Could not delete upload file');
         }
     }
 
@@ -119,6 +118,7 @@ class UploadedFileStorage
         }
 
         $mimeType = $this->mimeType($relativePath);
+        $this->validateImageDimensions($sourcePath, $mimeType);
         $sourceImage = match ($mimeType) {
             'image/jpeg' => function_exists('imagecreatefromjpeg') ? imagecreatefromjpeg($sourcePath) : false,
             'image/png' => function_exists('imagecreatefrompng') ? imagecreatefrompng($sourcePath) : false,
@@ -136,10 +136,6 @@ class UploadedFileStorage
         $sourceHeight = imagesy($sourceImage);
         $cropSize = min($sourceWidth, $sourceHeight);
 
-        if ($cropSize < 1) {
-            throw new \RuntimeException('Invalid source image size');
-        }
-
         $thumbnailSize = min(320, $cropSize);
         $sourceX = (int)(($sourceWidth - $cropSize) / 2);
         $sourceY = (int)(($sourceHeight - $cropSize) / 2);
@@ -154,7 +150,7 @@ class UploadedFileStorage
             imagefill($thumbnail, 0, 0, $white);
         }
 
-        if (!imagecopyresampled(
+        imagecopyresampled(
             $thumbnail,
             $sourceImage,
             0,
@@ -165,9 +161,7 @@ class UploadedFileStorage
             $thumbnailSize,
             $cropSize,
             $cropSize
-        )) {
-            throw new \RuntimeException('Failed to resample thumbnail');
-        }
+        );
 
         $thumbnailPath = $this->fullPath($this->thumbnailRelativePath($relativePath));
         $thumbnailFolder = dirname($thumbnailPath);
@@ -231,6 +225,7 @@ class UploadedFileStorage
         rmdir($folder);
     }
 
+    /** @param list<string> $usedRelativePaths */
     public function deleteOldOrphanFiles(array $usedRelativePaths, int $olderThanSeconds): int
     {
         $used = [];
@@ -265,6 +260,7 @@ class UploadedFileStorage
         return $deleted;
     }
 
+    /** @return list<string> */
     public function listUploadFiles(): array
     {
         if (!is_dir($this->uploadPath)) {
@@ -292,6 +288,10 @@ class UploadedFileStorage
 
     public function fullPath(string $relativePath): string
     {
+        if (!$this->isManagedUploadPath($relativePath)) {
+            throw new \InvalidArgumentException('Invalid managed upload path');
+        }
+
         return $this->uploadPath . ltrim($relativePath, '/');
     }
 
@@ -303,6 +303,117 @@ class UploadedFileStorage
     private function userFolder(int $tgId): string
     {
         return $this->uploadPath . 'user_' . $tgId;
+    }
+
+    /** @return array{string, string} */
+    private function validateSourceImage(string $tmpPath): array
+    {
+        if ($tmpPath === '' || str_contains($tmpPath, "\0") || str_contains($tmpPath, '://')) {
+            throw new ValidationException('Invalid upload source');
+        }
+
+        if (is_link($tmpPath) || !is_file($tmpPath) || !is_readable($tmpPath)) {
+            throw new ValidationException('Uploaded image is unavailable');
+        }
+
+        $sourcePath = realpath($tmpPath);
+        if ($sourcePath === false || !$this->isTrustedTemporaryPath($sourcePath)) {
+            throw new ValidationException('Upload source is outside the trusted temporary directory');
+        }
+
+        $size = filesize($sourcePath);
+        if ($size === false || $size < 1 || $size > UploadedImagePolicy::MAX_BYTES) {
+            throw new ValidationException('Uploaded image size is invalid');
+        }
+
+        $mimeType = (new \finfo(FILEINFO_MIME_TYPE))->file($sourcePath);
+        if (!is_string($mimeType) || !isset(UploadedImagePolicy::MIME_TO_EXTENSION[$mimeType])) {
+            throw new ValidationException('Uploaded file is not a supported image');
+        }
+
+        $this->validateImageDimensions($sourcePath, $mimeType);
+
+        return [$sourcePath, $mimeType];
+    }
+
+    private function validateImageDimensions(string $sourcePath, string $expectedMimeType): void
+    {
+        $imageInfo = @getimagesize($sourcePath);
+        if (!is_array($imageInfo) || $imageInfo['mime'] !== $expectedMimeType) {
+            throw new ValidationException('Uploaded image content is invalid');
+        }
+
+        $width = $imageInfo[0];
+        $height = $imageInfo[1];
+        if (
+            $width < 1
+            || $height < 1
+            || $width > UploadedImagePolicy::MAX_WIDTH
+            || $height > UploadedImagePolicy::MAX_HEIGHT
+            || $width * $height > UploadedImagePolicy::MAX_PIXELS
+        ) {
+            throw new ValidationException('Uploaded image dimensions are too large');
+        }
+    }
+
+    private function isTrustedTemporaryPath(string $sourcePath): bool
+    {
+        if (is_uploaded_file($sourcePath)) {
+            return true;
+        }
+
+        $temporaryRoots = [sys_get_temp_dir(), (string)ini_get('upload_tmp_dir')];
+        foreach ($temporaryRoots as $temporaryRoot) {
+            if ($temporaryRoot === '') {
+                continue;
+            }
+
+            $resolvedRoot = realpath($temporaryRoot);
+            if ($resolvedRoot !== false && $this->isPathInside($sourcePath, $resolvedRoot)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function trustedUserFolder(int $tgId): string
+    {
+        if ($tgId < 1 || $tgId > 10000000000) {
+            throw new ValidationException('Invalid upload owner');
+        }
+
+        if (!is_dir($this->uploadPath) && !mkdir($this->uploadPath, 0755, true)) {
+            throw new \RuntimeException('Failed to create upload folder');
+        }
+
+        $uploadRoot = realpath($this->uploadPath);
+        if ($uploadRoot === false || is_link(rtrim($this->uploadPath, '/'))) {
+            throw new \RuntimeException('Invalid upload folder');
+        }
+
+        $userFolder = $this->userFolder($tgId);
+        if (is_link($userFolder)) {
+            throw new \RuntimeException('Invalid user upload folder');
+        }
+
+        if (!is_dir($userFolder) && !mkdir($userFolder, 0755, true)) {
+            throw new \RuntimeException('Failed to create user folder');
+        }
+
+        $resolvedUserFolder = realpath($userFolder);
+        if ($resolvedUserFolder === false || !$this->isPathInside($resolvedUserFolder, $uploadRoot)) {
+            throw new \RuntimeException('User upload folder escapes upload root');
+        }
+
+        return $resolvedUserFolder;
+    }
+
+    private function isPathInside(string $path, string $root): bool
+    {
+        $root = rtrim($root, DIRECTORY_SEPARATOR);
+
+        return $path === $root || str_starts_with($path, $root . DIRECTORY_SEPARATOR);
     }
 
     private function isManagedUploadPath(string $relativePath): bool

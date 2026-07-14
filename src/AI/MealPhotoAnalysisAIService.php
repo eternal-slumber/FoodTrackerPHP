@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace App\AI;
 
+use App\AI\Exceptions\AIInvalidResponseException;
 use App\Exceptions\AppException;
 
 class MealPhotoAnalysisAIService
 {
     public function __construct(
         private readonly AIChatClientInterface $client,
-        private readonly AIJsonResponseParser $jsonParser
+        private readonly AIJsonResponseParser $jsonParser,
+        private readonly MealPhotoAnalysisResponseValidator $responseValidator
     ) {}
 
     public function analyze(string $imagePath): array
@@ -31,6 +33,8 @@ class MealPhotoAnalysisAIService
 - weight оценивай в граммах для всей видимой съедобной порции на фото.
 - kcal, proteins, fats и carbs оценивай для всей видимой порции, а не на 100 г.
 - Значения должны быть числами: weight и kcal целые, proteins/fats/carbs можно с 1 знаком после запятой.
+- Допустимые диапазоны: weight 0–10000, kcal 0–10000, proteins/fats/carbs 0–1000.
+- food — непустая строка длиной не более 120 символов.
 - confidence — число от 0 до 1.
 
 Формат ответа:
@@ -48,36 +52,68 @@ PROMPT;
             ],
         ]], 60, 'analyze', [
             'model_purpose' => 'vision',
+            'temperature' => 0.1,
+            'json_schema' => $this->responseSchema(),
         ]);
-
-        if ($textResponse === null) {
-            throw new AppException('AI API не ответил вовремя или недоступен', 502);
-        }
 
         $parsed = $this->jsonParser->parseObject($textResponse);
         if ($parsed === null) {
-            error_log('Meal photo analysis parse error. Text: ' . json_encode($textResponse, JSON_UNESCAPED_UNICODE));
-            throw new AppException('AI вернул некорректный ответ', 502);
+            error_log('Meal photo analysis parse error');
+            throw new AIInvalidResponseException('AI вернул некорректный ответ', 502);
         }
 
-        return $this->normalizeAnalysis($parsed);
+        $analysis = $this->responseValidator->validateAndNormalize($parsed);
+        if ($this->isUnrecognizedAnalysis($analysis)) {
+            throw new AppException('Не удалось распознать еду. Попробуйте другое фото', 422);
+        }
+
+        return $analysis;
     }
 
-    private function normalizeAnalysis(array $analysis): array
+    /**
+     * @param array{
+     *     food: string,
+     *     weight: int,
+     *     kcal: int,
+     *     proteins: float,
+     *     fats: float,
+     *     carbs: float,
+     *     confidence: float
+     * } $analysis
+     */
+    private function isUnrecognizedAnalysis(array $analysis): bool
     {
-        $food = trim((string)($analysis['food'] ?? 'не определено'));
-        if ($food === '') {
-            $food = 'не определено';
-        }
+        return preg_match('/^не определено$/iu', $analysis['food']) === 1
+            && $analysis['weight'] === 0
+            && $analysis['kcal'] === 0
+            && $analysis['proteins'] === 0.0
+            && $analysis['fats'] === 0.0
+            && $analysis['carbs'] === 0.0
+            && $analysis['confidence'] === 0.0;
+    }
+
+    /** @return array<string, mixed> */
+    private function responseSchema(): array
+    {
+        $macronutrient = ['type' => 'number', 'minimum' => 0, 'maximum' => 1000];
 
         return [
-            'food' => $food,
-            'weight' => max(0, min(5000, (int)round((float)($analysis['weight'] ?? 0)))),
-            'kcal' => max(0, (int)round((float)($analysis['kcal'] ?? 0))),
-            'proteins' => max(0, round((float)($analysis['proteins'] ?? 0), 1)),
-            'fats' => max(0, round((float)($analysis['fats'] ?? 0), 1)),
-            'carbs' => max(0, round((float)($analysis['carbs'] ?? 0), 1)),
-            'confidence' => max(0, min(1, round((float)($analysis['confidence'] ?? 0), 2))),
+            'name' => 'meal_photo_analysis',
+            'strict' => true,
+            'schema' => [
+                'type' => 'object',
+                'additionalProperties' => false,
+                'required' => ['food', 'weight', 'kcal', 'proteins', 'fats', 'carbs', 'confidence'],
+                'properties' => [
+                    'food' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 120],
+                    'weight' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 10_000],
+                    'kcal' => ['type' => 'integer', 'minimum' => 0, 'maximum' => 10_000],
+                    'proteins' => $macronutrient,
+                    'fats' => $macronutrient,
+                    'carbs' => $macronutrient,
+                    'confidence' => ['type' => 'number', 'minimum' => 0, 'maximum' => 1],
+                ],
+            ],
         ];
     }
 }

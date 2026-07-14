@@ -41,6 +41,7 @@ $cssSources = [
     'app/css/features/meal-draft/shell.css',
     'app/css/features/meal-draft/products.css',
     'app/css/features/meal-draft/ai-states.css',
+    'trainer/css/share.css',
 ];
 
 $jsSources = [
@@ -75,6 +76,7 @@ $jsSources = [
 
 buildBundle($cssSources, PUBLIC_ROOT . '/app.css', 'css');
 buildBundle($jsSources, PUBLIC_ROOT . '/app.js', 'js');
+buildBundle(['trainer/js/share.js'], PUBLIC_ROOT . '/trainer-share.js', 'js');
 
 echo sprintf(
     "Frontend built: %d CSS modules, %d JS modules.\n",
@@ -109,6 +111,7 @@ function buildBundle(array $sources, string $output, string $type): void
         throw new RuntimeException(sprintf('Unable to create frontend output directory "%s".', $directory));
     }
 
+    $bundle = rtrim($bundle) . "\n";
     $temporaryOutput = $output . '.tmp';
     if (file_put_contents($temporaryOutput, $bundle, LOCK_EX) === false) {
         throw new RuntimeException(sprintf('Unable to write frontend bundle "%s".', $output));

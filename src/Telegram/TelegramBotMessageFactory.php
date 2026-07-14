@@ -54,9 +54,9 @@ class TelegramBotMessageFactory
     public function mealReminder(string $mealType): string
     {
         return match ($mealType) {
-            'breakfast' => "Пора добавить завтрак 🍳\n\nЗаполни дневник, чтобы FoodTracker посчитал КБЖУ за день.",
-            'lunch' => "Пора добавить обед 🥗\n\nДобавь приём пищи вручную или по фото.",
-            'dinner' => "Пора добавить ужин 🍽️\n\nЗаверши дневник дня и посмотри итог по КБЖУ.",
+            'breakfast' => "Пора добавить завтрак\n\nЗаполни дневник, чтобы FoodTracker посчитал КБЖУ за день.",
+            'lunch' => "Пора добавить обед\n\nДобавь приём пищи вручную или по фото.",
+            'dinner' => "Пора добавить ужин\n\nЗаверши дневник дня и посмотри итог по КБЖУ.",
             default => throw new \InvalidArgumentException('Unsupported reminder meal type'),
         };
     }
@@ -79,6 +79,39 @@ class TelegramBotMessageFactory
             . 'Жиры: ' . $this->formatNumber($todayMacros['fats']) . ' / ' . $macroGoals['fats_goal'] . " г\n"
             . 'Углеводы: ' . $this->formatNumber($todayMacros['carbs']) . ' / ' . $macroGoals['carbs_goal'] . " г\n\n"
             . $remainingLine;
+    }
+
+    public function eveningSummary(array $summary, ?string $shortInsight = null): string
+    {
+        $message = "Вечерняя сводка\n\n"
+            . 'Сегодня: ' . (int)$summary['today_sum'] . ' / ' . (int)$summary['daily_goal'] . " ккал.\n"
+            . 'Белки: ' . $this->formatNumber($summary['today_macros']['proteins']) . " г · "
+            . 'жиры: ' . $this->formatNumber($summary['today_macros']['fats']) . " г · "
+            . 'углеводы: ' . $this->formatNumber($summary['today_macros']['carbs']) . ' г.';
+
+        if ($shortInsight !== null && trim($shortInsight) !== '') {
+            $message .= "\n\n" . trim($shortInsight);
+        }
+
+        return $message;
+    }
+
+    public function eveningSummaryInlineKeyboard(string $miniAppUrl): ?array
+    {
+        if ($miniAppUrl === '') {
+            return null;
+        }
+
+        $separator = str_contains($miniAppUrl, '?') ? '&' : '?';
+
+        return [
+            'inline_keyboard' => [[
+                [
+                    'text' => 'Открыть подробности',
+                    'web_app' => ['url' => $miniAppUrl . $separator . 'screen=summary'],
+                ],
+            ]],
+        ];
     }
 
     public function mainKeyboard(): array

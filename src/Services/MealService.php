@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\TransactionManager;
+use App\Exceptions\NotFoundException;
 use App\Models\Meal;
 use App\Models\MealProduct;
 use App\Models\User;
@@ -19,8 +21,10 @@ class MealService
         private readonly UserRepository $users,
         private readonly MealRepository $meals,
         private readonly MealProductRepository $mealProducts,
+        private readonly TransactionManager $transactions,
         private readonly MealNutritionService $nutrition,
         private readonly ReminderScheduleService $reminderSchedule,
+        private readonly EveningSummaryScheduleService $eveningSummarySchedule,
         private readonly UploadedFileStorage $storage
     ) {}
 
@@ -73,10 +77,20 @@ class MealService
         $user = $this->findUser($tgId);
         $meal = $this->findOwnedMeal($mealId, (int)$user->id);
 
-        $this->storage->deleteImageSet($meal->imagePath);
+        $this->transactions->transactional(function () use ($mealId): void {
+            if (!$this->meals->delete($mealId)) {
+                throw new \RuntimeException('Failed to delete meal');
+            }
+        });
 
-        if (!$this->meals->delete($mealId)) {
-            throw new \RuntimeException('Failed to delete meal');
+        try {
+            $this->storage->deleteImageSet($meal->imagePath);
+        } catch (\Throwable $error) {
+            error_log(sprintf(
+                'Meal image cleanup failed after deleting meal %d (%s)',
+                $mealId,
+                $error::class
+            ));
         }
 
         return [
@@ -116,9 +130,7 @@ class MealService
             imagePath: $imagePath
         );
 
-        $this->meals->beginTransaction();
-
-        try {
+        $this->transactions->transactional(function () use ($meal, $processedProducts): void {
             if (!$this->meals->save($meal) || !$meal->id) {
                 throw new \RuntimeException('Failed to save meal');
             }
@@ -130,12 +142,7 @@ class MealService
                     $processedProducts
                 )
             );
-
-            $this->meals->commit();
-        } catch (\Throwable $e) {
-            $this->meals->rollBack();
-            throw $e;
-        }
+        });
 
         $this->scheduleReminder(
             (int)$user->id,
@@ -143,6 +150,7 @@ class MealService
             $eatenAtUtc,
             $timezoneOffsetMinutes
         );
+        $this->scheduleEveningSummary((int)$user->id, $eatenAtUtc, $timezoneOffsetMinutes);
 
         return [
             'status' => 'success',
@@ -171,11 +179,15 @@ class MealService
         $user = $this->findUser($tgId);
         $mealTypeLabel = $this->mealTypePrefix($mealName);
         $mainImagePath = $this->storage->sanitizeDraftImagePath($imagePath, $tgId);
-        $savedMeals = [];
+        $savedMeals = $this->transactions->transactional(function () use (
+            $products,
+            $mealTypeLabel,
+            $mainImagePath,
+            $tgId,
+            $user
+        ): array {
+            $savedMeals = [];
 
-        $this->meals->beginTransaction();
-
-        try {
             foreach (array_values($products) as $index => $product) {
                 $processedProducts = $this->nutrition->processProducts([$product]);
                 $processedProduct = $processedProducts[0];
@@ -221,11 +233,8 @@ class MealService
                 ];
             }
 
-            $this->meals->commit();
-        } catch (\Throwable $e) {
-            $this->meals->rollBack();
-            throw $e;
-        }
+            return $savedMeals;
+        });
 
         $this->scheduleReminder(
             (int)$user->id,
@@ -233,6 +242,7 @@ class MealService
             $eatenAtUtc,
             $timezoneOffsetMinutes
         );
+        $this->scheduleEveningSummary((int)$user->id, $eatenAtUtc, $timezoneOffsetMinutes);
 
         return [
             'status' => 'success',
@@ -244,7 +254,7 @@ class MealService
 
     private function mealTypePrefix(string $mealName): string
     {
-        $prefix = trim(explode(':', $mealName, 2)[0] ?? '');
+        $prefix = trim(explode(':', $mealName, 2)[0]);
 
         return $prefix !== '' ? substr($prefix, 0, 40) : 'Прием пищи';
     }
@@ -269,6 +279,26 @@ class MealService
         } catch (\Throwable $error) {
             error_log(sprintf(
                 'Meal reminder scheduling failed for user %d: %s',
+                $userId,
+                $error->getMessage()
+            ));
+        }
+    }
+
+    private function scheduleEveningSummary(
+        int $userId,
+        ?DateTimeImmutable $eatenAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {
+        try {
+            $this->eveningSummarySchedule->scheduleFromMeal(
+                $userId,
+                $eatenAtUtc ?? new DateTimeImmutable('now', new DateTimeZone('UTC')),
+                $timezoneOffsetMinutes
+            );
+        } catch (\Throwable $error) {
+            error_log(sprintf(
+                'Evening summary scheduling failed for user %d: %s',
                 $userId,
                 $error->getMessage()
             ));
@@ -311,7 +341,7 @@ class MealService
         $meal = $this->findOwnedMeal($mealId, (int)$user->id);
 
         if (!$meal->imagePath || !is_file($this->storage->fullPath($meal->imagePath))) {
-            throw new \RuntimeException('Meal image not found');
+            throw new NotFoundException();
         }
 
         return [
@@ -326,7 +356,7 @@ class MealService
         $meal = $this->findOwnedMeal($mealId, (int)$user->id);
 
         if (!$meal->imagePath || !is_file($this->storage->fullPath($meal->imagePath))) {
-            throw new \RuntimeException('Meal image not found');
+            throw new NotFoundException();
         }
 
         if (!$this->storage->hasThumbnail($meal->imagePath)) {
@@ -352,7 +382,7 @@ class MealService
     {
         $user = $this->users->findByTelegramId($tgId);
         if (!$user) {
-            throw new \RuntimeException('User not found. Register first!');
+            throw new NotFoundException();
         }
 
         return $user;
@@ -362,11 +392,11 @@ class MealService
     {
         $meal = $this->meals->findById($mealId);
         if (!$meal) {
-            throw new \RuntimeException('Meal not found');
+            throw new NotFoundException();
         }
 
         if ($meal->userId !== $userId) {
-            throw new \RuntimeException('Access denied');
+            throw new NotFoundException();
         }
 
         return $meal;

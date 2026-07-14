@@ -12,7 +12,7 @@ class MealProductRepository
     public function __construct(private readonly PDO $db) {}
 
     /**
-     * @param MealProduct[] $products
+     * @param array<int, MealProduct> $products
      */
     public function saveMany(int $mealId, array $products): void
     {
@@ -26,10 +26,6 @@ class MealProductRepository
         );
 
         foreach ($products as $product) {
-            if (!$product instanceof MealProduct) {
-                throw new \InvalidArgumentException('Expected MealProduct instance');
-            }
-
             $stmt->execute([
                 'meal_id' => $mealId,
                 'name' => $product->name,

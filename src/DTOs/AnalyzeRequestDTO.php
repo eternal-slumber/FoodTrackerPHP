@@ -8,20 +8,23 @@ class AnalyzeRequestDTO
 {
     public function __construct(
         public readonly int $telegramId,
-        public readonly string $imagePath,
-        public readonly string $mimeType
+        public readonly string $imagePath
     ) {}
 
+    /**
+     * @param array<string, mixed> $postData
+     * @param array<string, mixed> $files
+     */
     public static function fromPost(array $postData, array $files): self
     {
-        if (!isset($files['photo'])) {
+        $photo = $files['photo'] ?? null;
+        if (!is_array($photo) || !isset($photo['tmp_name']) || !is_string($photo['tmp_name'])) {
             throw new \InvalidArgumentException('Missing photo');
         }
 
         return new self(
             telegramId: (int)($postData['telegram_id'] ?? 0),
-            imagePath: $files['photo']['tmp_name'],
-            mimeType: (string)($postData['mime_type'] ?? '')
+            imagePath: $photo['tmp_name']
         );
     }
 }

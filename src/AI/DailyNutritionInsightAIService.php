@@ -55,10 +55,6 @@ PROMPT;
             'json_schema' => $this->responseSchema(),
         ]);
 
-        if ($response === null) {
-            throw new AppException('AI-рекомендация временно недоступна', 502);
-        }
-
         $parsed = $this->jsonParser->parseObject($response);
         if ($parsed === null) {
             error_log('Daily nutrition insight parse error');

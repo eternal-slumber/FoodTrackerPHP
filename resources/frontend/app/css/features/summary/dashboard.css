@@ -102,16 +102,6 @@
     padding: 12px;
 }
 
-.summary-mini-card.is-disabled {
-    cursor: default;
-}
-
-.summary-mini-card.is-disabled strong,
-.summary-mini-card.is-disabled p,
-.summary-mini-card.is-disabled small {
-    color: var(--hint-color);
-}
-
 .summary-mini-nutrition {
     background: var(--fat-bg);
 }

@@ -68,11 +68,17 @@ async function checkUserStatus() {
         userData = result;
         updateUserUI();
         updateHomeGreeting();
-        showScreen('main');
+        showScreen(getRequestedInitialScreen());
         return;
     }
 
     showScreen('welcome');
+}
+
+function getRequestedInitialScreen() {
+    return new URLSearchParams(window.location.search).get('screen') === 'summary'
+        ? 'summary'
+        : 'main';
 }
 
 function setLoadingState(message) {
@@ -122,7 +128,9 @@ function showScreen(screenName) {
 
     if (screenName === 'settings' && userData) {
         loadAiUsage();
+        loadTrainerShare();
         loadReminderSettings();
+        loadEveningSummarySettings();
     }
 }
 

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <link rel="stylesheet" href="/assets/app/dist/app.css?v={{frontend_asset_version}}">
+    <title>Дневник питания</title>
+</head>
+<body class="trainer-share-body" data-share-state="{{share_state}}">
+    <main class="trainer-share-shell">
+        <section id="trainer-share-unavailable" class="trainer-share-unavailable" hidden>
+            <span class="trainer-share-state-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                    <rect x="5" y="10" width="14" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                    <circle cx="12" cy="15" r="1.2" fill="currentColor"/>
+                </svg>
+            </span>
+            <h1>Ссылка недоступна</h1>
+            <p>Возможно, срок доступа истёк или владелец дневника отключил ссылку.</p>
+        </section>
+
+        <div id="trainer-share-content" hidden>
+            <header class="trainer-share-header">
+                <div>
+                    <span class="trainer-share-eyebrow">Дневник питания</span>
+                    <h1 id="trainer-share-name">Пользователь FoodTracker</h1>
+                    <p>Сегодня · <span id="trainer-share-date"></span></p>
+                </div>
+                <span class="trainer-share-readonly">Только просмотр</span>
+            </header>
+
+            <section id="trainer-share-summary-card" class="trainer-share-summary-card" aria-label="Сегодняшняя сводка">
+                <div class="trainer-share-summary-head">
+                    <span id="trainer-share-summary-day-label">Сегодня</span>
+                    <strong><span id="trainer-share-calories">0</span> из <span id="trainer-share-goal">0</span> ккал</strong>
+                </div>
+                <div class="trainer-share-progress"><span id="trainer-share-progress-fill"></span></div>
+                <p id="trainer-share-remaining"></p>
+                <div class="trainer-share-macros">
+                    <div><span>Белки</span><strong id="trainer-share-proteins"></strong></div>
+                    <div><span>Жиры</span><strong id="trainer-share-fats"></strong></div>
+                    <div><span>Углеводы</span><strong id="trainer-share-carbs"></strong></div>
+                </div>
+            </section>
+
+            <section id="trainer-share-meals-card" class="trainer-share-section">
+                <div class="trainer-share-section-head"><h2 id="trainer-share-meals-title">Приёмы сегодня</h2></div>
+                <div id="trainer-share-meals" class="trainer-share-meals"></div>
+            </section>
+
+            <section id="trainer-share-history-card" class="trainer-share-section">
+                <div class="trainer-share-section-head">
+                    <h2>Последние 7 дней</h2>
+                    <span id="trainer-share-average-wrap"><strong id="trainer-share-average">0</strong> ккал/день</span>
+                </div>
+                <div id="trainer-share-calendar" class="trainer-share-calendar" aria-label="Календарь питания за семь дней"></div>
+                <div id="trainer-share-history" class="trainer-share-history"></div>
+            </section>
+
+            <section id="trainer-share-ai-card" class="trainer-share-section trainer-share-ai" hidden>
+                <div class="trainer-share-section-head">
+                    <h2>AI-анализ</h2>
+                    <span class="trainer-share-section-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" focusable="false">
+                            <path d="m12 3 1.1 3.6a4.2 4.2 0 0 0 2.8 2.8l3.6 1.1-3.6 1.1a4.2 4.2 0 0 0-2.8 2.8L12 18l-1.1-3.6a4.2 4.2 0 0 0-2.8-2.8l-3.6-1.1 3.6-1.1a4.2 4.2 0 0 0 2.8-2.8L12 3Z" fill="none" stroke="currentColor" stroke-linejoin="round" stroke-width="1.7"/>
+                            <path d="m18.5 16 .5 1.5 1.5.5-1.5.5-.5 1.5-.5-1.5-1.5-.5 1.5-.5.5-1.5Z" fill="currentColor"/>
+                        </svg>
+                    </span>
+                </div>
+                <strong id="trainer-share-ai-summary"></strong>
+                <p id="trainer-share-ai-analysis"></p>
+            </section>
+
+            <section id="trainer-share-profile-card" class="trainer-share-section" hidden>
+                <div class="trainer-share-section-head"><h2>Параметры профиля</h2></div>
+                <dl class="trainer-share-profile-params">
+                    <div><dt>Цель</dt><dd id="trainer-share-profile-goal"></dd></div>
+                    <div><dt>Вес</dt><dd id="trainer-share-profile-weight"></dd></div>
+                    <div><dt>Рост</dt><dd id="trainer-share-profile-height"></dd></div>
+                    <div><dt>Возраст</dt><dd id="trainer-share-profile-age"></dd></div>
+                    <div><dt>Пол</dt><dd id="trainer-share-profile-gender"></dd></div>
+                </dl>
+            </section>
+
+            <footer class="trainer-share-footer">
+                <span class="trainer-share-footer-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <rect x="6" y="10" width="12" height="10" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/>
+                        <path d="M9 10V7.5a3 3 0 0 1 6 0V10" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/>
+                    </svg>
+                </span>
+                Доступ только для просмотра · FoodTracker
+            </footer>
+        </div>
+    </main>
+    <script id="trainer-share-data" type="application/json">{{share_data_json}}</script>
+    <script src="/assets/app/dist/trainer-share.js?v={{frontend_asset_version}}"></script>
+</body>
+</html>

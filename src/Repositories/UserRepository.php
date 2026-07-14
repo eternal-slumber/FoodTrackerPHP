@@ -113,6 +113,52 @@ class UserRepository
         ]);
     }
 
+    /** @return array{enabled:bool,time:string}|null */
+    public function findEveningSummarySettingsByTelegramId(int $telegramId): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT evening_summary_enabled, evening_summary_time
+             FROM users WHERE tg_id = :telegram_id LIMIT 1'
+        );
+        $stmt->execute(['telegram_id' => $telegramId]);
+        $settings = $stmt->fetch();
+
+        return $settings === false ? null : [
+            'enabled' => (bool)$settings['evening_summary_enabled'],
+            'time' => substr((string)$settings['evening_summary_time'], 0, 5),
+        ];
+    }
+
+    /** @return array{enabled:bool,time:string}|null */
+    public function findEveningSummarySettingsByUserId(int $userId): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT evening_summary_enabled, evening_summary_time
+             FROM users WHERE id = :user_id LIMIT 1'
+        );
+        $stmt->execute(['user_id' => $userId]);
+        $settings = $stmt->fetch();
+
+        return $settings === false ? null : [
+            'enabled' => (bool)$settings['evening_summary_enabled'],
+            'time' => substr((string)$settings['evening_summary_time'], 0, 5),
+        ];
+    }
+
+    public function setEveningSummarySettings(int $userId, bool $enabled, string $time): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE users
+             SET evening_summary_enabled = :enabled, evening_summary_time = :summary_time
+             WHERE id = :user_id'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'enabled' => $enabled ? 1 : 0,
+            'summary_time' => $time . ':00',
+        ]);
+    }
+
     public function getTodayCalories(int $userId, int $timezoneOffsetMinutes = 0): int
     {
         return $this->getTodayNutrition($userId, $timezoneOffsetMinutes)['calories'];

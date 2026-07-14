@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
     goal VARCHAR(20) DEFAULT 'maintenance',
     daily_goal INT,
     meal_reminders_enabled TINYINT(1) NOT NULL DEFAULT 1,
+    evening_summary_enabled TINYINT(1) NOT NULL DEFAULT 0,
+    evening_summary_time TIME NOT NULL DEFAULT '21:00:00',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_tg_id (tg_id)
@@ -120,6 +122,33 @@ CREATE TABLE IF NOT EXISTS notification_queue (
         CHECK (status IN ('pending', 'processing', 'sent', 'skipped', 'failed'))
 );
 
+-- Публичные read-only ссылки на дневник
+CREATE TABLE IF NOT EXISTS shared_access_links (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    token CHAR(64) NOT NULL,
+    type VARCHAR(20) NOT NULL DEFAULT 'trainer',
+    display_name VARCHAR(120) NOT NULL DEFAULT 'Пользователь FoodTracker',
+    timezone_offset SMALLINT NOT NULL DEFAULT 0,
+    duration_days SMALLINT UNSIGNED NULL DEFAULT 30,
+    show_meals TINYINT(1) NOT NULL DEFAULT 1,
+    show_nutrition TINYINT(1) NOT NULL DEFAULT 1,
+    show_history TINYINT(1) NOT NULL DEFAULT 1,
+    show_ai_analysis TINYINT(1) NOT NULL DEFAULT 1,
+    show_profile_params TINYINT(1) NOT NULL DEFAULT 0,
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    expires_at DATETIME NULL,
+    last_viewed_at DATETIME DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    revoked_at DATETIME DEFAULT NULL,
+    UNIQUE KEY uniq_shared_access_token (token),
+    INDEX idx_shared_access_user (user_id, type, is_active),
+    INDEX idx_shared_access_expiry (is_active, expires_at),
+    CONSTRAINT fk_shared_access_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    CONSTRAINT chk_shared_access_type CHECK (type IN ('trainer')),
+    CONSTRAINT chk_shared_access_timezone CHECK (timezone_offset BETWEEN -840 AND 840)
+);
+
 -- Таблица rate limit / daily quota окон
 CREATE TABLE IF NOT EXISTS rate_limits (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -202,17 +231,22 @@ CREATE TABLE IF NOT EXISTS ai_requests (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id INT DEFAULT NULL,
     ai_model_id INT DEFAULT NULL,
+    provider VARCHAR(60) DEFAULT NULL,
+    model VARCHAR(180) DEFAULT NULL,
     request_type VARCHAR(60) NOT NULL DEFAULT 'meal_analysis',
     status VARCHAR(30) NOT NULL,
     response_time_ms INT DEFAULT NULL,
+    http_status SMALLINT UNSIGNED DEFAULT NULL,
     prompt_tokens INT DEFAULT NULL,
     completion_tokens INT DEFAULT NULL,
     estimated_cost DECIMAL(12, 6) DEFAULT NULL,
     error_message TEXT DEFAULT NULL,
+    trace_id VARCHAR(80) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_ai_requests_user_created (user_id, created_at),
     INDEX idx_ai_requests_model_created (ai_model_id, created_at),
     INDEX idx_ai_requests_status_created (status, created_at),
+    INDEX idx_ai_requests_trace_id (trace_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (ai_model_id) REFERENCES ai_models(id) ON DELETE SET NULL
 );

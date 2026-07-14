@@ -15,6 +15,7 @@ use DateTimeZone;
 final class NotificationDispatchService
 {
     private const NOTIFICATION_TYPE = 'meal_reminder';
+    private const EVENING_SUMMARY_TYPE = 'evening_summary';
     private const PROCESSING_TIMEOUT_MINUTES = 15;
 
     private const MEAL_DESCRIPTION_PREFIXES = [
@@ -29,7 +30,8 @@ final class NotificationDispatchService
         private readonly MealRepository $meals,
         private readonly TelegramBotClientInterface $telegram,
         private readonly TelegramBotMessageFactory $messages,
-        private readonly TelegramBotConfig $telegramConfig
+        private readonly TelegramBotConfig $telegramConfig,
+        private readonly EveningSummaryDeliveryService $eveningSummaryDelivery
     ) {}
 
     /** @return array{claimed:int, sent:int, skipped:int, failed:int, next_scheduled:int} */
@@ -55,6 +57,23 @@ final class NotificationDispatchService
             $canScheduleNext = $this->canContinueSchedule($notification);
 
             try {
+                if (($notification['notification_type'] ?? null) === self::EVENING_SUMMARY_TYPE) {
+                    if ((int)($notification['evening_summary_enabled'] ?? 0) !== 1) {
+                        $this->reminders->markSkipped($notificationId);
+                        $result['skipped']++;
+                        continue;
+                    }
+
+                    if ($this->eveningSummaryDelivery->send($notification, $now)) {
+                        $this->reminders->markSent($notificationId, $now->format('Y-m-d H:i:s'));
+                        $result['sent']++;
+                    } else {
+                        $this->reminders->markSkipped($notificationId);
+                        $result['skipped']++;
+                    }
+                    continue;
+                }
+
                 if (!$canScheduleNext) {
                     $this->reminders->markSkipped($notificationId);
                     $result['skipped']++;

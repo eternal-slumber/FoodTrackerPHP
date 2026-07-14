@@ -70,6 +70,17 @@ class SummaryServiceTest extends TestCase
         $this->assertSame('/api/meals/12/thumbnail', $day['meals'][0]['thumbnail_url']);
     }
 
+    public function testMonthlySummaryCalculatesAverageForDaysWithData(): void
+    {
+        $summary = $this->createService([
+            ['date' => '2026-05-01', 'calories' => 500],
+            ['date' => '2026-05-02', 'calories' => 692],
+        ])->getMonthlySummary(100001, '2026-05', -180);
+
+        $this->assertSame(596, $summary['average_daily_calories']);
+        $this->assertSame(2, $summary['days_with_data']);
+    }
+
     public function testEmptyMonthReturnsNoDays(): void
     {
         $service = $this->createService([]);
@@ -84,6 +95,8 @@ class SummaryServiceTest extends TestCase
             'fats_goal' => 56,
             'carbs_goal' => 262,
         ], $summary['macro_goals']);
+        $this->assertSame(0, $summary['average_daily_calories']);
+        $this->assertSame(0, $summary['days_with_data']);
         $this->assertSame([], $summary['days']);
     }
 

@@ -3,31 +3,46 @@ let summaryLoadId = 0;
 async function loadSummary() {
     const loadId = ++summaryLoadId;
     const card = document.querySelector('#screen-summary .summary-progress-card');
+    const averageCard = document.getElementById('summary-average-nutrition-card');
+    const timezoneOffset = getTimezoneOffsetMinutes();
+    const month = getSummaryCurrentMonthKey();
 
     updateSummaryIntroText();
     card?.classList.add('is-loading');
     card?.classList.remove('is-error');
+    averageCard?.classList.add('is-loading');
+    averageCard?.classList.remove('is-error');
 
-    try {
-        const result = await apiRequestJson(`/api/progress?tz_offset=${getTimezoneOffsetMinutes()}`);
+    const [progressResult, monthlyResult] = await Promise.allSettled([
+        apiRequestJson(`/api/progress?tz_offset=${timezoneOffset}`),
+        apiRequestJson(`/api/summary?month=${month}&tz_offset=${timezoneOffset}`)
+    ]);
 
-        if (loadId !== summaryLoadId) {
-            return;
-        }
-
-        renderSummaryProgress(result.data);
-    } catch (error) {
-        if (loadId !== summaryLoadId) {
-            return;
-        }
-
-        console.error('Ошибка загрузки прогресса сводки:', error);
-        card?.classList.add('is-error');
-    } finally {
-        if (loadId === summaryLoadId) {
-            card?.classList.remove('is-loading');
-        }
+    if (loadId !== summaryLoadId) {
+        return;
     }
+
+    if (progressResult.status === 'fulfilled') {
+        renderSummaryProgress(progressResult.value.data);
+    } else {
+        console.error('Ошибка загрузки прогресса сводки:', progressResult.reason);
+        card?.classList.add('is-error');
+    }
+
+    if (monthlyResult.status === 'fulfilled') {
+        renderSummaryAverageNutrition(monthlyResult.value.data);
+    } else {
+        console.error('Ошибка загрузки среднего питания:', monthlyResult.reason);
+        averageCard?.classList.add('is-error');
+    }
+
+    card?.classList.remove('is-loading');
+    averageCard?.classList.remove('is-loading');
+}
+
+function getSummaryCurrentMonthKey() {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
 function updateSummaryIntroText() {
@@ -61,6 +76,15 @@ function renderSummaryProgress(data) {
     document.getElementById('summary-progress-fill').style.width = `${visualPercentage}%`;
     renderSummaryStreak(data.streak || {});
     renderSummaryMacroBalance(data);
+}
+
+function renderSummaryAverageNutrition(data) {
+    const averageCalories = Math.max(0, Number(data.average_daily_calories || 0));
+    const daysWithData = Math.max(0, Number(data.days_with_data || 0));
+
+    document.getElementById('summary-average-calories').textContent = String(Math.round(averageCalories));
+    document.getElementById('summary-days-with-data').textContent =
+        `${daysWithData} ${getSummaryDayLabel(daysWithData)} с данными`;
 }
 
 function renderSummaryMacroBalance(data) {
@@ -109,7 +133,7 @@ function renderSummaryStreak(streak) {
     const message = document.getElementById('summary-streak-message');
     const days = Math.max(0, Number(streak.current_days || 0));
     const todayCompleted = Boolean(streak.today_completed);
-    const streakText = `${days} ${getSummaryStreakDayLabel(days)} подряд`;
+    const streakText = `${days} ${getSummaryDayLabel(days)} подряд`;
 
     card.dataset.streakStage = getSummaryStreakStage(days);
     card.setAttribute('aria-label', `Серия питания: ${streakText}`);
@@ -117,7 +141,7 @@ function renderSummaryStreak(streak) {
     message.textContent = getSummaryStreakMessage(days, todayCompleted);
 }
 
-function getSummaryStreakDayLabel(days) {
+function getSummaryDayLabel(days) {
     const lastDigit = days % 10;
     const lastTwoDigits = days % 100;
 
@@ -144,7 +168,7 @@ function getSummaryStreakStage(days) {
 function getSummaryStreakMessage(days, todayCompleted) {
     if (!todayCompleted) {
         return days > 0
-            ? `Добавь приём сегодня, чтобы продолжить серию в ${days} ${getSummaryStreakDayLabel(days)}.`
+            ? `Добавь приём сегодня, чтобы продолжить серию в ${days} ${getSummaryDayLabel(days)}.`
             : 'Добавь первый приём сегодня, чтобы начать серию.';
     }
 

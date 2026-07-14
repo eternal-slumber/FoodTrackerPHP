@@ -58,6 +58,7 @@
 
 :root.is-telegram-webapp #bottom-sheet .meal-main-product-hero {
     min-height: 320px;
+    padding-top: calc(28px + max(env(safe-area-inset-top), var(--tg-safe-area-top), var(--tg-content-safe-area-top)));
 }
 
 #bottom-sheet .meal-draft-topbar button {

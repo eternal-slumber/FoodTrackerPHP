@@ -38,23 +38,6 @@ class MealRepository
         return $result;
     }
 
-    public function beginTransaction(): void
-    {
-        $this->db->beginTransaction();
-    }
-
-    public function commit(): void
-    {
-        $this->db->commit();
-    }
-
-    public function rollBack(): void
-    {
-        if ($this->db->inTransaction()) {
-            $this->db->rollBack();
-        }
-    }
-
     public function findByUserId(int $userId): array
     {
         $stmt = $this->db->prepare('SELECT * FROM meals WHERE user_id = ? ORDER BY created_at DESC');
@@ -267,6 +250,47 @@ class MealRepository
         return array_values($dailyCalories);
     }
 
+    public function existsForLocalDate(int $userId, string $localDate, int $timezoneOffsetMinutes): bool
+    {
+        [$startUtc, $endUtc] = $this->localDateUtcRange($localDate, $timezoneOffsetMinutes);
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM meals
+             WHERE user_id = :user_id AND created_at >= :start_utc AND created_at < :end_utc
+             LIMIT 1'
+        );
+        $stmt->execute([
+            'user_id' => $userId,
+            'start_utc' => $startUtc,
+            'end_utc' => $endUtc,
+        ]);
+
+        return $stmt->fetchColumn() !== false;
+    }
+
+    /** @return array{0:string,1:string} */
+    private function localDateUtcRange(string $localDate, int $timezoneOffsetMinutes): array
+    {
+        if ($timezoneOffsetMinutes < -840 || $timezoneOffsetMinutes > 840) {
+            throw new \InvalidArgumentException('Invalid timezone offset');
+        }
+
+        $localStart = DateTimeImmutable::createFromFormat(
+            '!Y-m-d H:i:s',
+            $localDate . ' 00:00:00',
+            new DateTimeZone('UTC')
+        );
+        if (!$localStart instanceof DateTimeImmutable) {
+            throw new \InvalidArgumentException('Invalid local date');
+        }
+
+        $offsetModifier = sprintf('%+d minutes', $timezoneOffsetMinutes);
+
+        return [
+            $localStart->modify($offsetModifier)->format('Y-m-d H:i:s'),
+            $localStart->modify('+1 day')->modify($offsetModifier)->format('Y-m-d H:i:s'),
+        ];
+    }
+
     public function findById(int $id): ?Meal
     {
         $stmt = $this->db->prepare('SELECT * FROM meals WHERE id = ?');
@@ -292,7 +316,7 @@ class MealRepository
     {
         $stmt = $this->db->prepare('DELETE FROM meals WHERE id = ?');
 
-        return $stmt->execute([$id]);
+        return $stmt->execute([$id]) && $stmt->rowCount() === 1;
     }
 
     private function hydrate(array $data): Meal

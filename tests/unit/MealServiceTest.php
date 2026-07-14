@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Core\TransactionManager;
+use App\Exceptions\NotFoundException;
 use App\Models\Meal;
 use App\Models\MealProduct;
 use App\Models\User;
@@ -12,6 +14,7 @@ use App\Repositories\MealRepository;
 use App\Repositories\ReminderScheduleRepository;
 use App\Repositories\UserRepository;
 use App\Services\CalorieCalculatorService;
+use App\Services\EveningSummaryScheduleService;
 use App\Services\MealNutritionService;
 use App\Services\MealService;
 use App\Services\NutritionCalculatorService;
@@ -27,7 +30,8 @@ class MealServiceTest extends TestCase
     {
         $mealRepository = new FakeMealServiceMealRepository();
         $productRepository = new FakeMealServiceProductRepository();
-        $service = $this->createService($mealRepository, $productRepository);
+        $transactions = new FakeMealServiceTransactionManager();
+        $service = $this->createService($mealRepository, $productRepository, transactions: $transactions);
 
         $result = $service->saveManualMeal(100001, 'Обед', [
             [
@@ -54,7 +58,8 @@ class MealServiceTest extends TestCase
             ],
         ]);
 
-        $this->assertSame(['begin', 'save', 'commit'], $mealRepository->events);
+        $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame(['save'], $mealRepository->events);
         $this->assertCount(2, $productRepository->savedProducts);
         $this->assertSame(55, $productRepository->savedMealId);
         $this->assertSame('Курица', $productRepository->savedProducts[0]->name);
@@ -67,7 +72,8 @@ class MealServiceTest extends TestCase
     {
         $mealRepository = new FakeMealServiceMealRepository();
         $productRepository = new FakeMealServiceProductRepository(shouldFailOnSave: true);
-        $service = $this->createService($mealRepository, $productRepository);
+        $transactions = new FakeMealServiceTransactionManager();
+        $service = $this->createService($mealRepository, $productRepository, transactions: $transactions);
 
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Product save failed');
@@ -79,23 +85,83 @@ class MealServiceTest extends TestCase
                 'kbju' => ['calories' => 100],
             ]]);
         } finally {
-            $this->assertSame(['begin', 'save', 'rollback'], $mealRepository->events);
+            $this->assertSame(['begin', 'rollback'], $transactions->events);
+            $this->assertSame(['save'], $mealRepository->events);
         }
+    }
+
+    public function testDeleteMealKeepsImageWhenDatabaseDeleteFails(): void
+    {
+        $mealRepository = new FakeMealServiceMealRepository(shouldFailOnDelete: true);
+        $mealRepository->meal = new Meal(
+            userId: 7,
+            description: 'Обед',
+            calories: 250,
+            imagePath: 'user_100001/meal.jpg',
+            id: 55
+        );
+        $transactions = new FakeMealServiceTransactionManager();
+        $storage = new FakeMealServiceUploadedFileStorage($transactions);
+        $service = $this->createService(
+            $mealRepository,
+            new FakeMealServiceProductRepository(),
+            storage: $storage,
+            transactions: $transactions
+        );
+
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Failed to delete meal');
+
+        try {
+            $service->deleteMeal(55, 100001);
+        } finally {
+            $this->assertSame(['begin', 'rollback'], $transactions->events);
+            $this->assertFalse($storage->deleteAttempted);
+        }
+    }
+
+    public function testDeleteMealCommitsBeforeBestEffortImageCleanup(): void
+    {
+        $mealRepository = new FakeMealServiceMealRepository();
+        $mealRepository->meal = new Meal(
+            userId: 7,
+            description: 'Обед',
+            calories: 250,
+            imagePath: 'user_100001/meal.jpg',
+            id: 55
+        );
+        $transactions = new FakeMealServiceTransactionManager();
+        $storage = new FakeMealServiceUploadedFileStorage($transactions, shouldFailOnDelete: true);
+        $service = $this->createService(
+            $mealRepository,
+            new FakeMealServiceProductRepository(),
+            storage: $storage,
+            transactions: $transactions
+        );
+
+        $result = $service->deleteMeal(55, 100001);
+
+        $this->assertSame('success', $result['status']);
+        $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame(['begin', 'commit'], $storage->transactionEventsAtDelete);
+        $this->assertTrue($storage->deleteAttempted);
     }
 
     public function testSaveManualMealsAsCardsPersistsEachProductAsSeparateMeal(): void
     {
         $mealRepository = new FakeMealServiceMealRepository();
         $productRepository = new FakeMealServiceProductRepository();
+        $transactions = new FakeMealServiceTransactionManager();
         $service = $this->createService(
             $mealRepository,
             $productRepository,
-            new class('/tmp/') extends UploadedFileStorage {
+            storage: new class('/tmp/') extends UploadedFileStorage {
                 public function sanitizeDraftImagePath(?string $imagePath, int $tgId): ?string
                 {
                     return $imagePath;
                 }
-            }
+            },
+            transactions: $transactions
         );
 
         $result = $service->saveManualMealsAsCards(100001, 'Ужин: Курица, рис', [
@@ -112,7 +178,8 @@ class MealServiceTest extends TestCase
             ],
         ], 'user_100001/main.jpg');
 
-        $this->assertSame(['begin', 'save', 'save', 'commit'], $mealRepository->events);
+        $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame(['save', 'save'], $mealRepository->events);
         $this->assertCount(2, $mealRepository->savedMeals);
         $this->assertSame('Ужин: Курица', $mealRepository->savedMeals[0]->description);
         $this->assertSame('Ужин: Рис', $mealRepository->savedMeals[1]->description);
@@ -126,10 +193,12 @@ class MealServiceTest extends TestCase
     {
         $mealRepository = new FakeMealServiceMealRepository();
         $reminderRepository = new FakeMealServiceReminderRepository();
+        $transactions = new FakeMealServiceTransactionManager();
         $service = $this->createService(
             $mealRepository,
             new FakeMealServiceProductRepository(),
-            reminderSchedule: new ReminderScheduleService($reminderRepository)
+            reminderSchedule: new ReminderScheduleService($reminderRepository),
+            transactions: $transactions
         );
 
         $service->saveManualMealsAsCards(
@@ -144,7 +213,8 @@ class MealServiceTest extends TestCase
             eatenAtUtc: new DateTimeImmutable('2026-07-01 12:00:00', new DateTimeZone('UTC'))
         );
 
-        $this->assertSame(['begin', 'save', 'commit'], $mealRepository->events);
+        $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame(['save'], $mealRepository->events);
         $this->assertSame(['begin', 'setting', 'notification', 'commit'], $reminderRepository->events);
     }
 
@@ -210,8 +280,8 @@ class MealServiceTest extends TestCase
             try {
                 $run();
                 $this->fail(sprintf('The %s operation allowed access to another user meal', $operation));
-            } catch (\RuntimeException $exception) {
-                $this->assertSame('Access denied', $exception->getMessage(), $operation);
+            } catch (NotFoundException $exception) {
+                $this->assertSame('Not Found', $exception->getMessage(), $operation);
             }
         }
     }
@@ -264,19 +334,33 @@ class MealServiceTest extends TestCase
         FakeMealServiceMealRepository $mealRepository,
         FakeMealServiceProductRepository $productRepository,
         ?UploadedFileStorage $storage = null,
-        ?ReminderScheduleService $reminderSchedule = null
+        ?ReminderScheduleService $reminderSchedule = null,
+        ?TransactionManager $transactions = null
     ): MealService {
         return new MealService(
             new FakeMealServiceUserRepository(),
             $mealRepository,
             $productRepository,
+            $transactions ?? new FakeMealServiceTransactionManager(),
             new MealNutritionService(
                 new NutritionCalculatorService()
             ),
             $reminderSchedule ?? new ReminderScheduleService(new FakeMealServiceReminderRepository()),
+            new FakeMealServiceEveningSummarySchedule(),
             $storage ?? new UploadedFileStorage('/tmp/')
         );
     }
+}
+
+class FakeMealServiceEveningSummarySchedule extends EveningSummaryScheduleService
+{
+    public function __construct() {}
+
+    public function scheduleFromMeal(
+        int $userId,
+        DateTimeImmutable $eatenAtUtc,
+        int $timezoneOffsetMinutes
+    ): void {}
 }
 
 class FakeMealServiceUserRepository extends UserRepository
@@ -308,22 +392,7 @@ class FakeMealServiceMealRepository extends MealRepository
     public ?Meal $meal = null;
     public array $savedMeals = [];
 
-    public function __construct() {}
-
-    public function beginTransaction(): void
-    {
-        $this->events[] = 'begin';
-    }
-
-    public function commit(): void
-    {
-        $this->events[] = 'commit';
-    }
-
-    public function rollBack(): void
-    {
-        $this->events[] = 'rollback';
-    }
+    public function __construct(private readonly bool $shouldFailOnDelete = false) {}
 
     public function save(Meal $meal): bool
     {
@@ -338,6 +407,61 @@ class FakeMealServiceMealRepository extends MealRepository
     public function findById(int $id): ?Meal
     {
         return $this->meal;
+    }
+
+    public function delete(int $id): bool
+    {
+        $this->events[] = 'delete';
+
+        return !$this->shouldFailOnDelete;
+    }
+}
+
+class FakeMealServiceTransactionManager extends TransactionManager
+{
+    /** @var list<string> */
+    public array $events = [];
+
+    public function __construct() {}
+
+    public function transactional(callable $operation): mixed
+    {
+        $this->events[] = 'begin';
+
+        try {
+            $result = $operation();
+            $this->events[] = 'commit';
+
+            return $result;
+        } catch (\Throwable $error) {
+            $this->events[] = 'rollback';
+            throw $error;
+        }
+    }
+}
+
+class FakeMealServiceUploadedFileStorage extends UploadedFileStorage
+{
+    public bool $deleteAttempted = false;
+
+    /** @var list<string> */
+    public array $transactionEventsAtDelete = [];
+
+    public function __construct(
+        private readonly FakeMealServiceTransactionManager $transactions,
+        private readonly bool $shouldFailOnDelete = false
+    ) {
+        parent::__construct('/tmp/');
+    }
+
+    public function deleteImageSet(?string $relativePath): void
+    {
+        $this->deleteAttempted = true;
+        $this->transactionEventsAtDelete = $this->transactions->events;
+
+        if ($this->shouldFailOnDelete) {
+            throw new \RuntimeException('Simulated file cleanup failure');
+        }
     }
 }
 

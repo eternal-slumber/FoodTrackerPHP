@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use App\Exceptions\ValidationException;
 use App\Services\UploadedFileStorage;
+use App\Uploads\UploadedImagePolicy;
 use PHPUnit\Framework\TestCase;
 
 class UploadedFileStorageTest extends TestCase
@@ -102,6 +104,201 @@ class UploadedFileStorageTest extends TestCase
         $this->assertFileExists($original);
         $this->assertFileExists($thumbnail);
         $this->assertFileDoesNotExist($orphanThumbnail);
+    }
+
+    public function testSaveUploadedFileValidatesContentAndChoosesExtensionFromDetectedMime(): void
+    {
+        $sourcePath = $this->createTemporaryPng();
+        $storage = new UploadedFileStorage($this->uploadPath);
+
+        $relativePath = $storage->saveUploadedFile($sourcePath, 100001);
+
+        $this->assertMatchesRegularExpression('/^user_100001\/[a-f0-9_]+\.png$/', $relativePath);
+        $this->assertFileExists($storage->fullPath($relativePath));
+        $this->assertFileDoesNotExist($sourcePath);
+        $this->assertSame('image/png', $storage->mimeType($relativePath));
+    }
+
+    public function testSaveUploadedFileRejectsMissingSource(): void
+    {
+        $storage = new UploadedFileStorage($this->uploadPath);
+
+        $this->expectException(ValidationException::class);
+        $storage->saveUploadedFile(sys_get_temp_dir() . '/missing_' . bin2hex(random_bytes(6)), 100001);
+    }
+
+    public function testSaveUploadedFileRejectsNonImageContent(): void
+    {
+        $sourcePath = tempnam(sys_get_temp_dir(), 'foodtracker_invalid_');
+        $this->assertIsString($sourcePath);
+        file_put_contents($sourcePath, 'not an image');
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testSaveUploadedFileUsesActualFileSizeInsteadOfRequestMetadata(): void
+    {
+        $sourcePath = tempnam(sys_get_temp_dir(), 'foodtracker_large_');
+        $this->assertIsString($sourcePath);
+        $handle = fopen($sourcePath, 'wb');
+        $this->assertIsResource($handle);
+        ftruncate($handle, UploadedImagePolicy::MAX_BYTES + 1);
+        fclose($handle);
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testSaveUploadedFileRejectsImageWithExcessivePixelDimensions(): void
+    {
+        $sourcePath = tempnam(sys_get_temp_dir(), 'foodtracker_dimensions_');
+        $this->assertIsString($sourcePath);
+        file_put_contents($sourcePath, $this->pngWithDimensions(8001, 1));
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testSaveUploadedFileRejectsImageWithExcessiveTotalPixelCount(): void
+    {
+        $sourcePath = tempnam(sys_get_temp_dir(), 'foodtracker_pixels_');
+        $this->assertIsString($sourcePath);
+        file_put_contents($sourcePath, $this->pngWithDimensions(5001, 5000));
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testSaveUploadedFileRejectsSymlinkSource(): void
+    {
+        $sourcePath = $this->createTemporaryPng();
+        $linkPath = sys_get_temp_dir() . '/foodtracker_link_' . bin2hex(random_bytes(6));
+        symlink($sourcePath, $linkPath);
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($linkPath, 100001);
+        } finally {
+            if (is_link($linkPath)) {
+                unlink($linkPath);
+            }
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testSaveUploadedFileRejectsSourceOutsideTrustedTemporaryDirectory(): void
+    {
+        $sourcePath = __DIR__ . '/untrusted_upload_' . bin2hex(random_bytes(6)) . '.png';
+        $temporaryImage = $this->createTemporaryPng();
+        rename($temporaryImage, $sourcePath);
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(ValidationException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+        }
+    }
+
+    public function testFullPathRejectsPathTraversal(): void
+    {
+        $storage = new UploadedFileStorage($this->uploadPath);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $storage->fullPath('../outside.jpg');
+    }
+
+    public function testSaveUploadedFileRejectsSymlinkedUserFolder(): void
+    {
+        $sourcePath = $this->createTemporaryPng();
+        $outsidePath = sys_get_temp_dir() . '/foodtracker_outside_' . bin2hex(random_bytes(6));
+        mkdir($outsidePath, 0777, true);
+        symlink($outsidePath, $this->uploadPath . 'user_100001');
+
+        try {
+            $storage = new UploadedFileStorage($this->uploadPath);
+
+            $this->expectException(\RuntimeException::class);
+            $storage->saveUploadedFile($sourcePath, 100001);
+        } finally {
+            $userFolder = $this->uploadPath . 'user_100001';
+            if (is_link($userFolder)) {
+                unlink($userFolder);
+            }
+            if (is_file($sourcePath)) {
+                unlink($sourcePath);
+            }
+            if (is_dir($outsidePath)) {
+                rmdir($outsidePath);
+            }
+        }
+    }
+
+    private function createTemporaryPng(): string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'foodtracker_image_');
+        $this->assertIsString($path);
+        $contents = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+            true
+        );
+        $this->assertIsString($contents);
+        file_put_contents($path, $contents);
+
+        return $path;
+    }
+
+    private function pngWithDimensions(int $width, int $height): string
+    {
+        $ihdrData = pack('NNCCCCC', $width, $height, 8, 2, 0, 0, 0);
+        $ihdr = pack('N', strlen($ihdrData))
+            . 'IHDR'
+            . $ihdrData
+            . pack('N', crc32('IHDR' . $ihdrData));
+        $iend = pack('N', 0) . 'IEND' . pack('N', crc32('IEND'));
+
+        return "\x89PNG\r\n\x1a\n" . $ihdr . $iend;
     }
 
     private function createUpload(string $relativePath): string

@@ -7,6 +7,7 @@ use App\Controllers\AiUsageController;
 use App\Controllers\HomeController;
 use App\Controllers\TelegramBotController;
 use App\Controllers\UserController;
+use App\Controllers\TrainerShareController;
 use App\Services\RouteLoader;
 use Psr\Container\ContainerInterface;
 use Slim\App;
@@ -16,12 +17,13 @@ return function (App $app, ContainerInterface $container): void {
     $adminOnly = filter_var($_ENV['ADMIN_ONLY'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
     if (!$adminOnly) {
-        $routeLoader = new RouteLoader($app, $container, [
+        $routeLoader = new RouteLoader($app, [
             HomeController::class,
             UserController::class,
             AiUsageController::class,
             AnalyzeController::class,
             TelegramBotController::class,
+            TrainerShareController::class,
         ]);
 
         $routeLoader->load();
