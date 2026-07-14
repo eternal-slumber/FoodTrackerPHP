@@ -5,23 +5,31 @@ declare(strict_types=1);
 namespace App\Validators;
 
 use App\Exceptions\ValidationException;
+use App\Uploads\UploadedImagePolicy;
 
 class AnalyzeValidator
 {
+    /**
+     * @param array<string, mixed> $postData
+     * @param array<string, mixed> $files
+     */
     public static function validate(array $postData, array $files): void
     {
         $errors = [];
+        $photo = $files['photo'] ?? null;
 
         // Валидация фото
-        if (empty($files['photo'])) {
+        if (!is_array($photo)) {
             $errors['photo'] = 'Photo is required';
-        } elseif ($files['photo']['error'] !== UPLOAD_ERR_OK) {
-            $errors['photo'] = 'File upload error: ' . $files['photo']['error'];
-        } elseif ($files['photo']['size'] > 10 * 1024 * 1024) { // 10MB
+        } elseif (($photo['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $errors['photo'] = 'File upload error: ' . (string)($photo['error'] ?? UPLOAD_ERR_NO_FILE);
+        } elseif (!isset($photo['tmp_name']) || !is_string($photo['tmp_name'])) {
+            $errors['photo'] = 'Uploaded file is unavailable';
+        } elseif (isset($photo['size']) && is_numeric($photo['size']) && (int)$photo['size'] > UploadedImagePolicy::MAX_BYTES) {
             $errors['photo'] = 'File size exceeds 10MB limit';
         } else {
-            $mimeType = self::detectMimeType($files['photo']['tmp_name']);
-            if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            $mimeType = self::detectMimeType($photo['tmp_name']);
+            if (!isset(UploadedImagePolicy::MIME_TO_EXTENSION[$mimeType])) {
                 $errors['photo'] = 'Only JPEG, PNG and WebP images are allowed';
             }
         }
