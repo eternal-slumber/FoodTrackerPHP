@@ -217,12 +217,12 @@ function normalizeDraft(data, source) {
         ? data.products.map(product => ({
             clientId: `draft-product-${nextDraftProductId++}`,
             name: product.name || '',
-            weight: product.weight || 100,
+            weight: product.weight ?? '',
             portions: product.portions || 1,
-            calories: product.calories || '',
-            proteins: product.proteins || '',
-            fats: product.fats || '',
-            carbs: product.carbs || '',
+            calories: product.calories ?? '',
+            proteins: product.proteins ?? '',
+            fats: product.fats ?? '',
+            carbs: product.carbs ?? '',
             processing: product.processing || '',
             scanId: product.scanId || ''
         }))
