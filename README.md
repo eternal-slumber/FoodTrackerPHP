@@ -4,6 +4,8 @@ FoodTrackerPHP is a Telegram Mini App for tracking meals, calories, and macronut
 
 The app allows users to register, add meals, upload food photos, analyze meals through an OpenAI-compatible AI provider, and view daily nutrition progress. The project is built with PHP 8.5, Slim 4, MySQL, Docker, and vanilla HTML/CSS/JavaScript.
 
+**Live demo:** [demo.mycaloriebot.ru](https://demo.mycaloriebot.ru)
+
 ## Features
 
 - Telegram Mini App authentication
@@ -102,7 +104,3 @@ Users can configure meal reminders and an evening summary. Notifications are que
 Users can create a read-only link for a trainer or nutrition specialist. Shared access can include profile information, nutrition totals, meal history, and recent daily progress without exposing Telegram authentication data.
 
 The guest view displays calorie progress rings for recent days, allowing the trainer to compare consumption against the daily target before opening a specific day.
-
-## Administration
-
-The administration panel runs separately from the main Mini App. It provides application health information, usage statistics, system logs, and protected administrator authentication without exposing administrative routes through the public user interface.
