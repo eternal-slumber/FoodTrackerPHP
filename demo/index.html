@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Демонстрация сценария работы Telegram Mini App Caloric Analytics Tracker">
+    <title>Caloric Analytics Tracker — как это работает</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="#start" aria-label="Caloric Analytics Tracker — к началу страницы">
+            <img class="brand-logo" src="../public/assets/app/pics/monochrome_logo.webp" alt="">
+            <span>Caloric Analytics Tracker</span>
+        </a>
+        <nav class="header-actions" aria-label="Ссылки проекта">
+            <a class="header-action header-github" href="https://github.com/eternal-slumber/FoodTrackerPHP" target="_blank" rel="noopener noreferrer" aria-label="Caloric Analytics Tracker на GitHub" title="GitHub">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8a9.4 9.4 0 0 0-3 18.3c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.6 2.4 1.1 2.9.9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.1-4.7-4.7 0-1 .4-1.9 1-2.5-.1-.3-.4-1.3.1-2.5 0 0 .8-.3 2.6 1a9 9 0 0 1 4.8 0c1.8-1.2 2.6-1 2.6-1 .5 1.2.2 2.2.1 2.5.7.7 1 1.5 1 2.5 0 3.6-2.4 4.4-4.7 4.7.4.3.7 1 .7 1.9v2.9c0 .3.2.6.7.5A9.4 9.4 0 0 0 12 2.8Z" fill="currentColor"/></svg>
+            </a>
+            <a class="header-action header-telegram" href="https://t.me/aifoodtrackerai_bot" target="_blank" rel="noopener noreferrer" aria-label="Открыть Caloric Analytics Tracker в Telegram">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.3 3.5-3 16.1c-.2 1.1-.8 1.4-1.7.9l-4.6-3.4-2.2 2.1c-.2.3-.5.5-.9.5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L6.6 13.7 2 12.2c-1-.3-1-1 .2-1.5L20 3.8c.8-.3 1.5.2 1.3-.3Z" fill="currentColor"/></svg>
+                <span>Открыть в Telegram</span>
+            </a>
+        </nav>
+    </header>
+
+    <main id="start">
+        <section class="intro" aria-labelledby="page-title">
+            <p class="eyebrow hero-reveal">Питание без ручного подсчёта</p>
+            <h1 id="page-title"><span class="hero-reveal">От фотографии блюда</span><span class="hero-reveal">до записи в дневнике</span></h1>
+            <p class="intro-copy hero-reveal">Caloric Analytics Tracker распознаёт еду и помогает следить за рационом прямо внутри Telegram.</p>
+            <div class="mobile-hero-actions hero-reveal">
+                <a class="mobile-telegram" href="https://t.me/aifoodtrackerai_bot" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.3 3.5-3 16.1c-.2 1.1-.8 1.4-1.7.9l-4.6-3.4-2.2 2.1c-.2.3-.5.5-.9.5l.3-4.7 8.6-7.8c.4-.3-.1-.5-.6-.2L6.6 13.7 2 12.2c-1-.3-1-1 .2-1.5L20 3.8c.8-.3 1.5.2 1.3-.3Z" fill="currentColor"/></svg>
+                    <span>Открыть в Telegram</span>
+                </a>
+                <a class="mobile-github" href="https://github.com/eternal-slumber/FoodTrackerPHP" target="_blank" rel="noopener noreferrer">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8a9.4 9.4 0 0 0-3 18.3c.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 0 1.6 1 1.6 1 .9 1.6 2.4 1.1 2.9.9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.1-4.7-4.7 0-1 .4-1.9 1-2.5-.1-.3-.4-1.3.1-2.5 0 0 .8-.3 2.6 1a9 9 0 0 1 4.8 0c1.8-1.2 2.6-1 2.6-1 .5 1.2.2 2.2.1 2.5.7.7 1 1.5 1 2.5 0 3.6-2.4 4.4-4.7 4.7.4.3.7 1 .7 1.9v2.9c0 .3.2.6.7.5A9.4 9.4 0 0 0 12 2.8Z" fill="currentColor"/></svg>
+                    <span>GitHub</span>
+                </a>
+            </div>
+        </section>
+
+        <section class="product-story" aria-label="Как работает Caloric Analytics Tracker">
+            <div class="mobile-story-intro">
+                <p class="eyebrow">Как это работает</p>
+                <h2>Один понятный сценарий</h2>
+                <a class="mobile-story-start" href="#story-step-1">Приступить</a>
+            </div>
+            <div class="demo-column">
+                <div class="demo-sticky">
+                    <div class="demo-caption" aria-hidden="true">
+                        <span>Сценарий в приложении</span>
+                        <span class="demo-count"><b id="current-step">01</b> / 06</span>
+                    </div>
+
+                    <div class="phone-motion">
+                        <div class="phone" aria-live="polite">
+                            <div class="phone-topbar">
+                                <img class="phone-statusbar-art" src="assets/iphone-17-status-bar.svg" alt="">
+                                <span class="phone-island"></span>
+                            </div>
+
+                            <div class="phone-screen" role="img" aria-label="Интерактивный сценарий Caloric Analytics Tracker">
+                                <div class="phone-stage">
+                                    <section class="tg-layer" aria-label="Чат с ботом Caloric Analytics Tracker в Telegram">
+                                    <header class="tg-header">
+                                        <span class="tg-back">‹</span>
+                                        <span class="tg-chat-title"><strong>Caloric Analytics Tracker</strong><small>бот</small></span>
+                                        <span class="tg-avatar"><img src="../public/assets/app/pics/monochrome_logo.webp" alt=""></span>
+                                    </header>
+                                    <article class="tg-message">
+                                        <div class="tg-capabilities">
+                                            <strong>What can this bot do?</strong>
+                                            <p>Бот для учёта питания и контроля дневной нормы калорий.</p>
+                                            <p>Можно добавлять еду по фото или вручную, смотреть историю, отслеживать БЖУ и получать краткую сводку за день.</p>
+                                            <p>Открой мини-приложение и начни вести питание удобнее.</p>
+                                        </div>
+                                    </article>
+                                    <div class="tg-actions">
+                                        <span class="demo-pointer tg-pointer" aria-hidden="true"><i></i></span>
+                                        <button class="tg-start" type="button">Старт</button>
+                                    </div>
+                                </section>
+
+                                <section class="ft-app" aria-label="Главная Caloric Analytics Tracker">
+                                    <div class="ft-home">
+                                        <header class="ft-home-header">
+                                            <h2>Добрый день</h2>
+                                            <button class="ft-profile" type="button" aria-label="Профиль">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path d="M12 12.25C9.86 12.25 8.13 10.52 8.13 8.38C8.13 6.24 9.86 4.5 12 4.5C14.14 4.5 15.87 6.24 15.87 8.38C15.87 10.52 14.14 12.25 12 12.25ZM12 6C10.69 6 9.63 7.07 9.63 8.38C9.63 9.69 10.69 10.75 12 10.75C13.31 10.75 14.37 9.69 14.37 8.38C14.37 7.07 13.31 6 12 6Z" fill="currentColor"/>
+                                                    <path d="M18 20.25C17.59 20.25 17.25 19.91 17.25 19.5C17.25 17.47 14.9 15.82 12 15.82C9.1 15.82 6.75 17.47 6.75 19.5C6.75 19.91 6.41 20.25 6 20.25C5.59 20.25 5.25 19.91 5.25 19.5C5.25 16.64 8.28 14.32 12 14.32C15.72 14.32 18.75 16.64 18.75 19.5C18.75 19.91 18.41 20.25 18 20.25Z" fill="currentColor"/>
+                                                </svg>
+                                            </button>
+                                        </header>
+
+                                        <section class="ft-progress-card ft-reveal" aria-label="Дневная сводка">
+                                            <div class="ft-progress-head">
+                                                <span><strong>Сегодня</strong><small>72 кг · 178 см</small></span>
+                                                <b class="ft-completion"><span data-home-percent>38</span>%</b>
+                                            </div>
+                                            <div class="ft-calories-panel">
+                                                <div class="ft-gauge" style="--day-progress:38">
+                                                    <svg viewBox="0 0 248 124" aria-hidden="true">
+                                                        <path d="M 24 112 A 100 100 0 0 1 224 112" pathLength="100"></path>
+                                                        <path class="ft-gauge-value" d="M 24 112 A 100 100 0 0 1 224 112" pathLength="100"></path>
+                                                    </svg>
+                                                    <span><strong data-home-calories>760</strong><small>съедено</small></span>
+                                                </div>
+                                                <div class="ft-balance">
+                                                    <span><strong>2 000 <small>ккал</small></strong><small>норма</small></span>
+                                                    <i></i>
+                                                    <span><strong><b data-home-left>1 240</b> <small>ккал</small></strong><small>осталось</small></span>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section class="ft-macros ft-reveal" aria-label="БЖУ за день">
+                                            <article class="ft-macro ft-protein">
+                                                <span class="ft-macro-icon"><svg viewBox="0 0 24 24"><path d="M12 3.2c3.4 0 6.4 4.6 6.4 9.8 0 4.5-2.4 7.8-6.4 7.8S5.6 17.5 5.6 13c0-5.2 3-9.8 6.4-9.8Z" fill="currentColor"/><path d="M12 7.5c1.8 0 3.4 2.4 3.4 5.2 0 2.4-1.2 4.1-3.4 4.1s-3.4-1.7-3.4-4.1c0-2.8 1.6-5.2 3.4-5.2Z" fill="rgba(255,255,255,.68)"/></svg></span>
+                                                <span><strong>Белки</strong><small><b data-home-protein>42</b> / 80 г</small></span>
+                                                <i><b></b></i>
+                                            </article>
+                                            <article class="ft-macro ft-fat">
+                                                <span class="ft-macro-icon"><svg viewBox="0 0 24 24"><path d="M13 2.8c.3 2.5-.4 4.3-2.1 5.6C9 9.8 7.4 11.6 7.4 14.2c0 3 2.3 5.2 5.2 5.2 3.1 0 5.4-2.2 5.4-5.4 0-2.7-1.4-4.8-3-6.7-.8-1-1.5-2.4-1.7-4.5-.1-.4-.3-.4-.3 0Z" fill="currentColor"/><path d="M10.2 16.8c.1-1.5.9-2.5 2-3.3.7-.6 1.1-1.2 1.2-2 .9 1 1.9 2.1 1.9 3.6 0 1.7-1.2 3-2.8 3-1.2 0-2.1-.6-2.3-1.3Z" fill="rgba(255,255,255,.72)"/></svg></span>
+                                                <span><strong>Жиры</strong><small><b data-home-fat>28</b> / 65 г</small></span>
+                                                <i><b></b></i>
+                                            </article>
+                                            <article class="ft-macro ft-carbs">
+                                                <span class="ft-macro-icon"><svg viewBox="0 0 24 24"><path d="M11.2 4.1c0-.5.4-.9.8-.9s.8.4.8.9v16.2c0 .5-.4.9-.8.9s-.8-.4-.8-.9V4.1Z" fill="currentColor"/><path d="M10.4 6.6c-2.1.2-3.5 1.3-4.2 3.1-.2.5.2 1 .7.9 2.1-.2 3.5-1.2 4.2-3.1.2-.5-.2-1-.7-.9ZM13.6 6.6c2.1.2 3.5 1.3 4.2 3.1.2.5-.2 1-.7.9-2.1-.2-3.5-1.2-4.2-3.1-.2-.5.2-1 .7-.9ZM10.4 10.6c-2.1.2-3.5 1.3-4.2 3.1-.2.5.2 1 .7.9 2.1-.2 3.5-1.2 4.2-3.1.2-.5-.2-1-.7-.9ZM13.6 10.6c2.1.2 3.5 1.3 4.2 3.1.2.5-.2 1-.7.9-2.1-.2-3.5-1.2-4.2-3.1-.2-.5.2-1 .7-.9Z" fill="currentColor"/><path d="M10.4 14.6c-2 .2-3.3 1.1-4 2.7-.2.5.2 1 .7.9 1.9-.2 3.3-1.1 4-2.7.2-.5-.2-1-.7-.9ZM13.6 14.6c2 .2 3.3 1.1 4 2.7.2.5-.2 1-.7.9-1.9-.2-3.3-1.1-4-2.7-.2-.5.2-1 .7-.9Z" fill="currentColor"/></svg></span>
+                                                <span><strong>Углеводы</strong><small><b data-home-carbs>96</b> / 240 г</small></span>
+                                                <i><b></b></i>
+                                            </article>
+                                        </section>
+
+                                        <article class="ft-insight ft-reveal">
+                                            <span><svg viewBox="0 0 24 24"><path d="M12.9 3.5 14 7.1c.2.7.8 1.3 1.5 1.5l3.6 1.1c.8.2.8 1.4 0 1.6l-3.6 1.1c-.7.2-1.3.8-1.5 1.5l-1.1 3.6c-.2.8-1.4.8-1.6 0l-1.1-3.6c-.2-.7-.8-1.3-1.5-1.5l-3.6-1.1c-.8-.2-.8-1.4 0-1.6l3.6-1.1c.7-.2 1.3-.8 1.5-1.5l1.1-3.6c.2-.8 1.4-.8 1.6 0Z" fill="currentColor"/><path d="M18.6 15.4 19 17c.1.3.3.5.6.6l1.6.4c.4.1.4.7 0 .8l-1.6.4c-.3.1-.5.3-.6.6l-.4 1.6c-.1.4-.7.4-.8 0l-.4-1.6c-.1-.3-.3-.5-.6-.6l-1.6-.4c-.4-.1-.4-.7 0-.8l1.6-.4c.3-.1.5-.3.6-.6l.4-1.6c.1-.4.7-.4.8 0Z" fill="currentColor"/></svg></span>
+                                            <p><strong>AI-рекомендация</strong><small>Добавьте больше белка к ужину</small></p>
+                                            <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/></svg>
+                                        </article>
+
+                                        <section class="ft-meals ft-reveal" aria-label="Сегодняшние приемы">
+                                            <h3>Сегодняшние приемы</h3>
+                                            <div class="ft-meal-list">
+                                                <article class="ft-meal" data-meal="breakfast"><span class="ft-meal-icon"><svg viewBox="0 0 24 24"><path d="M5 16.8c0-3.9 3.1-7 7-7s7 3.1 7 7H5Z" fill="currentColor"/><path d="M3.2 18.2h17.6c.4 0 .7.3.7.7s-.3.7-.7.7H3.2c-.4 0-.7-.3-.7-.7s.3-.7.7-.7Z" fill="currentColor"/><path d="M12 3c.4 0 .7.3.7.7v2a.7.7 0 0 1-1.4 0v-2c0-.4.3-.7.7-.7ZM19.2 6.1c.3.3.3.7 0 1l-1.4 1.4a.7.7 0 0 1-1-1l1.4-1.4c.3-.3.7-.3 1 0ZM4.8 6.1c.3-.3.7-.3 1 0l1.4 1.4a.7.7 0 0 1-1 1L4.8 7.1c-.3-.3-.3-.7 0-1ZM2.4 13.2c0-.4.3-.7.7-.7h2a.7.7 0 0 1 0 1.4h-2c-.4 0-.7-.3-.7-.7ZM18.9 12.5h2a.7.7 0 0 1 0 1.4h-2a.7.7 0 0 1 0-1.4Z" fill="currentColor"/></svg></span><strong>Завтрак</strong><span><b>0</b> ккал</span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/></svg></article>
+                                                <article class="ft-meal is-current" data-meal="lunch"><span class="ft-meal-icon"><svg viewBox="0 0 24 24"><path d="M12 17.2a5.2 5.2 0 1 0 0-10.4 5.2 5.2 0 0 0 0 10.4Z" fill="currentColor"/><path d="M12 1.9c.4 0 .7.3.7.7v1.8a.7.7 0 0 1-1.4 0V2.6c0-.4.3-.7.7-.7ZM12 18.9c.4 0 .7.3.7.7v1.8a.7.7 0 0 1-1.4 0v-1.8c0-.4.3-.7.7-.7ZM22.1 12c0 .4-.3.7-.7.7h-1.8a.7.7 0 0 1 0-1.4h1.8c.4 0 .7.3.7.7ZM5.1 12c0 .4-.3.7-.7.7H2.6a.7.7 0 0 1 0-1.4h1.8c.4 0 .7.3.7.7ZM19.1 4.9c.3.3.3.7 0 1l-1.3 1.3a.7.7 0 0 1-1-1l1.3-1.3c.3-.3.7-.3 1 0ZM7.2 16.8c.3.3.3.7 0 1l-1.3 1.3a.7.7 0 0 1-1-1l1.3-1.3c.3-.3.7-.3 1 0ZM19.1 19.1c-.3.3-.7.3-1 0l-1.3-1.3a.7.7 0 0 1 1-1l1.3 1.3c.3.3.3.7 0 1ZM7.2 7.2c-.3.3-.7.3-1 0L4.9 5.9a.7.7 0 0 1 1-1l1.3 1.3c.3.3.3.7 0 1Z" fill="currentColor"/></svg></span><span><strong>Обед</strong><small class="ft-meal-count">1 блюдо</small></span><span><b data-meal-calories>0</b> ккал</span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/></svg></article>
+                                                <div class="ft-new-meal">
+                                                    <div class="ft-food-thumb"><img src="assets/lunch-chicken-rice-bowl.jpg" alt=""></div>
+                                                    <span><strong>Куриный боул с рисом</strong><small>14:32 · 340 г</small><small>Б 38 · Ж 17 · У 45</small></span>
+                                                    <span><strong>486</strong><small>ккал</small></span>
+                                                </div>
+                                                <article class="ft-meal" data-meal="dinner"><span class="ft-meal-icon"><svg viewBox="0 0 24 24"><path d="M18.8 15.3c-5.3 0-9.6-4.3-9.6-9.6 0-.9.1-1.8.4-2.6.1-.5-.4-.9-.8-.6A9.9 9.9 0 1 0 21.5 15c.2-.5-.3-.9-.7-.8-.7.1-1.3.2-2 .2Z" fill="currentColor"/><path d="M17.6 4.4 18 6c.1.3.3.5.6.6l1.6.4c.4.1.4.7 0 .8l-1.6.4c-.3.1-.5.3-.6.6l-.4 1.6c-.1.4-.7.4-.8 0l-.4-1.6c-.1-.3-.3-.5-.6-.6l-1.6-.4c-.4-.1-.4-.7 0-.8l1.6-.4c.3-.1.5-.3.6-.6l.4-1.6c.1-.4.7-.4.8 0Z" fill="currentColor"/></svg></span><strong>Ужин</strong><span><b>0</b> ккал</span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/></svg></article>
+                                                <article class="ft-meal" data-meal="snacks"><span class="ft-meal-icon"><svg viewBox="0 0 24 24"><path d="M16.2 7.5c1.8 0 3.1 1.6 3.1 4.3 0 4-2.6 8.2-5.2 8.2-.8 0-1.2-.3-2.1-.3-.9 0-1.3.3-2.1.3-2.6 0-5.2-4.2-5.2-8.2 0-2.7 1.3-4.3 3.1-4.3 1.2 0 2 .6 2.7.6.6 0 1.3-.6 2.5-.6.9 0 1.5.2 2 .5.3-.3.7-.5 1.2-.5Z" fill="currentColor"/><path d="M12.9 6.4c.2-2.1 1.3-3.5 3.3-4 .2 2.1-.9 3.6-3.3 4Z" fill="currentColor"/></svg></span><strong>Перекусы</strong><span><b>0</b> ккал</span><svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"/></svg></article>
+                                            </div>
+                                        </section>
+                                    </div>
+
+                                    <nav class="ft-tabbar" aria-label="Навигация Caloric Analytics Tracker">
+                                        <span class="ft-tab is-active"><svg viewBox="0 0 24 24"><path d="m3.5 10.5 8.5-7 8.5 7v9a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5v-9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/><path d="M9 21v-6.5h6V21" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><small>Главная</small></span>
+                                        <span class="ft-tab"><svg viewBox="0 0 24 24"><path d="M20.5 12A8.5 8.5 0 1 1 12 3.5V12h8.5Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/><path d="M15 3.9A8.5 8.5 0 0 1 20.1 9H15V3.9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><small>Сводка</small></span>
+                                        <span class="ft-tab ft-tab-gap"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7.5 2.5v4M16.5 2.5v4M3 9h18M12 12v3l2 1.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><small>История</small></span>
+                                        <span class="ft-tab"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5 20.5c.5-4.1 3-6.2 7-6.2s6.5 2.1 7 6.2" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg><small>Профиль</small></span>
+                                    </nav>
+                                    <button class="ft-fab" type="button" aria-label="Добавить прием пищи"><span></span></button>
+                                    <span class="demo-pointer fab-pointer" aria-hidden="true"><i></i></span>
+
+                                    <div class="ft-scrim"></div>
+                                    <section class="ft-draft" aria-label="Форма добавления блюда">
+                                        <div class="ft-photo-hero">
+                                            <button class="ft-back" type="button" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+                                            <div class="ft-upload">
+                                                <span><svg viewBox="0 0 24 24"><path d="M6.76 22h10.48c2.76 0 3.86-1.69 3.99-3.75l.52-8.26C21.89 7.83 20.17 6 18 6c-.61 0-1.17-.35-1.45-.89l-.72-1.45C15.37 2.75 14.17 2 13.15 2h-2.29c-1.03 0-2.23.75-2.69 1.66l-.72 1.45C7.17 5.65 6.61 6 6 6 3.83 6 2.11 7.83 2.25 9.99l.52 8.26C2.89 20.31 4 22 6.76 22Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"/><path d="M10.5 8h3" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/><circle cx="12" cy="14.75" r="3.25" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></span>
+                                                <strong>Загрузить фото</strong>
+                                                <small>Сфотографируйте еду или выберите изображение</small>
+                                            </div>
+                                            <div class="ft-dish-photo">
+                                                <img class="ft-dish-image" src="assets/lunch-chicken-rice-bowl.jpg" alt="Куриный боул с рисом и овощами">
+                                            </div>
+                                            <div class="ft-analysis-overlay">
+                                                <span class="ft-scan-line"></span>
+                                                <i class="ft-marker marker-one"></i><i class="ft-marker marker-two"></i><i class="ft-marker marker-three"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="ft-draft-card">
+                                            <header>
+                                                <span class="ft-draft-heading">
+                                                    <span class="ft-draft-title"><strong class="draft-title-empty">Новый продукт</strong><strong class="draft-title-filled">Куриный боул с рисом</strong></span>
+                                                    <small>Основной продукт</small>
+                                                </span>
+                                                <b class="ft-total"><span data-draft-calories></span> ккал</b>
+                                            </header>
+                                            <button class="ft-scan-action" type="button">
+                                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 2.75a.75.75 0 0 1 1.43-.32l1.77 3.92 3.92 1.77a.75.75 0 0 1 0 1.36l-3.92 1.77-1.77 3.92a.75.75 0 0 1-1.36 0L9.3 11.25 5.38 9.48a.75.75 0 0 1 0-1.36L9.3 6.35l1.77-3.92A.75.75 0 0 1 11 2.75Z" fill="currentColor"/><path d="M18.5 13.25a.75.75 0 0 1 .68.43l.66 1.48 1.48.66a.75.75 0 0 1 0 1.36l-1.48.66-.66 1.48a.75.75 0 0 1-1.36 0l-.66-1.48-1.48-.66a.75.75 0 0 1 0-1.36l1.48-.66.66-1.48a.75.75 0 0 1 .68-.43Z" fill="currentColor"/></svg>
+                                                <span class="scan-action-ready">Отсканировать фото</span>
+                                                <span class="scan-action-loading">AI анализирует фото</span>
+                                            </button>
+                                            <div class="ft-analysis-status"><span class="analysis-copy-loading">Анализируем изображение</span><span class="analysis-copy-done">Анализ завершён</span><i><b></b></i></div>
+                                            <p class="ft-draft-caption">На порцию</p>
+                                            <div class="ft-draft-summary">
+                                                <span><strong data-draft-calories></strong><small>ккал</small></span>
+                                                <span><strong data-draft-protein></strong><small>белки</small></span>
+                                                <span><strong data-draft-fat></strong><small>жиры</small></span>
+                                                <span><strong data-draft-carbs></strong><small>углеводы</small></span>
+                                            </div>
+                                            <div class="ft-fields">
+                                                <label class="ft-field ft-name"><span>Название</span><input data-draft-name type="text" placeholder="Например, куриный салат"></label>
+                                                <label class="ft-field"><span>Вес порции, г</span><input data-draft-weight type="text" inputmode="decimal" placeholder="0"></label>
+                                                <label class="ft-field ft-portions"><span>Порции</span><span class="ft-portion-stepper"><i>−</i><output data-draft-portions>1</output><i>+</i></span></label>
+                                            </div>
+                                            <p class="ft-draft-caption ft-kbju-caption">На 100 г продукта</p>
+                                            <div class="ft-kbju-fields">
+                                                <label class="ft-field"><span>Ккал</span><output data-draft-calories data-placeholder="0"></output></label>
+                                                <label class="ft-field"><span>Белки</span><output data-draft-protein data-placeholder="0"></output></label>
+                                                <label class="ft-field"><span>Жиры</span><output data-draft-fat data-placeholder="0"></output></label>
+                                                <label class="ft-field"><span>Углеводы</span><output data-draft-carbs data-placeholder="0"></output></label>
+                                            </div>
+                                            <div class="ft-save-row">
+                                                <button class="ft-save" type="button" aria-disabled="true"><span>Добавить в Обед</span><i>✓</i></button>
+                                                <button class="ft-meal-picker" type="button" aria-label="Выбрать другой приём пищи"><i></i></button>
+                                                <span class="demo-pointer save-pointer" aria-hidden="true"><i></i></span>
+                                            </div>
+                                            <section class="ft-extra-products" aria-label="Дополнительные продукты">
+                                                <header><h3>Дополнительные продукты</h3><span>0 / 5</span></header>
+                                                <button type="button"><span><strong>Добавить продукт</strong><small>Хлеб, овощи, соус или другую часть приема</small></span><i>+</i></button>
+                                            </section>
+                                        </div>
+                                    </section>
+                                    </section>
+                                </div>
+                            </div>
+                            <span class="phone-home-indicator" aria-hidden="true"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="steps-column">
+                <div class="steps-intro"><p class="eyebrow">Как это работает</p><h2>Один понятный сценарий</h2></div>
+                <article class="story-step is-active" id="story-step-1" data-step="0"><div class="step-copy"><span class="step-number">01</span><h3>Запустите в Telegram</h3><p><span class="desktop-step-description">Caloric Analytics Tracker открывается из диалога с ботом — без отдельной установки и регистрации.</span><span class="mobile-step-description">Откройте Caloric Analytics Tracker прямо из диалога с ботом.</span></p></div></article>
+                <article class="story-step" data-step="1"><div class="step-copy"><span class="step-number">02</span><h3>Откройте Mini App</h3><p><span class="desktop-step-description">Кнопка подтверждает действие, а интерфейс Telegram плавно уступает место приложению.</span><span class="mobile-step-description">Нажмите «Старт» — откроется Mini App.</span></p></div></article>
+                <article class="story-step" data-step="2"><div class="step-copy"><span class="step-number">03</span><h3>Добавьте фотографию</h3><p><span class="desktop-step-description">Откройте форму и добавьте снимок блюда в отдельную область загрузки.</span><span class="mobile-step-description">Загрузите фотографию блюда в форму.</span></p></div></article>
+                <article class="story-step" data-step="3"><div class="step-copy"><span class="step-number">04</span><h3>Доверьте анализ AI</h3><p><span class="desktop-step-description">Caloric Analytics Tracker сканирует фотографию, распознаёт продукты и рассчитывает КБЖУ.</span><span class="mobile-step-description">AI распознает блюдо и рассчитает КБЖУ.</span></p></div></article>
+                <article class="story-step" data-step="4"><div class="step-copy"><span class="step-number">05</span><h3>Получите готовые КБЖУ</h3><p><span class="desktop-step-description">Название, калории, белки, жиры и углеводы заполняются автоматически.</span><span class="mobile-step-description">Название и показатели заполнятся автоматически.</span></p></div></article>
+                <article class="story-step" data-step="5"><div class="step-copy"><span class="step-number">06</span><h3>Сохраните результат</h3><p><span class="desktop-step-description">Блюдо появляется в дневнике, а дневные показатели пересчитываются автоматически.</span><span class="mobile-step-description">Сохраните блюдо — дневник обновится.</span></p></div></article>
+            </div>
+        </section>
+
+        <footer class="page-footer"><span>Caloric Analytics Tracker</span><span>Осознанное питание каждый день</span></footer>
+    </main>
+
+    <script src="vendor/gsap.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
