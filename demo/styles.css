@@ -530,8 +530,8 @@ button { color: inherit; }
     .demo-column { display: contents; }
 
     .demo-sticky {
-        top: 30vh;
-        top: 30svh;
+        top: 38vh;
+        top: 38svh;
         z-index: 20;
         width: min(calc(100% - 32px), 410px);
         height: calc(62vh - 8px);
@@ -569,10 +569,10 @@ button { color: inherit; }
     }
 
     .demo-caption > span:first-child { display: none; }
-    .phone-motion { width: 254.4px; height: 537.6px; }
+    .phone-motion { width: 237.44px; height: 501.76px; }
 
     .phone {
-        transform: scale(.6);
+        transform: scale(.56);
         box-shadow: 0 20px 44px rgba(30, 44, 39, .16), 0 5px 14px rgba(30, 44, 39, .1), inset 0 0 0 1px rgba(255,255,255,.16);
     }
 
@@ -615,18 +615,42 @@ button { color: inherit; }
 }
 
 @media (max-width: 420px) {
-    .phone-motion { width: 237.44px; height: 501.76px; }
-    .phone { transform: scale(.56); }
-}
-
-@media (max-width: 380px) {
     .phone-motion { width: 220.48px; height: 465.92px; }
     .phone { transform: scale(.52); }
 }
 
-@media (max-width: 340px) {
+@media (max-width: 380px) {
     .phone-motion { width: 203.52px; height: 430.08px; }
     .phone { transform: scale(.48); }
+}
+
+@media (max-width: 340px) {
+    .phone-motion { width: 186.56px; height: 394.24px; }
+    .phone { transform: scale(.44); }
+}
+
+@media (max-width: 420px) and (max-height: 740px) {
+    .demo-sticky {
+        top: 42vh;
+        top: 42svh;
+        height: calc(58vh - 8px);
+        height: calc(58svh - 8px);
+    }
+
+    .phone-motion { width: 169.6px; height: 358.4px; }
+    .phone { transform: scale(.4); }
+}
+
+@media (max-width: 420px) and (max-height: 620px) {
+    .demo-sticky {
+        top: 46vh;
+        top: 46svh;
+        height: calc(54vh - 8px);
+        height: calc(54svh - 8px);
+    }
+
+    .phone-motion { width: 135.68px; height: 286.72px; }
+    .phone { transform: scale(.32); }
 }
 
 @media (max-width: 560px) {

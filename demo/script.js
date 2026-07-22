@@ -42,7 +42,7 @@ function lockDemo() {
 
 function getMobileActivationLine() {
     const stickyTop = Number.parseFloat(window.getComputedStyle(demoSticky).top);
-    return stickyTop - Math.min(182, window.innerHeight * .21);
+    return stickyTop - Math.min(228, window.innerHeight * .3);
 }
 
 function scheduleDemoUnlock() {
