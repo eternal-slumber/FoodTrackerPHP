@@ -36,6 +36,7 @@ class ProductNutritionAIServiceTest extends TestCase
         $this->assertStringContainsString('2 яйца', $client->lastPrompt);
         $this->assertStringContainsString('способ обработки: варка', $client->lastPrompt);
         $this->assertStringContainsString('варёные яйца', $client->lastPrompt);
+        $this->assertStringContainsString('уже приготовленного продукта', $client->lastPrompt);
         $this->assertSame('product_nutrition', $client->lastOptions['json_schema']['name']);
         $this->assertArrayNotHasKey('max_tokens', $client->lastOptions);
     }

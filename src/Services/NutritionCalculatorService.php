@@ -7,32 +7,28 @@ namespace App\Services;
 class NutritionCalculatorService
 {
     private const PROCESSING_OPTIONS = [
-        ['value' => '', 'label' => 'Не указано - КБЖУ готового продукта', 'coefficient' => 1.0],
-        ['value' => 'fry', 'label' => 'Жарка', 'coefficient' => 1.4],
-        ['value' => 'bake', 'label' => 'Запекание', 'coefficient' => 1.3],
-        ['value' => 'boil', 'label' => 'Варка', 'coefficient' => 1.2],
-        ['value' => 'stew', 'label' => 'Тушение', 'coefficient' => 1.1],
-        ['value' => 'grill', 'label' => 'Гриль', 'coefficient' => 1.25],
-        ['value' => 'steam', 'label' => 'На пару', 'coefficient' => 1.05],
-        ['value' => 'deep_fry', 'label' => 'Фритюр', 'coefficient' => 1.6],
-        ['value' => 'no_oil_fry', 'label' => 'Жарка без масла', 'coefficient' => 1.15],
+        ['value' => '', 'label' => 'Не указано - КБЖУ готового продукта'],
+        ['value' => 'fry', 'label' => 'Жарка'],
+        ['value' => 'bake', 'label' => 'Запекание'],
+        ['value' => 'boil', 'label' => 'Варка'],
+        ['value' => 'stew', 'label' => 'Тушение'],
+        ['value' => 'grill', 'label' => 'Гриль'],
+        ['value' => 'steam', 'label' => 'На пару'],
+        ['value' => 'deep_fry', 'label' => 'Фритюр'],
+        ['value' => 'no_oil_fry', 'label' => 'Жарка без масла'],
     ];
 
-    public function applyProcessingCoefficient(float $baseValue, string $processing): float
+    public function normalizeProcessing(string $processing): string
     {
-        $coefficient = $this->processingCoefficient($processing);
-        return $baseValue * $coefficient;
-    }
+        $processing = trim($processing);
 
-    public function processingCoefficient(string $processing): float
-    {
         foreach (self::PROCESSING_OPTIONS as $option) {
             if ($option['value'] === $processing) {
-                return $option['coefficient'];
+                return $processing;
             }
         }
 
-        return 1.0;
+        return '';
     }
 
     public function getProcessingOptions(): array

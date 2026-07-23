@@ -11,26 +11,41 @@ use PHPUnit\Framework\TestCase;
 
 class MealNutritionServiceTest extends TestCase
 {
-    public function testProcessProductsAppliesProcessingAndPortion(): void
+    public function testProcessProductsUsesReadyProductNutritionAndPortion(): void
     {
         $service = $this->createService();
 
-        $products = $service->processProducts([[
-            'name' => 'Картофель',
-            'weight' => 200,
-            'processing' => 'deep_fry',
-            'kbju' => [
-                'calories' => 100,
-                'proteins' => 2,
-                'fats' => 1,
-                'carbs' => 20,
+        $products = $service->processProducts([
+            [
+                'name' => 'Суп',
+                'weight' => 300,
+                'processing' => 'boil',
+                'kbju' => [
+                    'calories' => 50,
+                    'proteins' => 3,
+                    'fats' => 2,
+                    'carbs' => 5,
+                ],
             ],
-        ]]);
+            [
+                'name' => 'Картофель фри',
+                'weight' => 200,
+                'processing' => 'deep_fry',
+                'kbju' => [
+                    'calories' => 100,
+                    'proteins' => 2,
+                    'fats' => 1,
+                    'carbs' => 20,
+                ],
+            ],
+        ]);
 
-        $this->assertSame(320, $products[0]['calories']);
-        $this->assertSame(6.4, $products[0]['proteins']);
-        $this->assertSame(3.2, $products[0]['fats']);
-        $this->assertSame(64.0, $products[0]['carbs']);
+        $this->assertSame('', $products[0]['processing']);
+        $this->assertSame('deep_fry', $products[1]['processing']);
+        $this->assertSame(200, $products[1]['calories']);
+        $this->assertSame(4.0, $products[1]['proteins']);
+        $this->assertSame(2.0, $products[1]['fats']);
+        $this->assertSame(40.0, $products[1]['carbs']);
     }
 
     public function testCreateAiDraftProductUsesNoProcessingByDefault(): void

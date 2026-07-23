@@ -1,22 +1,6 @@
 // Meal totals, persistence and image uploads
 
 function recalculateDraftTotal() {
-    const totals = collectDraftProducts().reduce((result, product) => {
-        const caloriesPer100g = parseFloat(product.kbju.calories) || 0;
-        const proteinsPer100g = parseFloat(product.kbju.proteins) || 0;
-        const fatsPer100g = parseFloat(product.kbju.fats) || 0;
-        const carbsPer100g = parseFloat(product.kbju.carbs) || 0;
-        const weight = parseFloat(product.weight) || 0;
-        const coefficient = PROCESSING_OPTIONS.find(option => option.value === product.processing)?.coefficient ?? 1;
-        const ratio = coefficient * weight / 100;
-
-        result.calories += caloriesPer100g * ratio;
-        result.proteins += proteinsPer100g * ratio;
-        result.fats += fatsPer100g * ratio;
-        result.carbs += carbsPer100g * ratio;
-        return result;
-    }, { calories: 0, proteins: 0, fats: 0, carbs: 0 });
-
     const mainProduct = collectDraftProducts()[0];
     const mainWeight = Number(mainProduct?.weight || 0);
     const mainRatio = mainWeight / 100;

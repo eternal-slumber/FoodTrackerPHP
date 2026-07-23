@@ -63,7 +63,7 @@ class MealServiceTest extends TestCase
         $this->assertCount(2, $productRepository->savedProducts);
         $this->assertSame(55, $productRepository->savedMealId);
         $this->assertSame('Курица', $productRepository->savedProducts[0]->name);
-        $this->assertSame('grill', $productRepository->savedProducts[0]->processing);
+        $this->assertSame('', $productRepository->savedProducts[0]->processing);
         $this->assertSame(55, $result['meal']['id']);
         $this->assertSame(350, $result['meal']['weight']);
     }

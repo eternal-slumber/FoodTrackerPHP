@@ -72,12 +72,10 @@ class MealNutritionService
 
             $this->validateNumericFields($product);
             $weight = max(1, min(5000, (int)($product['weight'] ?? 100)));
-            $processing = (string)($product['processing'] ?? '');
+            $processing = $processedProducts === []
+                ? ''
+                : $this->calculator->normalizeProcessing((string)($product['processing'] ?? ''));
             $kbju100g = $this->resolveKbju100g($name, $product);
-
-            foreach (['calories', 'proteins', 'fats', 'carbs'] as $key) {
-                $kbju100g[$key] = $this->calculator->applyProcessingCoefficient($kbju100g[$key], $processing);
-            }
 
             $kbjuPortion = $this->calculator->calculateForPortion($kbju100g, $weight);
 

@@ -78,7 +78,7 @@ class AnalyzeController
         $data = $request->getParsedBody();
         $data = is_array($data) ? $data : [];
         $productName = substr(trim((string)($data['product_name'] ?? '')), 0, 120);
-        $processing = $this->normalizeProcessing((string)($data['processing'] ?? ''));
+        $processing = $this->nutritionCalculator->normalizeProcessing((string)($data['processing'] ?? ''));
 
         if ($productName === '') {
             throw new ValidationException('Введите название продукта');
@@ -92,19 +92,6 @@ class AnalyzeController
             'status' => 'success',
             'data' => $this->productNutrition->getProductNutrients($productName, $processing),
         ]);
-    }
-
-    private function normalizeProcessing(string $processing): string
-    {
-        $processing = trim($processing);
-
-        foreach ($this->nutritionCalculator->getProcessingOptions() as $option) {
-            if (($option['value'] ?? null) === $processing) {
-                return $processing;
-            }
-        }
-
-        return '';
     }
 
     #[RouteAttribute('/api/analyze-draft', 'POST')]

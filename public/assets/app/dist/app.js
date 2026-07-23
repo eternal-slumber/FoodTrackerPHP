@@ -1902,15 +1902,15 @@ const PHOTO_INTENTS = {
 };
 
 let PROCESSING_OPTIONS = [
-    { value: '', label: 'Не указано - КБЖУ готового продукта', coefficient: 1 },
-    { value: 'fry', label: 'Жарка', coefficient: 1.4 },
-    { value: 'bake', label: 'Запекание', coefficient: 1.3 },
-    { value: 'boil', label: 'Варка', coefficient: 1.2 },
-    { value: 'stew', label: 'Тушение', coefficient: 1.1 },
-    { value: 'grill', label: 'Гриль', coefficient: 1.25 },
-    { value: 'steam', label: 'На пару', coefficient: 1.05 },
-    { value: 'deep_fry', label: 'Фритюр', coefficient: 1.6 },
-    { value: 'no_oil_fry', label: 'Жарка без масла', coefficient: 1.15 }
+    { value: '', label: 'Не указано - КБЖУ готового продукта' },
+    { value: 'fry', label: 'Жарка' },
+    { value: 'bake', label: 'Запекание' },
+    { value: 'boil', label: 'Варка' },
+    { value: 'stew', label: 'Тушение' },
+    { value: 'grill', label: 'Гриль' },
+    { value: 'steam', label: 'На пару' },
+    { value: 'deep_fry', label: 'Фритюр' },
+    { value: 'no_oil_fry', label: 'Жарка без масла' }
 ];
 
 async function loadProcessingOptions() {
@@ -3622,22 +3622,6 @@ async function fillProductKbjuWithAi(card) {
 // Meal totals, persistence and image uploads
 
 function recalculateDraftTotal() {
-    const totals = collectDraftProducts().reduce((result, product) => {
-        const caloriesPer100g = parseFloat(product.kbju.calories) || 0;
-        const proteinsPer100g = parseFloat(product.kbju.proteins) || 0;
-        const fatsPer100g = parseFloat(product.kbju.fats) || 0;
-        const carbsPer100g = parseFloat(product.kbju.carbs) || 0;
-        const weight = parseFloat(product.weight) || 0;
-        const coefficient = PROCESSING_OPTIONS.find(option => option.value === product.processing)?.coefficient ?? 1;
-        const ratio = coefficient * weight / 100;
-
-        result.calories += caloriesPer100g * ratio;
-        result.proteins += proteinsPer100g * ratio;
-        result.fats += fatsPer100g * ratio;
-        result.carbs += carbsPer100g * ratio;
-        return result;
-    }, { calories: 0, proteins: 0, fats: 0, carbs: 0 });
-
     const mainProduct = collectDraftProducts()[0];
     const mainWeight = Number(mainProduct?.weight || 0);
     const mainRatio = mainWeight / 100;
