@@ -36,19 +36,19 @@ function getDraftNumericFieldDefinition(input) {
     }
 
     if (input.classList.contains('product-calories')) {
-        return { label: 'Ккал', required: false, min: 0 };
+        return { label: 'Ккал', required: false, min: 0, max: 1000 };
     }
 
     if (input.classList.contains('product-proteins')) {
-        return { label: 'Белки', required: false, min: 0 };
+        return { label: 'Белки', required: false, min: 0, max: 100 };
     }
 
     if (input.classList.contains('product-fats')) {
-        return { label: 'Жиры', required: false, min: 0 };
+        return { label: 'Жиры', required: false, min: 0, max: 100 };
     }
 
     if (input.classList.contains('product-carbs')) {
-        return { label: 'Углеводы', required: false, min: 0 };
+        return { label: 'Углеводы', required: false, min: 0, max: 100 };
     }
 
     return null;

@@ -10,6 +10,9 @@ class MealNutritionService
 {
     public const MAX_PRODUCTS_PER_MEAL = 6;
     private const KBJU_KEYS = ['calories', 'proteins', 'fats', 'carbs'];
+    private const MAX_WEIGHT_GRAMS = 5000;
+    private const MAX_CALORIES_PER_100G = 1000;
+    private const MAX_MACRO_PER_100G = 100;
 
     public function __construct(
         private readonly NutritionCalculatorService $calculator
@@ -24,7 +27,7 @@ class MealNutritionService
         $carbs = max(0, round((float)($analysis['carbs'] ?? 0), 1));
         $estimatedWeight = (int)($analysis['weight'] ?? 0);
         $weight = $estimatedWeight > 0
-            ? max(1, min(5000, $estimatedWeight))
+            ? max(1, min(self::MAX_WEIGHT_GRAMS, $estimatedWeight))
             : 100;
         $confidence = isset($analysis['confidence'])
             ? max(0, min(1, round((float)$analysis['confidence'], 2)))
@@ -49,7 +52,7 @@ class MealNutritionService
             'proteins' => (float)($product['proteins'] ?? 0),
             'fats' => (float)($product['fats'] ?? 0),
             'carbs' => (float)($product['carbs'] ?? 0),
-        ], max(1, min(5000, (int)($product['weight'] ?? 100))));
+        ], max(1, min(self::MAX_WEIGHT_GRAMS, (int)($product['weight'] ?? 100))));
     }
 
     public function processProducts(array $products): array
@@ -71,7 +74,7 @@ class MealNutritionService
             }
 
             $this->validateNumericFields($product);
-            $weight = max(1, min(5000, (int)($product['weight'] ?? 100)));
+            $weight = max(1, min(self::MAX_WEIGHT_GRAMS, (int)($product['weight'] ?? 100)));
             $processing = $processedProducts === []
                 ? ''
                 : $this->calculator->normalizeProcessing((string)($product['processing'] ?? ''));
@@ -146,8 +149,8 @@ class MealNutritionService
     private function validateNumericFields(array $product): void
     {
         $weight = $product['weight'] ?? null;
-        if ($weight !== null && $weight !== '' && !$this->isNumericInput($weight)) {
-            throw new ValidationException('Поле «Вес» должно содержать число');
+        if ($weight !== null && $weight !== '') {
+            $this->validateNumericField($weight, 'Вес', 1, self::MAX_WEIGHT_GRAMS);
         }
 
         $kbju = $product['kbju'] ?? [];
@@ -164,9 +167,32 @@ class MealNutritionService
 
         foreach ($labels as $key => $label) {
             $value = $kbju[$key] ?? null;
-            if ($value !== null && $value !== '' && !$this->isNumericInput($value)) {
-                throw new ValidationException(sprintf('Поле «%s» должно содержать число', $label));
+            if ($value !== null && $value !== '') {
+                $max = $key === 'calories'
+                    ? self::MAX_CALORIES_PER_100G
+                    : self::MAX_MACRO_PER_100G;
+                $this->validateNumericField($value, $label, 0, $max);
             }
+        }
+    }
+
+    private function validateNumericField(mixed $value, string $label, float $min, float $max): void
+    {
+        if (!$this->isNumericInput($value)) {
+            throw new ValidationException(sprintf('Поле «%s» должно содержать число', $label));
+        }
+
+        $numericValue = (float)$value;
+        if (!is_finite($numericValue)) {
+            throw new ValidationException(sprintf('Поле «%s» должно содержать корректное число', $label));
+        }
+
+        if ($numericValue < $min) {
+            throw new ValidationException(sprintf('Поле «%s» должно быть не меньше %g', $label, $min));
+        }
+
+        if ($numericValue > $max) {
+            throw new ValidationException(sprintf('Поле «%s» должно быть не больше %g', $label, $max));
         }
     }
 

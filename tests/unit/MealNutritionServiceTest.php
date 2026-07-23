@@ -162,6 +162,37 @@ class MealNutritionServiceTest extends TestCase
         ]]);
     }
 
+    public function testProcessProductsRejectsOutOfRangeNumbers(): void
+    {
+        $cases = [
+            [['weight' => 5001], 'Поле «Вес» должно быть не больше 5000'],
+            [['kbju' => ['calories' => -1]], 'Поле «Ккал» должно быть не меньше 0'],
+            [['kbju' => ['calories' => 1001]], 'Поле «Ккал» должно быть не больше 1000'],
+            [['kbju' => ['proteins' => 101]], 'Поле «Белки» должно быть не больше 100'],
+            [['kbju' => ['fats' => '1e309']], 'Поле «Жиры» должно содержать корректное число'],
+        ];
+
+        foreach ($cases as [$override, $expectedMessage]) {
+            $product = array_replace_recursive([
+                'name' => 'Продукт',
+                'weight' => 100,
+                'kbju' => [
+                    'calories' => 100,
+                    'proteins' => 10,
+                    'fats' => 10,
+                    'carbs' => 10,
+                ],
+            ], $override);
+
+            try {
+                $this->createService()->processProducts([$product]);
+                $this->fail('Expected invalid nutrition value to be rejected');
+            } catch (ValidationException $error) {
+                $this->assertSame($expectedMessage, $error->getMessage());
+            }
+        }
+    }
+
     public function testHasMissingKbjuTreatsZeroAsFilledValue(): void
     {
         $this->assertFalse(MealNutritionService::hasMissingKbju([
