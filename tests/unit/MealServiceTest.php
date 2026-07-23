@@ -31,7 +31,13 @@ class MealServiceTest extends TestCase
         $mealRepository = new FakeMealServiceMealRepository();
         $productRepository = new FakeMealServiceProductRepository();
         $transactions = new FakeMealServiceTransactionManager();
-        $service = $this->createService($mealRepository, $productRepository, transactions: $transactions);
+        $userRepository = new FakeMealServiceUserRepository();
+        $service = $this->createService(
+            $mealRepository,
+            $productRepository,
+            transactions: $transactions,
+            userRepository: $userRepository
+        );
 
         $result = $service->saveManualMeal(100001, 'Обед', [
             [
@@ -56,9 +62,10 @@ class MealServiceTest extends TestCase
                     'carbs' => 25,
                 ],
             ],
-        ]);
+        ], timezoneOffsetMinutes: -180);
 
         $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame([7, -180], $userRepository->todayCaloriesArguments);
         $this->assertSame(['save'], $mealRepository->events);
         $this->assertCount(2, $productRepository->savedProducts);
         $this->assertSame(55, $productRepository->savedMealId);
@@ -152,6 +159,7 @@ class MealServiceTest extends TestCase
         $mealRepository = new FakeMealServiceMealRepository();
         $productRepository = new FakeMealServiceProductRepository();
         $transactions = new FakeMealServiceTransactionManager();
+        $userRepository = new FakeMealServiceUserRepository();
         $service = $this->createService(
             $mealRepository,
             $productRepository,
@@ -161,7 +169,8 @@ class MealServiceTest extends TestCase
                     return $imagePath;
                 }
             },
-            transactions: $transactions
+            transactions: $transactions,
+            userRepository: $userRepository
         );
 
         $result = $service->saveManualMealsAsCards(100001, 'Ужин: Курица, рис', [
@@ -176,9 +185,10 @@ class MealServiceTest extends TestCase
                 'draft_image_path' => 'user_100001/rice.jpg',
                 'kbju' => ['calories' => 120, 'proteins' => 3, 'fats' => 1, 'carbs' => 25],
             ],
-        ], 'user_100001/main.jpg');
+        ], 'user_100001/main.jpg', timezoneOffsetMinutes: 330);
 
         $this->assertSame(['begin', 'commit'], $transactions->events);
+        $this->assertSame([7, 330], $userRepository->todayCaloriesArguments);
         $this->assertSame(['save', 'save'], $mealRepository->events);
         $this->assertCount(2, $mealRepository->savedMeals);
         $this->assertSame('Ужин: Курица', $mealRepository->savedMeals[0]->description);
@@ -335,10 +345,11 @@ class MealServiceTest extends TestCase
         FakeMealServiceProductRepository $productRepository,
         ?UploadedFileStorage $storage = null,
         ?ReminderScheduleService $reminderSchedule = null,
-        ?TransactionManager $transactions = null
+        ?TransactionManager $transactions = null,
+        ?FakeMealServiceUserRepository $userRepository = null
     ): MealService {
         return new MealService(
-            new FakeMealServiceUserRepository(),
+            $userRepository ?? new FakeMealServiceUserRepository(),
             $mealRepository,
             $productRepository,
             $transactions ?? new FakeMealServiceTransactionManager(),
@@ -365,6 +376,9 @@ class FakeMealServiceEveningSummarySchedule extends EveningSummaryScheduleServic
 
 class FakeMealServiceUserRepository extends UserRepository
 {
+    /** @var array{int, int}|null */
+    public ?array $todayCaloriesArguments = null;
+
     public function __construct() {}
 
     public function findByTelegramId(int $telegramId): ?User
@@ -382,6 +396,8 @@ class FakeMealServiceUserRepository extends UserRepository
 
     public function getTodayCalories(int $userId, int $timezoneOffsetMinutes = 0): int
     {
+        $this->todayCaloriesArguments = [$userId, $timezoneOffsetMinutes];
+
         return 500;
     }
 }

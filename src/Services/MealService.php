@@ -154,7 +154,10 @@ class MealService
 
         return [
             'status' => 'success',
-            'today_calories' => $this->users->getTodayCalories((int)$user->id),
+            'today_calories' => $this->users->getTodayCalories(
+                (int)$user->id,
+                $timezoneOffsetMinutes
+            ),
             'meal' => [
                 'id' => $meal->id,
                 'description' => $mealName,
@@ -246,7 +249,10 @@ class MealService
 
         return [
             'status' => 'success',
-            'today_calories' => $this->users->getTodayCalories((int)$user->id),
+            'today_calories' => $this->users->getTodayCalories(
+                (int)$user->id,
+                $timezoneOffsetMinutes
+            ),
             'meal' => $savedMeals[0] ?? null,
             'meals' => $savedMeals,
         ];
