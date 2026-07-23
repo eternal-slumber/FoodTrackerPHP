@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eu
+set -euo pipefail
 
 deploy_sha="${1:-}"
 
@@ -25,6 +25,7 @@ fi
 compose=(
     docker compose
     -p foodtracker-prod
+    --profile admin
     --env-file .env
     -f docker/docker-compose.yml
 )
@@ -33,11 +34,21 @@ echo "== Ensure production database and app are running =="
 "${compose[@]}" up -d db app
 
 echo "== Backup production database =="
-mkdir -p /root/foodtracker-backup/auto
+backup_dir="/root/foodtracker-backup/auto"
+backup_file="$backup_dir/database-before-deploy-$(date +%Y-%m-%d_%H-%M-%S).sql.gz"
+backup_tmp="${backup_file}.tmp"
 
-"${compose[@]}" exec -T db \
+mkdir -p "$backup_dir"
+
+if ! "${compose[@]}" exec -T db \
     sh -c 'mysqldump -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' \
-    | gzip > "/root/foodtracker-backup/auto/database-before-deploy-$(date +%Y-%m-%d_%H-%M-%S).sql.gz"
+    | gzip > "$backup_tmp"; then
+    rm -f "$backup_tmp"
+    echo "Database backup failed" >&2
+    exit 1
+fi
+
+mv "$backup_tmp" "$backup_file"
 
 echo "== Install Composer dependencies =="
 "${compose[@]}" exec -T app \
@@ -62,6 +73,10 @@ echo "== Fix storage permissions =="
 
 echo "== Rebuild production containers =="
 "${compose[@]}" up -d --build
+
+echo "== Database health check =="
+"${compose[@]}" exec -T db sh -c \
+    'mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE" -e "SELECT 1" >/dev/null'
 
 echo "== Health check =="
 curl --fail --silent --show-error \
