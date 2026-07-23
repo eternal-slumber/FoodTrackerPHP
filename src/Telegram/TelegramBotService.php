@@ -24,8 +24,8 @@ class TelegramBotService
 
     public function isWebhookAuthorized(string $receivedSecret): bool
     {
-        return $this->config->webhookSecretToken === ''
-            || hash_equals($this->config->webhookSecretToken, $receivedSecret);
+        return $this->config->webhookSecretToken !== ''
+            && hash_equals($this->config->webhookSecretToken, $receivedSecret);
     }
 
     public function handleUpdate(array $update): void

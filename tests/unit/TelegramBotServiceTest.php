@@ -16,6 +16,18 @@ use PHPUnit\Framework\TestCase;
 
 class TelegramBotServiceTest extends TestCase
 {
+    public function testWebhookAuthorizationFailsClosed(): void
+    {
+        $client = new FakeTelegramBotClient();
+
+        $configuredService = $this->createService($client, null);
+        $unconfiguredService = $this->createService($client, null, null, '');
+
+        $this->assertTrue($configuredService->isWebhookAuthorized('secret'));
+        $this->assertFalse($configuredService->isWebhookAuthorized('wrong-secret'));
+        $this->assertFalse($unconfiguredService->isWebhookAuthorized(''));
+    }
+
     public function testStartSendsWelcomeWithKeyboard(): void
     {
         $client = new FakeTelegramBotClient();
@@ -229,13 +241,14 @@ class TelegramBotServiceTest extends TestCase
     private function createService(
         FakeTelegramBotClient $client,
         ?array $summary,
-        string|\Throwable|null $recommendation = null
+        string|\Throwable|null $recommendation = null,
+        string $webhookSecret = 'secret'
     ): TelegramBotService
     {
         $rateLimiter = new FakeTelegramRateLimiterService();
 
         return new TelegramBotService(
-            new TelegramBotConfig('token', 'secret', 'https://example.com', -180),
+            new TelegramBotConfig('token', $webhookSecret, 'https://example.com', -180),
             $client,
             new TelegramBotMessageFactory(),
             new FakeTelegramDailySummaryService($summary),
