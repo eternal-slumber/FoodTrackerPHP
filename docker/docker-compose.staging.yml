@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodtracker-staging-app
+    restart: unless-stopped
+    working_dir: /var/www/
+    volumes:
+      - ..:/var/www
+    env_file:
+      - ../.env
+    networks:
+      - foodtracker-staging-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: foodtracker-staging-nginx
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:80"
+    volumes:
+      - ..:/var/www
+      - ./nginx:/etc/nginx/conf.d
+    depends_on:
+      - app
+    networks:
+      - foodtracker-staging-network
+
+  db:
+    container_name: foodtracker-staging-db
+    image: mysql:8.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3308:3306"
+    volumes:
+      - ./storage/mysql:/var/lib/mysql
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    networks:
+      - foodtracker-staging-network
+
+networks:
+  foodtracker-staging-network:
+    driver: bridge
