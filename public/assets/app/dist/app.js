@@ -4163,7 +4163,7 @@ mealRemindersToggle?.addEventListener('change', async () => {
 
     try {
         const result = await apiRequestJson('/api/reminder-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: { enabled: mealRemindersToggle.checked }
         });
         mealRemindersToggle.checked = Boolean(result.data?.enabled);
@@ -4195,7 +4195,7 @@ async function saveEveningSummarySettings(previousSettings) {
 
     try {
         const result = await apiRequestJson('/api/evening-summary-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: {
                 enabled: eveningSummaryToggle.checked,
                 time: eveningSummaryTime.value

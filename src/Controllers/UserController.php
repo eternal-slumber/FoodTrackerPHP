@@ -164,7 +164,7 @@ class UserController
         ]);
     }
 
-    #[RouteAttribute('/api/reminder-settings', 'POST')]
+    #[RouteAttribute('/api/reminder-settings', 'PUT')]
     public function updateReminderSettings(Request $request, Response $response): Response
     {
         $currentUser = $this->currentUser($request);
@@ -208,7 +208,7 @@ class UserController
             : ResponseResponder::json($response, ['status' => 'success', 'data' => $settings]);
     }
 
-    #[RouteAttribute('/api/evening-summary-settings', 'POST')]
+    #[RouteAttribute('/api/evening-summary-settings', 'PUT')]
     public function updateEveningSummarySettings(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
