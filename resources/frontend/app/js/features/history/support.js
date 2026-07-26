@@ -220,9 +220,8 @@ async function deleteMeal(mealId) {
     }
 
     try {
-        await apiRequestJson('/api/delete-meal', {
-            method: 'POST',
-            json: { meal_id: mealId }
+        await apiRequestJson(`/api/meals/${mealId}`, {
+            method: 'DELETE',
         });
 
         tg.showAlert('Запись успешно удалена');

@@ -907,7 +907,7 @@ async function fetchMealHistory() {
     const historyList = document.getElementById('history-list');
 
     try {
-        const result = await apiRequestJson('/api/history');
+        const result = await apiRequestJson('/api/meals');
         mealHistoryCache = Array.isArray(result.data) ? result.data : [];
         mealHistoryDirty = false;
         renderMealHistory(mealHistoryCache);
@@ -1826,9 +1826,8 @@ async function deleteMeal(mealId) {
     }
 
     try {
-        await apiRequestJson('/api/delete-meal', {
-            method: 'POST',
-            json: { meal_id: mealId }
+        await apiRequestJson(`/api/meals/${mealId}`, {
+            method: 'DELETE',
         });
 
         tg.showAlert('Запись успешно удалена');
@@ -3707,7 +3706,7 @@ async function saveMealDraft() {
         await ensureMainDraftImageUploaded();
         await ensureAdditionalDraftImagesUploaded(products);
 
-        const result = await apiRequestJson('/api/save-meal', {
+        const result = await apiRequestJson('/api/meals', {
             method: 'POST',
             json: {
                 meal_name: mealName || 'Прием пищи',

@@ -61,7 +61,7 @@ async function fetchMealHistory() {
     const historyList = document.getElementById('history-list');
 
     try {
-        const result = await apiRequestJson('/api/history');
+        const result = await apiRequestJson('/api/meals');
         mealHistoryCache = Array.isArray(result.data) ? result.data : [];
         mealHistoryDirty = false;
         renderMealHistory(mealHistoryCache);
