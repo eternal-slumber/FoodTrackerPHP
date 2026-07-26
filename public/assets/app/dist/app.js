@@ -4320,9 +4320,8 @@ deleteProfileButton.onclick = async () => {
     deleteProfileButton.disabled = true;
 
     try {
-        await apiRequestJson('/api/delete-profile', {
-            method: 'POST',
-            json: {}
+        await apiRequestJson('/api/profile', {
+            method: 'DELETE',
         });
 
         tg.showAlert('Профиль успешно удален');
@@ -4442,7 +4441,7 @@ async function saveProfilePayload(payload, saveButton, defaultButtonText) {
 
     try {
         const result = await apiRequestJson('/api/profile', {
-            method: 'POST',
+            method: 'PATCH',
             json: payload
         });
 

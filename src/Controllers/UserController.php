@@ -366,7 +366,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/profile', 'POST')]
+    #[RouteAttribute('/api/profile', 'PATCH')]
     public function updateProfile(Request $request, Response $response): Response
     {
         try {
@@ -572,7 +572,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/delete-profile', 'POST')]
+    #[RouteAttribute('/api/profile', 'DELETE')]
     public function delete(Request $request, Response $response): Response
     {
         try {
