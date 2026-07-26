@@ -27,7 +27,7 @@ class TelegramAuthMiddlewareTest extends TestCase
             'dev_user'
         );
 
-        $request = (new ServerRequestFactory())->createServerRequest('GET', '/api/user-status');
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/api/profile');
         $response = $middleware->process($request, $this->handler());
 
         $this->assertSame(401, $response->getStatusCode());
@@ -44,7 +44,7 @@ class TelegramAuthMiddlewareTest extends TestCase
             'dev_user'
         );
 
-        $request = (new ServerRequestFactory())->createServerRequest('GET', '/api/user-status');
+        $request = (new ServerRequestFactory())->createServerRequest('GET', '/api/profile');
         $response = $middleware->process($request, $this->handler());
 
         $this->assertSame(200, $response->getStatusCode());
@@ -63,7 +63,7 @@ class TelegramAuthMiddlewareTest extends TestCase
         );
 
         $request = (new ServerRequestFactory())
-            ->createServerRequest('GET', '/api/user-status')
+            ->createServerRequest('GET', '/api/profile')
             ->withHeader('X-Telegram-Init-Data', 'auth_date=1&hash=bad');
         $response = $middleware->process($request, $this->handler());
 

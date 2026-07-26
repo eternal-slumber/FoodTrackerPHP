@@ -4859,7 +4859,7 @@ registerSaveButton.onclick = async () => {
     tg.MainButton.setText('Рассчитываем...').show();
 
     try {
-        const result = await apiRequestJson('/api/register', {
+        const result = await apiRequestJson('/api/profile', {
             method: 'POST',
             json: data
         });
@@ -5803,7 +5803,7 @@ async function recordAppOpened() {
 }
 
 async function checkUserStatus() {
-    const result = await apiRequestJson('/api/user-status', {
+    const result = await apiRequestJson('/api/profile', {
         requireSuccessStatus: false
     });
 

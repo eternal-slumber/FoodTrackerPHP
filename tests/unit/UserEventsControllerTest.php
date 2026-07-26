@@ -150,7 +150,7 @@ class UserEventsControllerTest extends TestCase
             new FakeUserEventsTrainerShareService()
         );
         $request = (new ServerRequestFactory())
-            ->createServerRequest('POST', '/api/register')
+            ->createServerRequest('POST', '/api/profile')
             ->withParsedBody([
                 'weight' => 80,
                 'height' => 180,

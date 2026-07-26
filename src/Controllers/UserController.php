@@ -269,7 +269,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/register', 'POST')]
+    #[RouteAttribute('/api/profile', 'POST')]
     public function register(Request $request, Response $response): Response
     {
         try {
@@ -340,7 +340,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/user-status', 'GET')]
+    #[RouteAttribute('/api/profile', 'GET')]
     public function status(Request $request, Response $response): Response
     {
         try {
