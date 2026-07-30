@@ -145,7 +145,7 @@ class AnalyzeController
         ]);
     }
 
-    #[RouteAttribute('/api/history', 'GET')]
+    #[RouteAttribute('/api/meals', 'GET')]
     public function history(Request $request, Response $response): Response
     {
         $currentUser = $this->currentUser($request);
@@ -156,32 +156,45 @@ class AnalyzeController
         ]);
     }
 
-    #[RouteAttribute('/api/delete-meal', 'POST')]
-    public function deleteMeal(Request $request, Response $response): Response
+    #[RouteAttribute('/api/meals/{id}', 'DELETE')]
+    public function deleteMeal(Request $request, Response $response, array $args): Response
     {
         $currentUser = $this->currentUser($request);
-        $data = $request->getParsedBody();
-        $data = is_array($data) ? $data : [];
-        $tgId = $currentUser->telegramId;
-        $mealId = $data['meal_id'] ?? null;
+        $mealId = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
 
-        if (!$mealId || !is_numeric($mealId)) {
-            throw new ValidationException('Invalid meal_id parameter');
+        if ($mealId < 1) {
+            throw new ValidationException('Invalid meal id');
         }
 
-        if (!$this->rateLimiter->consume('tg:' . $currentUser->telegramId, 'delete_meal', 30, 3600)) {
-            return ResponseResponder::json($response, ['error' => 'Too Many Requests'], 429);
+        if (!$this->rateLimiter->consume(
+            'tg:' . $currentUser->telegramId,
+            'delete_meal',
+            30,
+            3600
+        )) {
+            return ResponseResponder::json(
+                $response,
+                ['error' => 'Too Many Requests'],
+                429
+            );
         }
 
-        $result = $this->mealAnalysisService->deleteMeal((int)$mealId, $tgId);
-        $this->telemetry->recordUserEvent($this->currentUserId($tgId), 'meal_deleted', [
-            'meal_id' => (int)$mealId,
-        ], $request);
+        $result = $this->mealAnalysisService->deleteMeal(
+            $mealId,
+            $currentUser->telegramId
+        );
+
+        $this->telemetry->recordUserEvent(
+            $this->currentUserId($currentUser->telegramId),
+            'meal_deleted',
+            ['meal_id' => $mealId],
+            $request
+        );
 
         return ResponseResponder::json($response, $result);
     }
 
-    #[RouteAttribute('/api/save-meal', 'POST')]
+    #[RouteAttribute('/api/meals', 'POST')]
     public function saveMeal(Request $request, Response $response): Response
     {
         $currentUser = $this->currentUser($request);
@@ -255,7 +268,7 @@ class AnalyzeController
             'source' => 'manual',
         ], $request);
 
-        return ResponseResponder::json($response, $result);
+        return ResponseResponder::json($response, $result, 201);
     }
 
     /** @return array{0:?string, 1:?DateTimeImmutable, 2:int} */

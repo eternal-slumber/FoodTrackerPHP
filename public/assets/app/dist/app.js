@@ -907,7 +907,7 @@ async function fetchMealHistory() {
     const historyList = document.getElementById('history-list');
 
     try {
-        const result = await apiRequestJson('/api/history');
+        const result = await apiRequestJson('/api/meals');
         mealHistoryCache = Array.isArray(result.data) ? result.data : [];
         mealHistoryDirty = false;
         renderMealHistory(mealHistoryCache);
@@ -1826,9 +1826,8 @@ async function deleteMeal(mealId) {
     }
 
     try {
-        await apiRequestJson('/api/delete-meal', {
-            method: 'POST',
-            json: { meal_id: mealId }
+        await apiRequestJson(`/api/meals/${mealId}`, {
+            method: 'DELETE',
         });
 
         tg.showAlert('Запись успешно удалена');
@@ -3707,7 +3706,7 @@ async function saveMealDraft() {
         await ensureMainDraftImageUploaded();
         await ensureAdditionalDraftImagesUploaded(products);
 
-        const result = await apiRequestJson('/api/save-meal', {
+        const result = await apiRequestJson('/api/meals', {
             method: 'POST',
             json: {
                 meal_name: mealName || 'Прием пищи',
@@ -4164,7 +4163,7 @@ mealRemindersToggle?.addEventListener('change', async () => {
 
     try {
         const result = await apiRequestJson('/api/reminder-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: { enabled: mealRemindersToggle.checked }
         });
         mealRemindersToggle.checked = Boolean(result.data?.enabled);
@@ -4196,7 +4195,7 @@ async function saveEveningSummarySettings(previousSettings) {
 
     try {
         const result = await apiRequestJson('/api/evening-summary-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: {
                 enabled: eveningSummaryToggle.checked,
                 time: eveningSummaryTime.value
@@ -4321,9 +4320,8 @@ deleteProfileButton.onclick = async () => {
     deleteProfileButton.disabled = true;
 
     try {
-        await apiRequestJson('/api/delete-profile', {
-            method: 'POST',
-            json: {}
+        await apiRequestJson('/api/profile', {
+            method: 'DELETE',
         });
 
         tg.showAlert('Профиль успешно удален');
@@ -4443,7 +4441,7 @@ async function saveProfilePayload(payload, saveButton, defaultButtonText) {
 
     try {
         const result = await apiRequestJson('/api/profile', {
-            method: 'POST',
+            method: 'PATCH',
             json: payload
         });
 
@@ -4861,7 +4859,7 @@ registerSaveButton.onclick = async () => {
     tg.MainButton.setText('Рассчитываем...').show();
 
     try {
-        const result = await apiRequestJson('/api/register', {
+        const result = await apiRequestJson('/api/profile', {
             method: 'POST',
             json: data
         });
@@ -5805,7 +5803,7 @@ async function recordAppOpened() {
 }
 
 async function checkUserStatus() {
-    const result = await apiRequestJson('/api/user-status', {
+    const result = await apiRequestJson('/api/profile', {
         requireSuccessStatus: false
     });
 

@@ -86,7 +86,7 @@ async function saveMealDraft() {
         await ensureMainDraftImageUploaded();
         await ensureAdditionalDraftImagesUploaded(products);
 
-        const result = await apiRequestJson('/api/save-meal', {
+        const result = await apiRequestJson('/api/meals', {
             method: 'POST',
             json: {
                 meal_name: mealName || 'Прием пищи',

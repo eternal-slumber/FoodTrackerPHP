@@ -319,7 +319,7 @@ mealRemindersToggle?.addEventListener('change', async () => {
 
     try {
         const result = await apiRequestJson('/api/reminder-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: { enabled: mealRemindersToggle.checked }
         });
         mealRemindersToggle.checked = Boolean(result.data?.enabled);
@@ -351,7 +351,7 @@ async function saveEveningSummarySettings(previousSettings) {
 
     try {
         const result = await apiRequestJson('/api/evening-summary-settings', {
-            method: 'POST',
+            method: 'PUT',
             json: {
                 enabled: eveningSummaryToggle.checked,
                 time: eveningSummaryTime.value
@@ -476,9 +476,8 @@ deleteProfileButton.onclick = async () => {
     deleteProfileButton.disabled = true;
 
     try {
-        await apiRequestJson('/api/delete-profile', {
-            method: 'POST',
-            json: {}
+        await apiRequestJson('/api/profile', {
+            method: 'DELETE',
         });
 
         tg.showAlert('Профиль успешно удален');
@@ -598,7 +597,7 @@ async function saveProfilePayload(payload, saveButton, defaultButtonText) {
 
     try {
         const result = await apiRequestJson('/api/profile', {
-            method: 'POST',
+            method: 'PATCH',
             json: payload
         });
 

@@ -60,7 +60,7 @@ async function recordAppOpened() {
 }
 
 async function checkUserStatus() {
-    const result = await apiRequestJson('/api/user-status', {
+    const result = await apiRequestJson('/api/profile', {
         requireSuccessStatus: false
     });
 

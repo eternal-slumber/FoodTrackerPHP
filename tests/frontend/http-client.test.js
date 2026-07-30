@@ -86,7 +86,7 @@ test('accepts successful JSON without status field when explicitly allowed', asy
         headers: { 'Content-Type': 'application/json' }
     });
 
-    const result = await apiRequestJson('/api/user-status', {
+    const result = await apiRequestJson('/api/profile', {
         requireSuccessStatus: false
     });
 

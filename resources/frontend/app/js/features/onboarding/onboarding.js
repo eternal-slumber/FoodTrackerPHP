@@ -381,7 +381,7 @@ registerSaveButton.onclick = async () => {
     tg.MainButton.setText('Рассчитываем...').show();
 
     try {
-        const result = await apiRequestJson('/api/register', {
+        const result = await apiRequestJson('/api/profile', {
             method: 'POST',
             json: data
         });

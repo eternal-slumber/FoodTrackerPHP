@@ -164,7 +164,7 @@ class UserController
         ]);
     }
 
-    #[RouteAttribute('/api/reminder-settings', 'POST')]
+    #[RouteAttribute('/api/reminder-settings', 'PUT')]
     public function updateReminderSettings(Request $request, Response $response): Response
     {
         $currentUser = $this->currentUser($request);
@@ -208,7 +208,7 @@ class UserController
             : ResponseResponder::json($response, ['status' => 'success', 'data' => $settings]);
     }
 
-    #[RouteAttribute('/api/evening-summary-settings', 'POST')]
+    #[RouteAttribute('/api/evening-summary-settings', 'PUT')]
     public function updateEveningSummarySettings(Request $request, Response $response): Response
     {
         $data = $request->getParsedBody();
@@ -269,7 +269,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/register', 'POST')]
+    #[RouteAttribute('/api/profile', 'POST')]
     public function register(Request $request, Response $response): Response
     {
         try {
@@ -340,7 +340,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/user-status', 'GET')]
+    #[RouteAttribute('/api/profile', 'GET')]
     public function status(Request $request, Response $response): Response
     {
         try {
@@ -366,7 +366,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/profile', 'POST')]
+    #[RouteAttribute('/api/profile', 'PATCH')]
     public function updateProfile(Request $request, Response $response): Response
     {
         try {
@@ -572,7 +572,7 @@ class UserController
         }
     }
 
-    #[RouteAttribute('/api/delete-profile', 'POST')]
+    #[RouteAttribute('/api/profile', 'DELETE')]
     public function delete(Request $request, Response $response): Response
     {
         try {
