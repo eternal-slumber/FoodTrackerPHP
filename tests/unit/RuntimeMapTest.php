@@ -24,6 +24,12 @@ final class RuntimeMapTest extends TestCase
 
         self::assertSame($frames[0]['span_id'], $frames[1]['parent_id']);
 
+        RuntimeMap::leaveAutoSpan();
+        RuntimeMap::leaveAutoSpan();
+
+        $events = (new ReflectionProperty(RuntimeMap::class, 'events'))->getValue();
+        self::assertCount(2, $events);
+
         (new ReflectionMethod(RuntimeMap::class, 'reset'))->invoke(null);
     }
 }

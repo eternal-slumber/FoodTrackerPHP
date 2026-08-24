@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Http\ErrorMiddlewareFactory;
 use App\Http\Middleware\TelegramAuthMiddleware;
 use RuntimeMentalMap\AutoInstrumentation;
+use RuntimeMentalMap\PdoInstrumentation;
 use RuntimeMentalMap\Slim\RuntimeMapMiddleware;
 use Slim\Factory\AppFactory;
 
@@ -16,6 +17,7 @@ $runtimeMapEnabled = filter_var(
 
 if ($runtimeMapEnabled) {
     AutoInstrumentation::register(dirname(__DIR__) . '/src');
+    PdoInstrumentation::register();
 }
 
 AppFactory::setContainer($container);
