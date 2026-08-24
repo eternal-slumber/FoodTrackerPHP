@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9eda44d6fdbca0a9b4953fc82f9fb7b0",
+    "content-hash": "81d434ef077b4e17bac73f5ebc1683fb",
     "packages": [
         {
             "name": "fig/http-message-util",
@@ -1339,6 +1339,38 @@
         }
     ],
     "packages-dev": [
+        {
+            "name": "eternalslumber/runtime-mental-map-agent",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "/packages/runtime-mental-map-agent",
+                "reference": "d81326068678acfead0315f951869eb56330db42"
+            },
+            "require": {
+                "php": "^8.2",
+                "psr/http-message": "^1.1 || ^2.0",
+                "psr/http-server-handler": "^1.0",
+                "psr/http-server-middleware": "^1.0"
+            },
+            "suggest": {
+                "ext-opentelemetry": "Required for automatic method instrumentation"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "RuntimeMentalMap\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Development-time PHP runtime tracing agent",
+            "transport-options": {
+                "symlink": false,
+                "relative": false
+            }
+        },
         {
             "name": "myclabs/deep-copy",
             "version": "1.13.4",
@@ -3185,7 +3217,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "eternalslumber/runtime-mental-map-agent": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

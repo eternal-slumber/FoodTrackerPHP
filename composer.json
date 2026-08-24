@@ -1,5 +1,14 @@
 {
     "name": "eternalslumber/foodtracker",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/packages/runtime-mental-map-agent",
+            "options": {
+                "symlink": false
+            }
+        }
+    ],
     "autoload": {
         "psr-4": {
             "App\\": "src/"
@@ -22,6 +31,7 @@
         "php-di/php-di": "^7.0"
     },
     "require-dev": {
+        "eternalslumber/runtime-mental-map-agent": "dev-main",
         "phpunit/phpunit": "^13",
         "phpstan/phpstan": "^2.2"
     }
