@@ -32,4 +32,26 @@ final class RuntimeMapTest extends TestCase
 
         (new ReflectionMethod(RuntimeMap::class, 'reset'))->invoke(null);
     }
+
+    public function testExceptionStateDoesNotLeakIntoNextRequest(): void
+    {
+        RuntimeMap::startRequest('GET', '/broken', 'slim', 'http://127.0.0.1:1');
+        $firstTraceId = RuntimeMap::traceId();
+        $exception = new RuntimeException('broken');
+
+        RuntimeMap::enterAutoSpan('application', 'App\Services\BrokenService', 'run');
+        RuntimeMap::leaveAutoSpan($exception);
+        RuntimeMap::recordException($exception);
+        RuntimeMap::finishRequest(500);
+
+        RuntimeMap::startRequest('GET', '/healthy', 'slim', 'http://127.0.0.1:1');
+
+        self::assertNotSame($firstTraceId, RuntimeMap::traceId());
+        self::assertCount(1, (new ReflectionProperty(RuntimeMap::class, 'stack'))->getValue());
+        self::assertSame([], (new ReflectionProperty(RuntimeMap::class, 'autoFrames'))->getValue());
+        self::assertSame([], (new ReflectionProperty(RuntimeMap::class, 'events'))->getValue());
+        self::assertNull((new ReflectionProperty(RuntimeMap::class, 'requestException'))->getValue());
+
+        (new ReflectionMethod(RuntimeMap::class, 'reset'))->invoke(null);
+    }
 }

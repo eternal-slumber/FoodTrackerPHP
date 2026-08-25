@@ -41,6 +41,10 @@ final class ErrorMiddlewareFactory
                     : 500;
                 $statusCode = $statusCode >= 400 && $statusCode < 600 ? $statusCode : 500;
 
+                if (class_exists(\RuntimeMentalMap\RuntimeMap::class)) {
+                    \RuntimeMentalMap\RuntimeMap::recordException($exception);
+                }
+
                 $payload = $isAppException
                     ? $exception->toArray()
                     : ['error' => $statusCode === 404 ? 'Not Found' : 'Internal Server Error'];
