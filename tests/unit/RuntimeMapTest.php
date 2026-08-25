@@ -14,6 +14,7 @@ final class RuntimeMapTest extends TestCase
             path: '/test',
             framework: 'slim',
             collectorUrl: 'http://127.0.0.1:1',
+            serviceName: 'foodtracker',
         );
 
         RuntimeMap::enterAutoSpan('controller', 'App\Controllers\TestController', 'index');
@@ -29,6 +30,11 @@ final class RuntimeMapTest extends TestCase
 
         $events = (new ReflectionProperty(RuntimeMap::class, 'events'))->getValue();
         self::assertCount(2, $events);
+
+        foreach ($events as $event) {
+            self::assertSame(1, $event['protocol_version']);
+            self::assertSame('foodtracker', $event['service_name']);
+        }
 
         (new ReflectionMethod(RuntimeMap::class, 'reset'))->invoke(null);
     }

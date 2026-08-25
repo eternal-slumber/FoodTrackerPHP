@@ -16,7 +16,18 @@ $runtimeMapEnabled = filter_var(
 );
 
 if ($runtimeMapEnabled) {
-    AutoInstrumentation::register(dirname(__DIR__) . '/src');
+    AutoInstrumentation::register(
+        sourceDirectory: dirname(__DIR__) . '/src',
+        layers: [
+            'Controllers' => 'controller',
+            'Services' => 'application',
+            'Repositories' => 'infrastructure',
+        ],
+        namespace: 'App\\',
+        exclude: [
+            'App\\Services\\TelemetryService',
+        ],
+    );
     PdoInstrumentation::register();
 }
 
@@ -35,7 +46,10 @@ ErrorMiddlewareFactory::create(
 
 if ($runtimeMapEnabled) {
     $app->add(new RuntimeMapMiddleware(
-        $_ENV['RUNTIME_MAP_COLLECTOR_URL'] ?? 'http://host.docker.internal:9000'
+        collectorUrl: $_ENV['RUNTIME_MAP_COLLECTOR_URL']
+            ?? 'http://host.docker.internal:9000',
+        serviceName: $_ENV['RUNTIME_MAP_SERVICE_NAME']
+            ?? 'foodtracker',
     ));
 }
 
